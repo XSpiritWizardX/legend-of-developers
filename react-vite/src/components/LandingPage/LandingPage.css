@@ -1,9 +1,9 @@
-.landing-page { min-height:calc(100vh - 36px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center; background:radial-gradient(circle at 50% 32%,#28324a 0,transparent 45%); }
-.landing-kicker { color:#c69d43; letter-spacing:.3em; font:700 10px sans-serif; }
-.landing-page h1 { margin:8px 0 18px; font:800 clamp(48px,9vw,100px)/.9 Georgia,serif; }
-.landing-page h1 span { color:#f0c75e; }
+.landing-page { min-height:calc(100vh - 36px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center; background:linear-gradient(#060815aa,#060815ee),repeating-linear-gradient(90deg,transparent 0,transparent 79px,#29d6c31a 80px),repeating-linear-gradient(0deg,transparent 0,transparent 79px,#d52f9a1a 80px),radial-gradient(circle at 50% 32%,#21395c 0,transparent 52%); }
+.landing-kicker { color:#ed42aa; letter-spacing:.3em; font:700 10px sans-serif; }
+.landing-page h1 { margin:8px 0 18px; font:900 clamp(48px,9vw,100px)/.9 monospace; color:#e8fffb; text-shadow:5px 3px #a91e79; }
+.landing-page h1 span { color:#42efd4; }
 .landing-page>p:not(.landing-kicker) { max-width:650px; color:#aaa99f; font:18px/1.7 Georgia,serif; }
 .landing-actions { display:flex; gap:12px; margin:24px 0 18px; }
-.landing-actions a { padding:14px 22px; background:#f0c75e; color:#201a10; text-decoration:none; font:800 12px sans-serif; letter-spacing:.08em; }
+.landing-actions a { padding:14px 22px; background:#42efd4; color:#061512; text-decoration:none; font:800 12px sans-serif; letter-spacing:.08em; box-shadow:5px 5px #a91e79; }
 .landing-actions a.secondary { color:#e9e4d4; background:#252633; border:1px solid #4b4d60; }
 .landing-page small { color:#77787c; }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { csrfFetch } from "../../redux/csrf";
 import { createGame } from "./engine";
 import "./Game.css";
@@ -14,6 +15,8 @@ function readLocal(slot) {
 
 export default function Game() {
   const user = useSelector((state) => state.session.user);
+  const location = useLocation();
+  const debugRequested = new URLSearchParams(location.search).get("mode") === "debug";
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const saveTimer = useRef(null);
@@ -76,12 +79,17 @@ export default function Game() {
         }, 350);
       },
     });
+    if (debugRequested) {
+      gameRef.current.start();
+      gameRef.current.enterDebugLab();
+      setStarted(true);
+    }
     return () => {
       clearTimeout(saveTimer.current);
       gameRef.current?.destroy();
       gameRef.current = null;
     };
-  }, [activeFile, user]);
+  }, [activeFile, user, debugRequested]);
 
   async function persistFile(slot, data) {
     localStorage.setItem(localKey(slot), JSON.stringify(data));
@@ -136,6 +144,12 @@ export default function Game() {
     setMode("select");
   }
 
+  function enterDebugLab() {
+    gameRef.current?.start();
+    gameRef.current?.enterDebugLab();
+    setStarted(true);
+  }
+
   if (!activeFile) {
     return (
       <main className="file-screen">
@@ -161,8 +175,19 @@ export default function Game() {
                   <span className="file-number">FILE {slot}</span>
                   {data ? (
                     <span className="file-details">
-                      <b>{player?.hasEmber ? "EMBER RESTORED" : "THE LOST EMBER"}</b>
-                      <span>♥ {player?.hp || 6}/{player?.maxHp || 6} · ◆ {player?.coins || 0} · Keys {player?.keys || 0}</span>
+                      <b>
+                        {data?.flags?.questComplete
+                          ? "JOB OFFER EARNED"
+                          : (data?.flags?.firstWebpage ? "FIRST WEBPAGE LIVE" : (player?.inventory?.htmlSword ? "LEARNING THE STACK" : "BEGINNER CODER"))}
+                      </b>
+                      <span className="file-stats">
+                        <span className="mini-hearts">
+                          {Array.from({ length: Math.ceil((player?.maxHp || 6) / 2) }, (_, index) => (
+                            <i className={(player?.hp || 6) > index * 2 ? "full" : ""} key={index}>♥</i>
+                          ))}
+                        </span>
+                        <span>¢ {player?.coins || 0} · Access {player?.keys || 0}</span>
+                      </span>
                     </span>
                   ) : (
                     <span className="empty-file">NEW GAME</span>
@@ -186,20 +211,21 @@ export default function Game() {
   return (
     <main className="game-page">
       <header className="game-header">
-        <div><small>FILE {activeFile.slot} · A TOP-DOWN ADVENTURE</small><h1>Legend of Devs</h1></div>
+        <div><small>FILE {activeFile.slot} · BUILD YOUR CAREER</small><h1>Legend of Devs</h1></div>
         <div className="game-header-actions">
-          <div className="controls"><span>WASD Move</span><span>J Sword</span><span>K Item / Use</span><span>Q Change Item</span><span>M Map</span><span>P Pause</span></div>
+          <div className="controls"><span>WASD Move</span><span>H HTML Sword</span><span>J Slot A</span><span>K Slot B</span><span>L Enter / Talk</span><span>P Pause Screens</span><span>Q/E Change Tab</span></div>
+          <button onClick={enterDebugLab}>Debug Lab</button>
           <button onClick={returnToFiles}>Save Files</button>
         </div>
       </header>
       <section className="game-frame">
-        <canvas ref={canvasRef} width="960" height="576" aria-label="Legend of Devs game" />
+        <canvas ref={canvasRef} width="1024" height="708" aria-label="Legend of Devs game" />
         {!started && (
           <div className="game-overlay">
-            <p>CHAPTER I</p>
-            <h2>{activeFile.data ? "Continue the Quest" : "The Lost Ember"}</h2>
-            <span>Cross the open vale. Find useful items.<br />Enter the Ember Crypt and defeat its guardian.</span>
-            <button onClick={begin}>{activeFile.data ? "CONTINUE JOURNEY" : "BEGIN JOURNEY"}</button>
+            <p>SPRINT 01 · HELLO, WORLD</p>
+            <h2>{activeFile.data ? "Resume Your Build" : "The First Commit"}</h2>
+            <span>You are a beginner coder in Neon Stack City.<br />Find the HTML Sword, learn CSS and JavaScript, then publish your first webpage.</span>
+            <button onClick={begin}>{activeFile.data ? "RESUME SESSION" : "START CODING"}</button>
           </div>
         )}
       </section>

@@ -1,6 +1,10 @@
 # Legend of Devs
 
-A full-stack top-down fantasy adventure inspired by classic 16-bit Zelda games.
+A full-stack cyberpunk, top-down action adventure about a beginner coder building
+skills, publishing projects, and ultimately earning a developer job.
+
+The renderer uses a higher-detail 64×64 tile format, a 1024×640 canvas, and
+48×64 directional character sprites with animated movement and attacks.
 
 ## Stack
 
@@ -44,9 +48,11 @@ Demo account: `demo@aa.io` / `password`
 
 ## Current world
 
-- A scrolling 80×60-tile overworld with forests, rivers, mountains, a village,
-  bridge crossings, enemies, hidden rewards, and a dungeon entrance
-- The Ember Crypt dungeon with rooms, a small key, locked door, dungeon map,
-  bombable secret wall, treasure, and a boss
-- Sword combat, a returning boomerang, bombs, heart containers, keys, coins,
-  local guest saves, and account-backed save files
+- Eight authored 16×10-tile Neon Stack City screens whose paths, walls, and
+  exits align across classic room transitions
+- The Browser Sandbox, an authored 3×3 system grid with access keys, a locked
+  boss door, switches, barriers, schematic, hidden passage, caches, and a boss
+- An HTML Sword, CSS Pulsecaster, JS Callback Drone, animated developer tools,
+  shared magic, passive equipment, two assignable item slots, and 20 hearts
+- A tabbed Status/Map/Gear pause system and a dedicated Developer Debug Lab
+- Local guest saves and account-backed save files
