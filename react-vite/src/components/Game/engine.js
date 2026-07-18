@@ -108,9 +108,8 @@ export function createGame(canvas, { initialSave, onSave }) {
     const screenYIndex = Math.floor(player.y / VIEW_H);
     state.discovered[`${state.mapId}:${screenXIndex},${screenYIndex}`] = true;
   }
-  function findOpenSpawn(mapId, tx, ty, type) {
+  function findOpenPosition(mapId, tx, ty, collisionRadius) {
     const targetMap = MAPS[mapId];
-    const collisionRadius = ["boss", "knight", "mage"].includes(type) ? 27 : 15;
     for (let searchRadius = 0; searchRadius <= 8; searchRadius += 1) {
       for (let oy = -searchRadius; oy <= searchRadius; oy += 1) {
         for (let ox = -searchRadius; ox <= searchRadius; ox += 1) {
@@ -133,6 +132,18 @@ export function createGame(canvas, { initialSave, onSave }) {
       }
     }
     return { x: targetMap.spawn.x, y: targetMap.spawn.y };
+  }
+  function findOpenSpawn(mapId, tx, ty, type) {
+    const collisionRadius = ["boss", "knight", "mage"].includes(type) ? 27 : 15;
+    return findOpenPosition(mapId, tx, ty, collisionRadius);
+  }
+  function dungeonReturnPosition(dungeon) {
+    return findOpenPosition(
+      "overworld",
+      Math.floor(dungeon.entrance.x / TILE),
+      Math.floor((dungeon.entrance.y + 108) / TILE),
+      18,
+    );
   }
   if (
     player.x < TILE || player.y < TILE
@@ -339,7 +350,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       return;
     } else if (Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {
       const dungeon = DUNGEONS.find((entry) => entry.id === state.mapId);
-      changeMap("overworld", { x: dungeon.entrance.x, y: dungeon.entrance.y + 108 });
+      changeMap("overworld", dungeonReturnPosition(dungeon));
       return;
     }
 
@@ -383,7 +394,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
     if (item === "mirror" && state.mapId !== "overworld" && state.mapId !== "debugLab") {
       const dungeon = DUNGEONS.find((entry) => entry.id === state.mapId);
-      changeMap("overworld", { x: dungeon.entrance.x, y: dungeon.entrance.y + 108 });
+      changeMap("overworld", dungeonReturnPosition(dungeon));
       weaponEffects.push({ type: "mirror", x: player.x, y: player.y, time: 0, duration: 0.9 });
     } else if (item === "mirror") {
       weaponEffects.push({ type: "mirror", x: player.x, y: player.y, time: 0, duration: 0.9 });
