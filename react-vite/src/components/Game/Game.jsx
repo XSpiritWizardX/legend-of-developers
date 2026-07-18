@@ -178,7 +178,11 @@ export default function Game() {
                       <b>
                         {data?.flags?.questComplete
                           ? "JOB OFFER EARNED"
-                          : (data?.flags?.firstWebpage ? "FIRST WEBPAGE LIVE" : (player?.inventory?.htmlSword ? "LEARNING THE STACK" : "BEGINNER CODER"))}
+                          : (data?.flags?.backendApi
+                            ? "BACKEND API ONLINE"
+                            : (data?.flags?.reactApp
+                              ? "REACT APP SHIPPED"
+                              : (data?.flags?.firstWebpage ? "FIRST WEBPAGE LIVE" : (player?.inventory?.htmlSword ? "LEARNING THE STACK" : "BEGINNER CODER"))))}
                       </b>
                       <span className="file-stats">
                         <span className="mini-hearts">

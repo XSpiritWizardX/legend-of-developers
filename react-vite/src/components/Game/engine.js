@@ -267,6 +267,17 @@ export function createGame(canvas, { initialSave, onSave }) {
       player.selectedItem = "boomerang";
       state.flags.firstWebpage = true;
       announce("FIRST WEBPAGE DEPLOYED · JS CALLBACK DRONE ONLINE!", 8);
+    } else if (type === "reactApp") {
+      player.inventory.hookshot = true;
+      state.flags.reactApp = true;
+      if (!player.equippedSlots[0]) player.equippedSlots[0] = "hookshot";
+      announce("REACT APP SHIPPED · API GRAPPLER ONLINE!", 8);
+    } else if (type === "backendApi") {
+      player.inventory.fireRod = true;
+      player.inventory.shield = true;
+      state.flags.backendApi = true;
+      if (!player.equippedSlots[1]) player.equippedSlots[1] = "fireRod";
+      announce("BACKEND API ONLINE · DEBUG SHIELD ACQUIRED!", 8);
     } else if (["boomerang", "bow", "hookshot", "fireRod", "iceRod", "hammer", "lantern", "flippers", "glove", "boots", "devJacket", "shield", "cape", "mirror", "medallion", "masterSword"].includes(type)) {
       player.inventory[type] = true;
       if (ITEM_ORDER.includes(type)) player.selectedItem = type;
@@ -558,7 +569,29 @@ export function createGame(canvas, { initialSave, onSave }) {
         boomerang.x += boomerang.vx * dt;
         boomerang.y += boomerang.vy * dt;
         boomerang.distance += 380 * dt;
-        if (boomerang.distance > 230 || solidAt(boomerang.x, boomerang.y)) boomerang.returning = true;
+        const callbackTile = tileAt(
+          state.mapId,
+          Math.floor(boomerang.x / TILE),
+          Math.floor(boomerang.y / TILE),
+          state.flags,
+        );
+        if (callbackTile === "callbackNode") {
+          state.flags.callback_firewall_1 = true;
+          boomerang.returning = true;
+          announce("CALLBACK RESOLVED · EASTERN NETWORK COMPILED", 5);
+          save();
+        } else if (callbackTile === "callbackNode2") {
+          boomerang.returning = true;
+          if (state.flags.complete_d02) {
+            state.flags.callback_firewall_2 = true;
+            announce("ADVANCED CALLBACK RESOLVED · DEPLOYMENT EDGE OPEN", 5);
+            save();
+          } else {
+            announce("DEPENDENCY MISSING · COMPLETE COMPONENT FACTORY", 4);
+          }
+        } else if (boomerang.distance > 230 || solidAt(boomerang.x, boomerang.y)) {
+          boomerang.returning = true;
+        }
       } else {
         const dx = player.x - boomerang.x;
         const dy = player.y - boomerang.y;
@@ -751,10 +784,12 @@ export function createGame(canvas, { initialSave, onSave }) {
     desert: "#533d54", desertAlt: "#443448",
     dungeonFloor: "#15172c", dungeonFloorAlt: "#101326", wall: "#090b19",
     lockedDoor: "#be8c22", crackedWall: "#30233e", barrier: "#a51c75",
-    switch: "#19e6c2", codeBrush: "#103944", snow: "#83e7eb", void: "#03040b",
+    switch: "#19e6c2", codeBrush: "#103944", callbackNode: "#182650",
+    callbackNode2: "#421b4d", snow: "#83e7eb", void: "#03040b",
   };
   const dungeonPalettes = {
     mainframe: ["#15172c", "#0d1124"],
+    reactor: ["#20204a", "#17183b"], server: ["#173640", "#102b35"],
     crypt: ["#303249", "#292b42"], forest: ["#294236", "#243a31"],
     water: ["#294151", "#233947"], fire: ["#4b302f", "#3d292c"],
     shadow: ["#29263b", "#211f32"], sky: ["#394653", "#313d49"],
@@ -817,6 +852,16 @@ export function createGame(canvas, { initialSave, onSave }) {
           rect(x + 10, y + 18, 28, 3, "#31e1c8");
           rect(x + 18, y + 10, 3, 29, "#d52f9a");
           text("</>", x + 24, y + 31, 9, "center", "#b9fff5");
+        }
+        if (tile === "callbackNode" || tile === "callbackNode2") {
+          const advanced = tile === "callbackNode2";
+          rect(x + 3, y + 3, 42, 42, advanced ? "#421b4d" : "#182650");
+          rect(x + 7, y + 7, 34, 34, "#080d1b");
+          const pulse = 4 + (animationFrame % 3) * 2;
+          ctx.strokeStyle = advanced ? "#f02ea5" : "#42efd4";
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(x + 24, y + 24, 8 + pulse, 0, Math.PI * 2); ctx.stroke();
+          text(advanced ? "await" : "JS", x + 24, y + 28, advanced ? 7 : 10, "center", advanced ? "#f09bd6" : "#b9fff5");
         }
         if (tile === "mountain") {
           rect(x, y, 48, 48, "#484c59");
@@ -1192,7 +1237,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     ctx.strokeRect(80, 64, 864, 512);
     text(state.mapId === "overworld" ? "NEON STACK CITY NETWORK" : map().name.toUpperCase(), VIEW_W / 2, 103, 22, "center", "#42efd4");
 
-    const scale = 10;
+    const scale = Math.min(10, 760 / map().width, 330 / map().height);
     const mapWidth = map().width * scale;
     const mapHeight = map().height * scale;
     const originX = (VIEW_W - mapWidth) / 2;
@@ -1333,7 +1378,11 @@ export function createGame(canvas, { initialSave, onSave }) {
     text("CURRENT MILESTONE", 570, 210, 10, "center", "#8595a0");
     const milestone = state.flags.questComplete
       ? "JOB OFFER EARNED"
-      : (state.flags.firstWebpage ? "FIRST WEBPAGE LIVE" : "FIND YOUR FIRST BUILD");
+      : (state.flags.backendApi
+        ? "BACKEND API ONLINE"
+        : (state.flags.reactApp
+          ? "REACT APP SHIPPED"
+          : (state.flags.firstWebpage ? "FIRST WEBPAGE LIVE" : "FIND YOUR FIRST BUILD")));
     text(milestone, 570, 242, 14, "center", "#ffffff");
     text("PASSIVE LOADOUT", 570, 300, 10, "center", "#8595a0");
     const activeEquipment = [
