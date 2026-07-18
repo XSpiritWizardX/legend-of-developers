@@ -1,8 +1,8 @@
 FROM python:3.9.18-alpine3.18
 
-RUN apk add build-base
+RUN apk add --quiet build-base
 
-RUN apk add postgresql-dev gcc python3-dev musl-dev
+RUN apk add --quiet postgresql-dev gcc python3-dev musl-dev npm
 
 ARG FLASK_APP
 ARG FLASK_ENV
@@ -18,6 +18,8 @@ RUN pip install -r requirements.txt
 RUN pip install psycopg2
 
 COPY . .
+
+RUN cd react-vite && npm ci --no-audit --no-fund && npm run build
 
 RUN flask db upgrade
 RUN flask seed all
