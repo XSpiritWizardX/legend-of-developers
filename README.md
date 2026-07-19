@@ -46,6 +46,13 @@ Demo account: `demo@aa.io` / `password`
 - P: open the Status/Map/Gear pause screens
 - Q/E: change pause screen
 
+## Editing rooms
+
+Each 16×10 screen has an individual room file and supports reusable, placeable
+pixel-art props. See
+[`react-vite/src/components/Game/rooms/README.md`](react-vite/src/components/Game/rooms/README.md)
+for coordinates, asset types, collision options, and an example.
+
 ## Current world
 
 - 72 aligned 16×10-tile Neon Stack City screens across nine regions and eight

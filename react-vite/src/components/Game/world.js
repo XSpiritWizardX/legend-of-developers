@@ -1,13 +1,18 @@
+import { editableRoomAt } from "./rooms/roomRegistry";
+import { indexedRoomTileAt } from "./art/tileIndex";
+
 export const TILE = 64;
 export const SCREEN_COLS = 16;
 export const SCREEN_ROWS = 10;
-export const WORLD_COLS = 9;
-export const WORLD_ROWS = 8;
+export const WORLD_COLS = 16;
+export const WORLD_ROWS = 16;
 
 const REGION_NAMES = [
   "Legacy Frontier", "Open Source Ward", "Data Coast", "Cloud Reach",
   "Callback Expanse", "Component Borough", "Runtime Badlands",
   "Backend Depths", "Deployment Edge",
+  "Package Highlands", "Container Port", "Query Gardens", "Kernel Range",
+  "Pipeline Basin", "Release Coast", "Production Crown",
 ];
 
 const BIOME_ROWS = [
@@ -32,7 +37,8 @@ function buildOverworldRooms() {
       if (rx < WORLD_COLS - 1) exits.push("e");
       rooms[`${rx},${ry}`] = {
         name: `${REGION_NAMES[rx]} · NODE ${ry + 1}`,
-        biome: BIOME_ROWS[ry][rx],
+        biome: BIOME_ROWS[ry]?.[rx]
+          || ["grass", "forest", "stone", "village", "desert", "lake"][(rx * 5 + ry * 3) % 6],
         exits,
       };
     }
@@ -258,12 +264,17 @@ function overworldTile(tx, ty, flags) {
 function dungeonTile(mapId, tx, ty, flags) {
   const rx = Math.floor(tx / SCREEN_COLS);
   const ry = Math.floor(ty / SCREEN_ROWS);
-  const room = DUNGEON_ROOMS[`${rx},${ry}`];
+  const baseRoom = DUNGEON_ROOMS[`${rx},${ry}`];
+  const editableRoom = editableRoomAt(mapId, rx, ry);
+  const room = baseRoom && editableRoom ? { ...baseRoom, ...editableRoom } : baseRoom;
   if (!room) return "void";
   const lx = tx % SCREEN_COLS;
   const ly = ty % SCREEN_ROWS;
 
   if (roomBoundary(room.exits, lx, ly)) return "wall";
+  if (room.wallRects?.some(([x, y, width, height]) => (
+    lx >= x && lx < x + width && ly >= y && ly < y + height
+  ))) return "wall";
 
   const bossDoor = (rx === 1 && ry === 1 && ly === 0 && (lx === 7 || lx === 8))
     || (rx === 1 && ry === 0 && ly === 9 && (lx === 7 || lx === 8));
@@ -293,6 +304,8 @@ function debugLabTile(tx, ty) {
 export function tileAt(mapId, tx, ty, flags = {}) {
   const map = MAPS[mapId];
   if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return "void";
+  const indexedTile = indexedRoomTileAt(mapId, tx, ty);
+  if (indexedTile) return indexedTile.tile;
   if (mapId === "overworld") return overworldTile(tx, ty, flags);
   if (mapId === "debugLab") return debugLabTile(tx, ty);
   return dungeonTile(mapId, tx, ty, flags);
@@ -302,7 +315,9 @@ export function roomNameAt(mapId, x, y) {
   if (mapId !== "overworld") return MAPS[mapId].name;
   const rx = Math.floor(x / (SCREEN_COLS * TILE));
   const ry = Math.floor(y / (SCREEN_ROWS * TILE));
-  return OW_ROOMS[`${rx},${ry}`]?.name || MAPS.overworld.name;
+  const roomName = OW_ROOMS[`${rx},${ry}`]?.name || MAPS.overworld.name;
+  const coordinate = `${rx + 1}${String.fromCharCode(65 + ry)}`;
+  return `${roomName} · ${coordinate}`;
 }
 
 export function isSolid(tile) {

@@ -1,4 +1,9 @@
 import { DUNGEONS, isSolid, MAPS, MERCHANTS, roomNameAt, TILE, tileAt } from "./world";
+import {
+  drawPlacedRoomAsset, roomAssetAt, roomAssetIsSolid, visibleRoomAssets,
+} from "./roomAssets";
+import { drawCatalogArt } from "./art/artLoader";
+import { indexedRoomTileAt } from "./art/tileIndex";
 
 const VIEW_W = 1024;
 const VIEW_H = 640;
@@ -124,7 +129,14 @@ export function createGame(canvas, { initialSave, onSave }) {
             [centerX + collisionRadius, centerY - collisionRadius],
             [centerX - collisionRadius, centerY + collisionRadius],
             [centerX + collisionRadius, centerY + collisionRadius],
-          ].every(([px, py]) => !isSolid(tileAt(mapId, Math.floor(px / TILE), Math.floor(py / TILE), state.flags)));
+          ].every(([px, py]) => {
+            const footprintTileX = Math.floor(px / TILE);
+            const footprintTileY = Math.floor(py / TILE);
+            const indexedTile = indexedRoomTileAt(mapId, footprintTileX, footprintTileY);
+            return !(indexedTile?.solid
+              ?? isSolid(tileAt(mapId, footprintTileX, footprintTileY, state.flags)))
+              && !roomAssetIsSolid(roomAssetAt(mapId, footprintTileX, footprintTileY));
+          });
           if (footprintOpen) {
             return { x: centerX, y: centerY };
           }
@@ -223,7 +235,15 @@ export function createGame(canvas, { initialSave, onSave }) {
   function screenY(y) { return y - camera.y + HUD_H; }
 
   function solidAt(x, y) {
-    const tile = tileAt(state.mapId, Math.floor(x / TILE), Math.floor(y / TILE), state.flags);
+    const tileX = Math.floor(x / TILE);
+    const tileY = Math.floor(y / TILE);
+    if (roomAssetIsSolid(roomAssetAt(state.mapId, tileX, tileY))) return true;
+    const indexedTile = indexedRoomTileAt(state.mapId, tileX, tileY);
+    if (indexedTile) {
+      if (indexedTile.tile === "water" && player.inventory.flippers) return false;
+      return indexedTile.solid;
+    }
+    const tile = tileAt(state.mapId, tileX, tileY, state.flags);
     if (tile === "water" && player.inventory.flippers) return false;
     return isSolid(tile);
   }
@@ -234,12 +254,14 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function enemyCanMove(enemy, x, y) {
     const radius = ["boss", "knight", "mage"].includes(enemy.type) ? 27 : 15;
-    const open = (px, py) => !isSolid(tileAt(
-      state.mapId,
-      Math.floor(px / TILE),
-      Math.floor(py / TILE),
-      state.flags,
-    ));
+    const open = (px, py) => {
+      const tileX = Math.floor(px / TILE);
+      const tileY = Math.floor(py / TILE);
+      const indexedTile = indexedRoomTileAt(state.mapId, tileX, tileY);
+      return !roomAssetIsSolid(roomAssetAt(state.mapId, tileX, tileY))
+        && !(indexedTile?.solid
+          ?? isSolid(tileAt(state.mapId, tileX, tileY, state.flags)));
+    };
     return open(x - radius, y - radius) && open(x + radius, y - radius)
       && open(x - radius, y + radius) && open(x + radius, y + radius);
   }
@@ -826,6 +848,8 @@ export function createGame(canvas, { initialSave, onSave }) {
           color = palette[tile === "dungeonFloor" ? 0 : 1];
         }
         rect(x, y, TILE + 1, TILE + 1, color);
+        const indexedTile = indexedRoomTileAt(state.mapId, tx, ty);
+        if (drawCatalogArt(ctx, "tiles", indexedTile?.code || tile, x, y, TILE, TILE)) continue;
         // Tile decorations are authored on a 48-unit detail grid and scaled
         // into the new 64×64 art format, leaving more pixels for shading.
         ctx.save();
@@ -934,6 +958,8 @@ export function createGame(canvas, { initialSave, onSave }) {
     const bob = player.moving && (walkFrame === 1 || walkFrame === 3) ? -1 : 0;
     const y = screenY(player.y) + bob;
     if (player.invincible > 0 && Math.floor(player.invincible * 12) % 2) return;
+    const playerArtId = `player${player.dir[0].toUpperCase()}${player.dir.slice(1)}`;
+    if (drawCatalogArt(ctx, "characters", playerArtId, x - 32, y - 44, 64, 64)) return;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(1.28, 1.28);
@@ -997,10 +1023,22 @@ export function createGame(canvas, { initialSave, onSave }) {
 
     ctx.restore();
   }
+  function drawRoomAssets() {
+    visibleRoomAssets(state.mapId, camera.x, camera.y, VIEW_W, VIEW_H)
+      .forEach((asset) => {
+        drawPlacedRoomAsset(
+          ctx,
+          asset,
+          screenX(asset.worldX),
+          screenY(asset.worldY),
+        );
+      });
+  }
   function drawEnemy(enemy) {
     if (enemy.hit > 0 && Math.floor(enemy.hit * 15) % 2) return;
     const x = screenX(enemy.x);
     const y = screenY(enemy.y);
+    if (drawCatalogArt(ctx, "enemies", enemy.type, x - 32, y - 44, 64, 64)) return;
     const stunned = enemy.stunned > 0;
     if (enemy.type === "slime") {
       const squish = Math.sin(enemy.phase * 6) > 0.5 ? 3 : 0;
@@ -1275,7 +1313,34 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.beginPath(); ctx.moveTo(originX, originY + sy * scale); ctx.lineTo(originX + mapWidth, originY + sy * scale); ctx.stroke();
     }
 
+    if (state.mapId !== "overworld") {
+      const currentRoomX = Math.floor(player.x / (16 * TILE));
+      const currentRoomY = Math.floor(player.y / (10 * TILE));
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(
+        originX + currentRoomX * 16 * scale + 2,
+        originY + currentRoomY * 10 * scale + 2,
+        16 * scale - 4,
+        10 * scale - 4,
+      );
+      text(
+        "CURRENT NODE",
+        originX + (currentRoomX * 16 + 8) * scale,
+        originY + currentRoomY * 10 * scale - 7,
+        8,
+        "center",
+        "#ffffff",
+      );
+    }
+
     if (state.mapId === "overworld") {
+      for (let roomX = 0; roomX < 16; roomX += 1) {
+        text(`${roomX + 1}`, originX + (roomX * 16 + 8) * scale, originY - 7, 7, "center", "#d5c89c");
+      }
+      for (let roomY = 0; roomY < 16; roomY += 1) {
+        text(String.fromCharCode(65 + roomY), originX - 9, originY + (roomY * 10 + 5) * scale + 3, 7, "center", "#d5c89c");
+      }
       DUNGEONS.forEach((dungeon) => {
         if (!pointIsVisible(dungeon.entrance.x / TILE, dungeon.entrance.y / TILE)) return;
         const x = originX + dungeon.entrance.x / TILE * scale;
@@ -1432,6 +1497,7 @@ export function createGame(canvas, { initialSave, onSave }) {
 
   function draw() {
     drawTiles();
+    drawRoomAssets();
     drawObjects();
     enemiesByMap[state.mapId].forEach(drawEnemy);
     drawPlayer();
