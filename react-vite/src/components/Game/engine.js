@@ -49,6 +49,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   let cssPulses = [];
   let weaponEffects = [];
   let merchantOpen = null;
+  let merchantCursor = 0;
   let screenTransition = null;
   let debugReturnPosition = { ...MAPS.overworld.spawn };
 
@@ -364,6 +365,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       const merchant = MERCHANTS.find((entry) => Math.hypot(player.x - (entry.x * TILE + TILE / 2), player.y - (entry.y * TILE + TILE / 2)) < 82);
       if (merchant) {
         merchantOpen = merchant;
+        merchantCursor = 0;
         return;
       }
     } else if (state.mapId === "debugLab" && Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {
@@ -1381,15 +1383,33 @@ export function createGame(canvas, { initialSave, onSave }) {
 
   function drawMerchant() {
     if (!merchantOpen) return;
-    rect(180, 90, 600, 400, "#11131ff8");
+    rect(180, 82, 600, 430, "#11131ff8");
     text(`${merchantOpen.name.toUpperCase()}'S CODE SHOP`, 480, 140, 22, "center", "#42efd4");
     merchantOpen.stock.forEach(([item, price], index) => {
+      const selected = merchantCursor === index;
       const label = itemLabel(item);
-      text(`${index + 1}  ${label}`, 300, 205 + index * 62, 14, "left", "#eee4ca");
-      text(`${price} ◆`, 655, 205 + index * 62, 14, "right", "#f0c75e");
+      const y = 174 + index * 58;
+      rect(245, y, 470, 44, selected ? "#263657" : "#171a29");
+      if (selected) {
+        ctx.strokeStyle = "#42efd4";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(245, y, 470, 44);
+      }
+      text(`${selected ? "▶" : " "}  ${label}`, 270, y + 28, 14, "left", selected ? "#ffffff" : "#eee4ca");
+      text(`${price} ◆`, 685, y + 28, 14, "right", "#f0c75e");
     });
-    text(`YOUR CREDITS: ${player.coins}`, 480, 410, 12, "center", "#bfc3b5");
-    text("PRESS 1–3 TO BUY · ESC TO LEAVE", 480, 455, 10, "center", "#777a76");
+    const exitIndex = merchantOpen.stock.length;
+    const exitY = 174 + exitIndex * 58;
+    const exitSelected = merchantCursor === exitIndex;
+    rect(245, exitY, 470, 44, exitSelected ? "#4a233d" : "#171a29");
+    if (exitSelected) {
+      ctx.strokeStyle = "#f02ea5";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(245, exitY, 470, 44);
+    }
+    text(`${exitSelected ? "▶" : " "}  EXIT SHOP`, 270, exitY + 28, 14, "left", exitSelected ? "#ffffff" : "#bbb7aa");
+    text(`YOUR CREDITS: ${player.coins}`, 480, 445, 12, "center", "#bfc3b5");
+    text("MOVE TO SELECT · L / TALK TO CONFIRM", 480, 480, 10, "center", "#777a76");
   }
 
   function drawLoadoutMenu() {
@@ -1612,8 +1632,25 @@ export function createGame(canvas, { initialSave, onSave }) {
       return;
     }
     if (merchantOpen) {
+      const optionCount = merchantOpen.stock.length + 1;
       if (key === "escape") merchantOpen = null;
-      if (["1", "2", "3"].includes(key)) buyMerchantItem(Number(key) - 1);
+      if (!event.repeat && (key === "arrowdown" || key === "s" || key === "arrowright" || key === "d")) {
+        merchantCursor = (merchantCursor + 1) % optionCount;
+      }
+      if (!event.repeat && (key === "arrowup" || key === "w" || key === "arrowleft" || key === "a")) {
+        merchantCursor = (merchantCursor - 1 + optionCount) % optionCount;
+      }
+      if (!event.repeat && (key === "l" || key === "enter" || key === " ")) {
+        if (merchantCursor === merchantOpen.stock.length) merchantOpen = null;
+        else buyMerchantItem(merchantCursor);
+      }
+      if (["1", "2", "3"].includes(key)) {
+        const directIndex = Number(key) - 1;
+        if (directIndex < merchantOpen.stock.length) {
+          merchantCursor = directIndex;
+          buyMerchantItem(directIndex);
+        }
+      }
       return;
     }
     if (!keys[key]) pressed[key] = true;
