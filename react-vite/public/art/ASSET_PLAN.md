@@ -21,12 +21,12 @@
 ## Water and coast
 
 - [x] Shore transitions, animated water, foam, reeds
-- [ ] Dock, boat, waterfall, lily pad, coral
+- [x] Dock, boat, waterfall, lily pad, coral
 
 ## Caves and crystals
 
-- [ ] Cave floor, cave wall, pits, stalagmites, bones, torch
-- [ ] Crystal floor, crystal walls, small and large crystal clusters
+- [x] Cave floor, cave wall, pits, stalagmites, bones, torch
+- [x] Crystal floor, crystal walls, small and large crystal clusters
 
 ## Dungeons
 

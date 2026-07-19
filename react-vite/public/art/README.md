@@ -126,6 +126,21 @@ Use these directly in a room's `floor` or `walls` rows:
 | `ow` | animated open water | solid |
 | `fm` | coastal foam overlay | solid |
 | `re` | shoreline reeds | walkable |
+| `dk` | vertical wooden dock | walkable |
+| `bt` | coastal sailboat | solid |
+| `wf` | waterfall | solid |
+| `ly` | lily-pad cluster | walkable |
+| `co` | coral cluster | solid |
+| `cv` | natural cave floor | walkable |
+| `cw` | natural cave wall | solid |
+| `cp` | bottomless cave pit | solid |
+| `cm` | stalagmite cluster | solid |
+| `cb` | cave bone pile | walkable |
+| `ct` | cave wall torch | walkable |
+| `xf` | crystal-cavern floor | walkable |
+| `xw` | crystal-cavern wall | solid |
+| `xs` | small crystal cluster | solid |
+| `xl` | large crystal formation | solid |
 
 For precise placement, use the long catalog IDs in `assets`. Village examples
 are `villageFence`, `villageSign`, `villageLamp`, and `villageWell`; houses use
@@ -134,3 +149,10 @@ the `buildings` category as shown above.
 Desert prop IDs for precise placement are `desertCactus`,
 `desertDryBush`, `desertBones`, `desertRock`, `desertRuins`, and
 `desertOasis`.
+
+Coastal prop IDs are `coastFoam`, `coastReeds`, `coastDock`,
+`coastBoat`, `coastWaterfall`, `coastLilyPad`, and `coastCoral`.
+
+Cave prop IDs are `caveStalagmite`, `caveBones`, and `caveTorch`.
+
+Crystal prop IDs are `crystalSmall` and `crystalLarge`.

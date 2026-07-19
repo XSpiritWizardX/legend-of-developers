@@ -14,6 +14,9 @@ export const ROOM_ASSET_TYPES = [
   "desertCactus", "desertDryBush", "desertBones", "desertRock",
   "desertRuins", "desertOasis",
   "coastFoam", "coastReeds",
+  "coastDock", "coastBoat", "coastWaterfall", "coastLilyPad", "coastCoral",
+  "caveStalagmite", "caveBones", "caveTorch",
+  "crystalSmall", "crystalLarge",
 ];
 
 const ASSET_RULES = {
@@ -49,6 +52,16 @@ const ASSET_RULES = {
   desertOasis: { solid: true },
   coastFoam: { solid: false },
   coastReeds: { solid: false },
+  coastDock: { solid: false },
+  coastBoat: { solid: true },
+  coastWaterfall: { solid: true },
+  coastLilyPad: { solid: false },
+  coastCoral: { solid: true },
+  caveStalagmite: { solid: true },
+  caveBones: { solid: false },
+  caveTorch: { solid: false },
+  crystalSmall: { solid: true },
+  crystalLarge: { solid: true },
   cyberTree: { solid: true },
   boulder: { solid: true },
   fountain: { solid: true },
