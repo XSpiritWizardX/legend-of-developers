@@ -32,17 +32,20 @@
 
 - [x] Mainframe, reactor, and server floor/wall sets
 - [x] Doors, locked doors, barriers, switches, statues, pillars
-- [ ] Chests, pots, crates, terminals, traps, stairs, portals
+- [x] Chests, pots, crates, terminals, traps, stairs, portals
 
 ## Characters and combat
 
-- [ ] Player walk, attack, item-use, hurt, and fall animations
-- [ ] Villagers, merchants, quest characters
-- [ ] Common forest, cave, desert, water, and dungeon enemies
-- [ ] Minibosses and three original dungeon bosses
-- [ ] Weapons, inventory items, projectiles, impacts, and magic effects
+- [x] Player walk, attack, item-use, hurt, and fall animations
+- [x] Villagers, merchants, quest characters
+- [x] Common forest, cave, desert, water, and dungeon enemies
+- [x] Minibosses and three original dungeon bosses
+- [x] Core sword, callback drone, pulsecaster, code bomb, and API grappler
+- [x] Fire and ice rods, hammer, lantern, and mirror
+- [x] Cloak, medallion, jacket, shield, gloves, and boots
+- [x] Projectiles, impacts, and magic effects
 
 ## Interface
 
-- [ ] Hearts, magic meter, currency, keys, item slots
-- [ ] Dialogue box, menus, map markers, room frames, icons
+- [x] Hearts, magic meter, currency, keys, item slots
+- [x] Dialogue box, menus, map markers, room frames, icons

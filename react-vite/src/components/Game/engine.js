@@ -8,7 +8,10 @@ import { indexedRoomTileAt } from "./art/tileIndex";
 const VIEW_W = 1024;
 const VIEW_H = 640;
 const HUD_H = 68;
-const PERMANENT_ENEMY_TYPES = ["boss", "knight", "mage"];
+const PERMANENT_ENEMY_TYPES = [
+  "boss", "knight", "mage", "minibossNullKnight",
+  "bossCacheColossus", "bossFluxSovereign", "bossRootWarden",
+];
 const isPermanentEnemy = (type) => PERMANENT_ENEMY_TYPES.includes(type);
 const ITEM_ORDER = ["boomerang", "bombs", "bow", "hookshot", "fireRod", "iceRod", "hammer", "lantern", "mirror", "cape", "medallion"];
 const LOADOUT_ORDER = [...ITEM_ORDER];
@@ -149,7 +152,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     return { x: targetMap.spawn.x, y: targetMap.spawn.y };
   }
   function findOpenSpawn(mapId, tx, ty, type) {
-    const collisionRadius = ["boss", "knight", "mage"].includes(type) ? 27 : 15;
+    const collisionRadius = isPermanentEnemy(type) ? 27 : 15;
     return findOpenPosition(mapId, tx, ty, collisionRadius);
   }
   function dungeonReturnPosition(dungeon) {
@@ -271,7 +274,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       && !solidAt(x - r, y + r) && !solidAt(x + r, y + r);
   }
   function enemyCanMove(enemy, x, y) {
-    const radius = ["boss", "knight", "mage"].includes(enemy.type) ? 27 : 15;
+    const radius = isPermanentEnemy(enemy.type) ? 27 : 15;
     const open = (px, py) => {
       const tileX = Math.floor(px / TILE);
       const tileY = Math.floor(py / TILE);
@@ -399,7 +402,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     const chest = currentMap.chests.find((entry) => {
       const [id, tx, ty] = entry;
       if (state.openedChests[id]) return false;
-      if (id.endsWith("-reward") && enemiesByMap[state.mapId].some((enemy) => ["boss", "knight", "mage"].includes(enemy.type))) return false;
+      if (id.endsWith("-reward") && enemiesByMap[state.mapId].some((enemy) => isPermanentEnemy(enemy.type))) return false;
       return Math.hypot(player.x - (tx * TILE + TILE / 2), player.y - (ty * TILE + TILE / 2)) < 76;
     });
     if (chest) {
@@ -581,7 +584,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         Math.sin(enemyAngle - facingAngle),
         Math.cos(enemyAngle - facingAngle),
       ));
-      const enemyRadius = ["boss", "knight", "mage"].includes(enemy.type) ? 30 : 16;
+      const enemyRadius = isPermanentEnemy(enemy.type) ? 30 : 16;
       if (distance <= 78 + enemyRadius && angleDifference <= 0.92) {
         damageEnemy(enemy, player.inventory.masterSword || player.inventory.glove ? 2 : 1);
       }
@@ -773,13 +776,13 @@ export function createGame(canvas, { initialSave, onSave }) {
       enemy.phase += dt;
       const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
       if (!enemy.stunned && distance < 310 && distance > 0) {
-        const speed = enemy.type === "bat" ? 100 : ["boss", "knight", "mage"].includes(enemy.type) ? 80 : 58;
+        const speed = enemy.type === "bat" ? 100 : isPermanentEnemy(enemy.type) ? 80 : 58;
         const nx = enemy.x + (player.x - enemy.x) / distance * speed * dt;
         const ny = enemy.y + (player.y - enemy.y) / distance * speed * dt;
         if (enemyCanMove(enemy, nx, enemy.y)) enemy.x = nx;
         if (enemyCanMove(enemy, enemy.x, ny)) enemy.y = ny;
       }
-      const boss = ["boss", "knight", "mage"].includes(enemy.type);
+      const boss = isPermanentEnemy(enemy.type);
       if (distance < (boss ? 43 : 29) && player.invincible <= 0) {
         const incomingDamage = boss && !player.inventory.shield ? 2 : 1;
         player.hp -= incomingDamage;
@@ -1147,11 +1150,16 @@ export function createGame(canvas, { initialSave, onSave }) {
       const x = screenX(bomb.x);
       const y = screenY(bomb.y);
       if (bomb.exploded) {
-        ctx.fillStyle = "#f4a33b99";
-        ctx.beginPath(); ctx.arc(x, y, 95, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "#ffe07a";
-        ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.arc(x, y, 55, 0, Math.PI * 2); ctx.stroke();
+        const explosionDrawn = drawCatalogArt(
+          ctx, "effects", "codeExplosion", x - 96, y - 96, 192, 192,
+        );
+        if (!explosionDrawn) {
+          ctx.fillStyle = "#f4a33b99";
+          ctx.beginPath(); ctx.arc(x, y, 95, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#ffe07a";
+          ctx.lineWidth = 5;
+          ctx.beginPath(); ctx.arc(x, y, 55, 0, Math.PI * 2); ctx.stroke();
+        }
       } else {
         const fusePulse = Math.floor(bomb.timer * 12) % 2;
         rect(x - 10 - fusePulse, y - 8 - fusePulse, 20 + fusePulse * 2, 18 + fusePulse * 2, fusePulse ? "#4b204b" : "#171722");
@@ -1168,13 +1176,18 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(spin);
-      ctx.strokeStyle = "#f02ea5";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(0, 0, flare, 0, Math.PI * 2);
-      ctx.stroke();
-      text("{", -15, 7, 19, "center", "#42efd4");
-      text("}", 15, 7, 19, "center", "#42efd4");
+      const pulseDrawn = drawCatalogArt(
+        ctx, "effects", "cssPulse", -flare * 1.5, -flare * 1.5, flare * 3, flare * 3,
+      );
+      if (!pulseDrawn) {
+        ctx.strokeStyle = "#f02ea5";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, flare, 0, Math.PI * 2);
+        ctx.stroke();
+        text("{", -15, 7, 19, "center", "#42efd4");
+        text("}", 15, 7, 19, "center", "#42efd4");
+      }
       ctx.restore();
       ctx.fillStyle = "#b8fff6aa";
       ctx.beginPath();
@@ -1188,11 +1201,16 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rotation);
-      rect(-25, -14, 22, 28, "#f2d532");
-      rect(3, -14, 22, 28, "#f2d532");
-      rect(-4, -4, 8, 8, "#111827");
-      text("J", -14, 7, 20, "center", "#17140a");
-      text("S", 14, 7, 20, "center", "#17140a");
+      const droneDrawn = drawCatalogArt(
+        ctx, "items", "boomerang", -27, -27, 54, 54,
+      );
+      if (!droneDrawn) {
+        rect(-25, -14, 22, 28, "#f2d532");
+        rect(3, -14, 22, 28, "#f2d532");
+        rect(-4, -4, 8, 8, "#111827");
+        text("J", -14, 7, 20, "center", "#17140a");
+        text("S", 14, 7, 20, "center", "#17140a");
+      }
       ctx.restore();
     }
   }
@@ -1205,25 +1223,21 @@ export function createGame(canvas, { initialSave, onSave }) {
       const y = screenY(followsPlayer ? player.y : effect.y);
       ctx.save();
       if (effect.type === "sword") {
-        const facing = Math.atan2(effect.dir.y, effect.dir.x);
-        const startAngle = facing - 0.85;
-        const angle = startAngle + progress * 1.7;
-        ctx.strokeStyle = `rgba(240,46,165,${0.8 - progress * 0.35})`;
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.arc(x, y, 40, startAngle, angle, false);
-        ctx.stroke();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        rect(8, -7, 7, 14, "#f02ea5");
-        rect(14, -3, 6, 6, "#ffffff");
-        ctx.font = "900 10px monospace";
-        ctx.textAlign = "left";
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = "#071513";
-        ctx.strokeText("<HTML><HTML/>", 19, 4);
-        ctx.fillStyle = "#57ffe6";
-        ctx.fillText("<HTML><HTML/>", 19, 4);
+        ctx.globalAlpha = 1 - progress * 0.55;
+        const slashDrawn = drawCatalogArt(
+          ctx, "effects", "htmlSlash", x - 48, y - 48, 96, 96,
+        );
+        ctx.globalAlpha = 1;
+        if (!slashDrawn) {
+          const facing = Math.atan2(effect.dir.y, effect.dir.x);
+          const startAngle = facing - 0.85;
+          const angle = startAngle + progress * 1.7;
+          ctx.strokeStyle = `rgba(240,46,165,${0.8 - progress * 0.35})`;
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.arc(x, y, 40, startAngle, angle, false);
+          ctx.stroke();
+        }
       }
       if (effect.type === "hookshot") {
         const endX = screenX(effect.endX);
@@ -1241,13 +1255,22 @@ export function createGame(canvas, { initialSave, onSave }) {
       if (effect.type === "fire" || effect.type === "ice") {
         const hot = effect.type === "fire";
         const radius = 24 + progress * 150;
-        ctx.strokeStyle = hot ? `rgba(255,80,90,${1 - progress})` : `rgba(80,235,255,${1 - progress})`;
-        ctx.lineWidth = 9 - progress * 6;
-        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke();
-        for (let spark = 0; spark < 10; spark += 1) {
-          const angle = spark / 10 * Math.PI * 2 + progress * (hot ? 3 : -2);
-          const distance = radius * (0.45 + (spark % 3) * 0.18);
-          rect(x + Math.cos(angle) * distance - 4, y + Math.sin(angle) * distance - 4, 8, 8, hot ? "#ffcf4a" : "#c9fbff");
+        const size = radius * 1.55;
+        ctx.globalAlpha = 1 - progress * 0.75;
+        const burstDrawn = drawCatalogArt(
+          ctx,
+          "effects",
+          hot ? "firewallBurst" : "freezeBurst",
+          x - size / 2,
+          y - size / 2,
+          size,
+          size,
+        );
+        ctx.globalAlpha = 1;
+        if (!burstDrawn) {
+          ctx.strokeStyle = hot ? `rgba(255,80,90,${1 - progress})` : `rgba(80,235,255,${1 - progress})`;
+          ctx.lineWidth = 9 - progress * 6;
+          ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke();
         }
       }
       if (effect.type === "hammer") {
@@ -1286,13 +1309,20 @@ export function createGame(canvas, { initialSave, onSave }) {
         rect(x + 12 + progress * 20, y - 35, 8, 70, "#42efd455");
       }
       if (effect.type === "root") {
-        for (let ring = 0; ring < 4; ring += 1) {
-          const ringProgress = Math.max(0, progress - ring * 0.1);
-          ctx.strokeStyle = ring % 2 ? `rgba(66,239,212,${1 - progress})` : `rgba(240,46,165,${1 - progress})`;
-          ctx.lineWidth = 5;
-          ctx.beginPath(); ctx.arc(x, y, ringProgress * (180 + ring * 45), 0, Math.PI * 2); ctx.stroke();
+        const size = 90 + progress * 240;
+        ctx.globalAlpha = 1 - progress * 0.72;
+        const rootDrawn = drawCatalogArt(
+          ctx, "effects", "rootSurge", x - size / 2, y - size / 2, size, size,
+        );
+        ctx.globalAlpha = 1;
+        if (!rootDrawn) {
+          for (let ring = 0; ring < 4; ring += 1) {
+            const ringProgress = Math.max(0, progress - ring * 0.1);
+            ctx.strokeStyle = ring % 2 ? `rgba(66,239,212,${1 - progress})` : `rgba(240,46,165,${1 - progress})`;
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.arc(x, y, ringProgress * (180 + ring * 45), 0, Math.PI * 2); ctx.stroke();
+          }
         }
-        text("sudo", x, y + 7, 18, "center", "#ffffff");
       }
       ctx.restore();
     });
@@ -1302,9 +1332,11 @@ export function createGame(canvas, { initialSave, onSave }) {
     ctx.save();
     ctx.translate(0, HUD_H);
     rect(70, 54, 884, 532, "#070b18f8");
-    ctx.strokeStyle = "#32dfca";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(80, 64, 864, 512);
+    if (!drawCatalogArt(ctx, "ui", "mapRoomFrame", 70, 54, 884, 532)) {
+      ctx.strokeStyle = "#32dfca";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(80, 64, 864, 512);
+    }
     text(state.mapId === "overworld" ? "NEON STACK CITY NETWORK" : map().name.toUpperCase(), VIEW_W / 2, 103, 22, "center", "#42efd4");
 
     const scale = Math.min(10, 760 / map().width, 330 / map().height);
@@ -1370,18 +1402,29 @@ export function createGame(canvas, { initialSave, onSave }) {
       });
       MERCHANTS.forEach((merchant) => {
         if (!pointIsVisible(merchant.x, merchant.y)) return;
-        rect(originX + (merchant.x + 0.5) * scale - 4, originY + (merchant.y + 0.5) * scale - 4, 8, 8, "#d46f55");
+        const markerX = originX + (merchant.x + 0.5) * scale;
+        const markerY = originY + (merchant.y + 0.5) * scale;
+        if (!drawCatalogArt(ctx, "ui", "mapMarkerShop", markerX - 18, markerY - 18, 36, 36)) {
+          rect(markerX - 4, markerY - 4, 8, 8, "#d46f55");
+        }
       });
     }
     map().chests.forEach(([id, tx, ty]) => {
-      if (!state.openedChests[id] && pointIsVisible(tx, ty)) rect(originX + (tx + 0.5) * scale - 3, originY + (ty + 0.5) * scale - 3, 6, 6, "#e5bd50");
+      if (state.openedChests[id] || !pointIsVisible(tx, ty)) return;
+      const markerX = originX + (tx + 0.5) * scale;
+      const markerY = originY + (ty + 0.5) * scale;
+      if (!drawCatalogArt(ctx, "ui", "mapMarkerCache", markerX - 15, markerY - 15, 30, 30)) {
+        rect(markerX - 3, markerY - 3, 6, 6, "#e5bd50");
+      }
     });
 
     const playerMapX = originX + player.x / TILE * scale;
     const playerMapY = originY + player.y / TILE * scale;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.arc(playerMapX, playerMapY, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#151622"; ctx.lineWidth = 2; ctx.stroke();
+    if (!drawCatalogArt(ctx, "ui", "mapMarkerPlayer", playerMapX - 17, playerMapY - 17, 34, 34)) {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(playerMapX, playerMapY, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#151622"; ctx.lineWidth = 2; ctx.stroke();
+    }
 
     if (!revealAll) text(state.mapId === "overworld" ? "EXPLORE TO DECRYPT EACH DISTRICT" : "UNKNOWN NODES HIDDEN · DOWNLOAD THE SYSTEM SCHEMATIC", VIEW_W / 2, 500, 10, "center", "#8c8c8c");
     text(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), VIEW_W / 2, 530, 12, "center", "#d5c89c");
@@ -1391,6 +1434,9 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function drawHeart(x, y, filled) {
+    if (drawCatalogArt(
+      ctx, "ui", filled ? "heartFull" : "heartEmpty", x, y, 22, 21,
+    )) return;
     const color = filled ? "#ed5353" : "#4a3038";
     rect(x + 3, y, 7, 5, color);
     rect(x + 12, y, 7, 5, color);
@@ -1403,6 +1449,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   function drawMerchant() {
     if (!merchantOpen) return;
     rect(180, 82, 600, 430, "#11131ff8");
+    drawCatalogArt(ctx, "ui", "menuPanelFrame", 180, 82, 600, 430);
     text(`${merchantOpen.name.toUpperCase()}'S CODE SHOP`, 480, 140, 22, "center", "#42efd4");
     merchantOpen.stock.forEach(([item, price], index) => {
       const selected = merchantCursor === index;
@@ -1414,7 +1461,8 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.lineWidth = 3;
         ctx.strokeRect(245, y, 470, 44);
       }
-      text(`${selected ? "▶" : " "}  ${label}`, 270, y + 28, 14, "left", selected ? "#ffffff" : "#eee4ca");
+      if (selected) drawCatalogArt(ctx, "ui", "selectionCursor", 250, y + 7, 36, 36);
+      text(label, 290, y + 28, 14, "left", selected ? "#ffffff" : "#eee4ca");
       text(`${price} ◆`, 685, y + 28, 14, "right", "#f0c75e");
     });
     const exitIndex = merchantOpen.stock.length;
@@ -1426,7 +1474,8 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.lineWidth = 3;
       ctx.strokeRect(245, exitY, 470, 44);
     }
-    text(`${exitSelected ? "▶" : " "}  EXIT SHOP`, 270, exitY + 28, 14, "left", exitSelected ? "#ffffff" : "#bbb7aa");
+    if (exitSelected) drawCatalogArt(ctx, "ui", "selectionCursor", 250, exitY + 7, 36, 36);
+    text("EXIT SHOP", 290, exitY + 28, 14, "left", exitSelected ? "#ffffff" : "#bbb7aa");
     text(`YOUR CREDITS: ${player.coins}`, 480, 445, 12, "center", "#bfc3b5");
     text("MOVE TO SELECT · L / TALK TO CONFIRM", 480, 480, 10, "center", "#777a76");
   }
@@ -1434,9 +1483,11 @@ export function createGame(canvas, { initialSave, onSave }) {
   function drawLoadoutMenu() {
     const gear = availableLoadout();
     rect(90, 72, 844, 500, "#070b18fa");
-    ctx.strokeStyle = "#42efd4";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(100, 82, 824, 480);
+    if (!drawCatalogArt(ctx, "ui", "menuPanelFrame", 90, 72, 844, 500)) {
+      ctx.strokeStyle = "#42efd4";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(100, 82, 824, 480);
+    }
     text("GEAR LOADOUT", 512, 123, 25, "center", "#42efd4");
     text("PASSIVE EQUIPMENT", 125, 158, 10, "left", "#f09bd6");
     const equipment = [
@@ -1449,8 +1500,17 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.strokeStyle = acquired ? "#42efd4" : "#343b4c";
       ctx.lineWidth = 2;
       ctx.strokeRect(x, 170, 180, 62);
-      text(slot, x + 12, 190, 9, "left", "#8ea0ad");
-      text(acquired ? itemLabel(item) : "NOT ACQUIRED", x + 90, 217, 10, "center", acquired ? "#ffffff" : "#59616d");
+      const hasItemArt = acquired
+        && drawCatalogArt(ctx, "items", item, x + 8, 181, 40, 40);
+      text(slot, x + (hasItemArt ? 54 : 12), 190, 9, "left", "#8ea0ad");
+      text(
+        acquired ? itemLabel(item) : "NOT ACQUIRED",
+        x + (hasItemArt ? 111 : 90),
+        217,
+        10,
+        "center",
+        acquired ? "#ffffff" : "#59616d",
+      );
     });
     text("WEAPON / ITEM SLOTS", 125, 258, 10, "left", "#f09bd6");
     text(paused ? "MOVE · J ASSIGN A · K ASSIGN B" : "MOVE · J ASSIGN A · K ASSIGN B · Q CLOSE", 899, 258, 9, "right", "#a9b9c3");
@@ -1469,8 +1529,10 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.strokeStyle = "#f02ea5";
         ctx.lineWidth = 3;
         ctx.strokeRect(x, y, 230, 50);
+        drawCatalogArt(ctx, "ui", "selectionCursor", x - 25, y + 7, 36, 36);
       }
-      text(itemLabel(item), x + 14, y + 22, 10, "left", selected ? "#ffffff" : "#b8c7d0");
+      const hasItemArt = drawCatalogArt(ctx, "items", item, x + 8, y + 5, 40, 40);
+      text(itemLabel(item), x + (hasItemArt ? 54 : 14), y + 22, 10, "left", selected ? "#ffffff" : "#b8c7d0");
       const badges = [];
       if (player.equippedSlots[0] === item) badges.push("A");
       if (player.equippedSlots[1] === item) badges.push("B");
@@ -1482,9 +1544,11 @@ export function createGame(canvas, { initialSave, onSave }) {
 
   function drawPauseStatus() {
     rect(150, 100, 724, 470, "#070b18fa");
-    ctx.strokeStyle = "#42efd4";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(160, 110, 704, 450);
+    if (!drawCatalogArt(ctx, "ui", "menuPanelFrame", 150, 100, 724, 470)) {
+      ctx.strokeStyle = "#42efd4";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(160, 110, 704, 450);
+    }
     text("DEVELOPER STATUS", 512, 155, 25, "center", "#42efd4");
     text(`HEARTS  ${Math.ceil(player.hp / 2)} / ${player.maxHp / 2}`, 220, 215, 15, "left", "#ed5353");
     text(`MAGIC  ${Math.floor(player.magic)} / ${player.maxMagic}`, 220, 255, 15, "left", "#f02ea5");
@@ -1551,12 +1615,17 @@ export function createGame(canvas, { initialSave, onSave }) {
       || LOADOUT_ORDER.some((item) => Boolean(player.inventory[item]));
     if (hasMagicGear) {
       text("MAGIC", 302, 25, 10, "left", "#42efd4");
-      rect(350, 11, 112, 16, "#080b16");
       rect(353, 14, Math.round(106 * (player.magic / player.maxMagic)), 10, "#d52f9a");
       rect(353, 14, Math.round(106 * (player.magic / player.maxMagic) * 0.55), 3, "#ff83cf");
+      if (!drawCatalogArt(ctx, "ui", "magicMeterFrame", 348, 9, 116, 20)) {
+        ctx.strokeStyle = "#42efd4";
+        ctx.strokeRect(350, 11, 112, 16);
+      }
     }
-    text(`¢ ${player.coins}`, 302, 55, 11, "left", "#42efd4");
-    text(`ACCESS ${player.keys}`, 390, 55, 10, "left", "#f09bd6");
+    drawCatalogArt(ctx, "ui", "creditToken", 298, 37, 18, 18);
+    text(`${player.coins}`, 320, 55, 11, "left", "#42efd4");
+    drawCatalogArt(ctx, "ui", "accessKey", 388, 37, 18, 18);
+    text(`${player.keys}`, 410, 55, 10, "left", "#f09bd6");
     text(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), 700, 55, 9, "right", "#c4bd9e");
     const slotLabel = (item) => {
       if (!item || (item !== "bombs" && !player.inventory[item])) return "EMPTY";
@@ -1566,14 +1635,24 @@ export function createGame(canvas, { initialSave, onSave }) {
     [["A · J", player.equippedSlots[0]], ["B · K", player.equippedSlots[1]]].forEach(([button, item], index) => {
       const x = 720 + index * 150;
       rect(x, 7, 140, 52, "#080b16");
-      ctx.strokeStyle = index ? "#f02ea5" : "#42efd4";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, 7, 140, 52);
-      text(button, x + 9, 23, 9, "left", index ? "#f09bd6" : "#42efd4");
-      text(slotLabel(item), x + 70, 47, 9, "center", "#ecf8f6");
+      const equipped = slotLabel(item) !== "EMPTY";
+      if (equipped) {
+        drawCatalogArt(ctx, "items", item, x + 10, 11, 36, 36);
+      }
+      const frameDrawn = drawCatalogArt(
+        ctx, "ui", "itemSlotFrame", x + 5, 8, 46, 46,
+      );
+      if (!frameDrawn) {
+        ctx.strokeStyle = index ? "#f02ea5" : "#42efd4";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 5, 8, 46, 46);
+      }
+      text(button, x + 58, 23, 9, "left", index ? "#f09bd6" : "#42efd4");
+      text(slotLabel(item), x + 95, 47, 9, "center", "#ecf8f6");
     });
     if (messageTime > 0) {
-      rect(250, 500 + HUD_H, 460, 48, "#11131ef0");
+      rect(240, 494 + HUD_H, 480, 60, "#11131ef0");
+      drawCatalogArt(ctx, "ui", "dialogueFrame", 240, 494 + HUD_H, 480, 60);
       text(message, 480, 530 + HUD_H, 13, "center", "#f2ddb0");
     }
     if (paused) {

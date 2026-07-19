@@ -15,7 +15,7 @@ function cachedImage(source) {
   return imageCache.get(source);
 }
 
-export function drawCatalogArt(ctx, category, id, x, y, width, height) {
+export function drawCatalogArt(ctx, category, id, x, y, width, height, options = {}) {
   const entry = catalogArt(category, id);
   const sources = entry?.frames || (entry?.source ? [entry.source] : []);
   sources.forEach(cachedImage);
@@ -33,6 +33,31 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height) {
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
+  const sheet = entry.sheet;
+  if (sheet) {
+    const directionIndex = Math.max(
+      0,
+      sheet.directions.indexOf(options.direction || "down"),
+    );
+    const elapsedFrame = Math.floor(performance.now() / frameDuration);
+    const requestedFrame = options.frame ?? elapsedFrame;
+    const animationFrame = entry.loop === false && options.frame !== undefined
+      ? Math.min(sheet.framesPerDirection - 1, requestedFrame)
+      : requestedFrame % sheet.framesPerDirection;
+    ctx.drawImage(
+      record.image,
+      animationFrame * sheet.frameWidth,
+      directionIndex * sheet.frameHeight,
+      sheet.frameWidth,
+      sheet.frameHeight,
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight,
+    );
+    ctx.restore();
+    return true;
+  }
   if (entry.flipX) {
     ctx.translate(drawX + drawWidth, drawY);
     ctx.scale(-1, 1);

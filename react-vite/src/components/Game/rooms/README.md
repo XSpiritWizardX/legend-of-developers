@@ -167,7 +167,7 @@ export default {
   ],
 
   enemies: [
-    { id: "1A-slime-1", type: "slime", x: 9, y: 6 },
+    { id: "1A-beetle-1", type: "forestByteBeetle", x: 9, y: 6 },
   ],
 
   chests: [
@@ -194,3 +194,8 @@ registered.
 
 See [`../../../../public/art/README.md`](../../../../public/art/README.md) for the
 folder layout, image recommendations, catalog example, sizing, and offsets.
+Enemy `type` values can use any ID from the `enemies` section of that catalog,
+including `forestByteBeetle`, `caveEchoBat`, `desertSandSkitter`,
+`waterCurrentBlob`, and `dungeonFirewallDrone`. Persistent encounters use
+`minibossNullKnight`, `bossCacheColossus`, `bossFluxSovereign`, or
+`bossRootWarden`; unlike common enemies, these do not respawn after defeat.

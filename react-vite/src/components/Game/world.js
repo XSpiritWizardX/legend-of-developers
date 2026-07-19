@@ -122,12 +122,17 @@ function buildOverworldEnemies() {
 }
 
 function dungeonEnemies(id) {
+  const bossTypes = {
+    d01: "bossCacheColossus",
+    d02: "bossFluxSovereign",
+    d03: "bossRootWarden",
+  };
   return [
     [`${id}-entry-a`, "slime", 21, 25], [`${id}-entry-b`, "slime", 27, 25],
     [`${id}-west-guard`, "guard", 8, 15], [`${id}-east-guard`, "guard", 40, 15],
     [`${id}-hall-bat-a`, "bat", 21, 15], [`${id}-hall-bat-b`, "bat", 27, 15],
     [`${id}-north-bat`, "bat", 8, 5], [`${id}-east-slime`, "slime", 40, 5],
-    [`${id}-boss`, id === "d02" ? "mage" : "boss", 24, 4],
+    [`${id}-boss`, bossTypes[id], 24, 4],
   ];
 }
 

@@ -19,6 +19,10 @@ export const ROOM_ASSET_TYPES = [
   "crystalSmall", "crystalLarge",
   "dungeonDoor", "dungeonLockedDoor", "dungeonBarrier", "dungeonSwitch",
   "dungeonStatue", "dungeonPillar",
+  "dungeonChest", "dungeonPot", "dungeonCrate", "dungeonTerminal",
+  "dungeonSpikeTrap", "dungeonStairs", "dungeonPortal",
+  "villagerGardener", "villagerMechanic", "merchantTraveler",
+  "merchantTechnician", "questArchivist", "questNetworkScout",
 ];
 
 const ASSET_RULES = {
@@ -70,6 +74,19 @@ const ASSET_RULES = {
   dungeonSwitch: { solid: false },
   dungeonStatue: { solid: true },
   dungeonPillar: { solid: true },
+  dungeonChest: { solid: true },
+  dungeonPot: { solid: true },
+  dungeonCrate: { solid: true },
+  dungeonTerminal: { solid: true },
+  dungeonSpikeTrap: { solid: false },
+  dungeonStairs: { solid: false },
+  dungeonPortal: { solid: false },
+  villagerGardener: { solid: true },
+  villagerMechanic: { solid: true },
+  merchantTraveler: { solid: true },
+  merchantTechnician: { solid: true },
+  questArchivist: { solid: true },
+  questNetworkScout: { solid: true },
   cyberTree: { solid: true },
   boulder: { solid: true },
   fountain: { solid: true },
@@ -254,7 +271,12 @@ const DRAW = {
 };
 
 export function drawPlacedRoomAsset(ctx, asset, screenX, screenY) {
-  if (drawCatalogArt(ctx, asset.category || "props", asset.type, screenX, screenY, TILE, TILE)) return;
+  const categories = asset.category
+    ? [asset.category]
+    : ["props", "characters", "buildings"];
+  if (categories.some((category) => (
+    drawCatalogArt(ctx, category, asset.type, screenX, screenY, TILE, TILE)
+  ))) return;
   DRAW[asset.type]?.(ctx, screenX, screenY, asset);
 }
 
