@@ -213,7 +213,7 @@ export default function Game() {
     return (
       <main className="file-screen">
         <div className="file-panel">
-          <p className="file-kicker">THE LEGEND OF DEVS</p>
+          <p className="file-kicker">THE LEGEND OF DEVELOPERS</p>
           <h1>Select a File</h1>
           <p className="file-instruction">
             {mode === "copy" && (copySource ? `Choose a destination for File ${copySource}` : "Choose a file to copy")}
@@ -274,7 +274,7 @@ export default function Game() {
   return (
     <main className="game-page">
       <header className="game-header">
-        <div><small>FILE {activeFile.slot} · BUILD YOUR CAREER</small><h1>Legend of Devs</h1></div>
+        <div><small>FILE {activeFile.slot} · BUILD YOUR CAREER</small><h1>Legend of Developers</h1></div>
         <div className="game-header-actions">
           <div className="controls"><span>WASD Move</span><span>H HTML Sword</span><span>J Slot A</span><span>K Slot B</span><span>L Enter / Talk</span><span>P Pause Screens</span><span>Q/E Change Tab</span></div>
           <button onClick={enterDebugLab}>Debug Lab</button>
