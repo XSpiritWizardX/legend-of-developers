@@ -8,7 +8,7 @@ export default function Navigation() {
 
   return (
     <header className="site-header">
-      <NavLink className="site-brand" to="/">Legend of Devs</NavLink>
+      <NavLink className="site-brand" to="/">Legend of Developers</NavLink>
       <nav className="site-links" aria-label="Primary navigation">
         <NavLink to="/">Home</NavLink>
         <NavLink to="/game">Game</NavLink>
