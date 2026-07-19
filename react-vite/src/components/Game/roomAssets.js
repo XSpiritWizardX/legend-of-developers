@@ -17,6 +17,8 @@ export const ROOM_ASSET_TYPES = [
   "coastDock", "coastBoat", "coastWaterfall", "coastLilyPad", "coastCoral",
   "caveStalagmite", "caveBones", "caveTorch",
   "crystalSmall", "crystalLarge",
+  "dungeonDoor", "dungeonLockedDoor", "dungeonBarrier", "dungeonSwitch",
+  "dungeonStatue", "dungeonPillar",
 ];
 
 const ASSET_RULES = {
@@ -62,6 +64,12 @@ const ASSET_RULES = {
   caveTorch: { solid: false },
   crystalSmall: { solid: true },
   crystalLarge: { solid: true },
+  dungeonDoor: { solid: true },
+  dungeonLockedDoor: { solid: true },
+  dungeonBarrier: { solid: true },
+  dungeonSwitch: { solid: false },
+  dungeonStatue: { solid: true },
+  dungeonPillar: { solid: true },
   cyberTree: { solid: true },
   boulder: { solid: true },
   fountain: { solid: true },

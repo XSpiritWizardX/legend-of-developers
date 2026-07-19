@@ -141,6 +141,18 @@ Use these directly in a room's `floor` or `walls` rows:
 | `xw` | crystal-cavern wall | solid |
 | `xs` | small crystal cluster | solid |
 | `xl` | large crystal formation | solid |
+| `mf` | mainframe circuit floor | walkable |
+| `mw` | mainframe server wall | solid |
+| `rf` | reactor heat-plate floor | walkable |
+| `rw` | reactor thermal wall | solid |
+| `sf` | server access-panel floor | walkable |
+| `sv` | server-bay wall | solid |
+| `dd` | closed dungeon door | solid |
+| `dl` | locked dungeon door | solid |
+| `eb` | energy barrier | solid |
+| `ps` | pressure switch | walkable |
+| `gs` | guardian statue | solid |
+| `pi` | dungeon support pillar | solid |
 
 For precise placement, use the long catalog IDs in `assets`. Village examples
 are `villageFence`, `villageSign`, `villageLamp`, and `villageWell`; houses use
@@ -156,3 +168,6 @@ Coastal prop IDs are `coastFoam`, `coastReeds`, `coastDock`,
 Cave prop IDs are `caveStalagmite`, `caveBones`, and `caveTorch`.
 
 Crystal prop IDs are `crystalSmall` and `crystalLarge`.
+
+Dungeon mechanism IDs are `dungeonDoor`, `dungeonLockedDoor`,
+`dungeonBarrier`, `dungeonSwitch`, `dungeonStatue`, and `dungeonPillar`.

@@ -30,8 +30,8 @@
 
 ## Dungeons
 
-- [ ] Mainframe, reactor, and server floor/wall sets
-- [ ] Doors, locked doors, barriers, switches, statues, pillars
+- [x] Mainframe, reactor, and server floor/wall sets
+- [x] Doors, locked doors, barriers, switches, statues, pillars
 - [ ] Chests, pots, crates, terminals, traps, stairs, portals
 
 ## Characters and combat
