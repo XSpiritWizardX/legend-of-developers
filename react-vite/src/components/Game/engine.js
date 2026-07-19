@@ -8,6 +8,8 @@ import { indexedRoomTileAt } from "./art/tileIndex";
 const VIEW_W = 1024;
 const VIEW_H = 640;
 const HUD_H = 68;
+const PERMANENT_ENEMY_TYPES = ["boss", "knight", "mage"];
+const isPermanentEnemy = (type) => PERMANENT_ENEMY_TYPES.includes(type);
 const ITEM_ORDER = ["boomerang", "bombs", "bow", "hookshot", "fireRod", "iceRod", "hammer", "lantern", "mirror", "cape", "medallion"];
 const LOADOUT_ORDER = [...ITEM_ORDER];
 const MAGIC_COSTS = {
@@ -177,19 +179,34 @@ export function createGame(canvas, { initialSave, onSave }) {
   markCurrentScreenDiscovered();
 
   function map() { return MAPS[state.mapId]; }
+  function createEnemy(mapId, [id, type, tx, ty]) {
+    const spawnPoint = findOpenSpawn(mapId, tx, ty, type);
+    return {
+      id, type, x: spawnPoint.x, y: spawnPoint.y,
+      homeX: spawnPoint.x, homeY: spawnPoint.y,
+      hp: isPermanentEnemy(type) ? 14 + (MAPS[mapId].number || 0) : type === "guard" ? 4 : 2,
+      phase: Math.random() * 6, hit: 0, stunned: 0,
+    };
+  }
   function buildEnemies(mapId) {
     if (enemiesByMap[mapId]) return;
     enemiesByMap[mapId] = MAPS[mapId].enemies
-      .filter(([id]) => !state.killed[id])
-      .map(([id, type, tx, ty]) => {
-        const spawnPoint = findOpenSpawn(mapId, tx, ty, type);
-        return {
-          id, type, x: spawnPoint.x, y: spawnPoint.y,
-          homeX: spawnPoint.x, homeY: spawnPoint.y,
-          hp: ["boss", "knight", "mage"].includes(type) ? 14 + (MAPS[mapId].number || 0) : type === "guard" ? 4 : 2,
-          phase: Math.random() * 6, hit: 0, stunned: 0,
-        };
-      });
+      .filter(([id, type]) => !isPermanentEnemy(type) || !state.killed[id])
+      .map((definition) => createEnemy(mapId, definition));
+  }
+  function respawnRoomEnemies(mapId, roomCameraX, roomCameraY) {
+    const activeIds = new Set(enemiesByMap[mapId].map((enemy) => enemy.id));
+    MAPS[mapId].enemies.forEach((definition) => {
+      const [id, type, tx, ty] = definition;
+      const spawnX = tx * TILE + TILE / 2;
+      const spawnY = ty * TILE + TILE / 2;
+      const inRoom = spawnX >= roomCameraX && spawnX < roomCameraX + VIEW_W
+        && spawnY >= roomCameraY && spawnY < roomCameraY + VIEW_H;
+      if (!isPermanentEnemy(type)) delete state.killed[id];
+      if (inRoom && !isPermanentEnemy(type) && !activeIds.has(id)) {
+        enemiesByMap[mapId].push(createEnemy(mapId, definition));
+      }
+    });
   }
   buildEnemies(state.mapId);
 
@@ -284,6 +301,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       Math.floor(player.y / VIEW_H) * VIEW_H,
       Math.max(0, MAPS[mapId].height * TILE - VIEW_H),
     );
+    respawnRoomEnemies(mapId, camera.x, camera.y);
     screenTransition = null;
     markCurrentScreenDiscovered();
     announce(MAPS[mapId].name.toUpperCase(), 2.6);
@@ -574,8 +592,8 @@ export function createGame(canvas, { initialSave, onSave }) {
     enemy.hp -= amount;
     enemy.hit = 0.22;
     if (enemy.hp <= 0) {
-      state.killed[enemy.id] = true;
-      const isBoss = ["boss", "knight", "mage"].includes(enemy.type);
+      const isBoss = isPermanentEnemy(enemy.type);
+      if (isBoss) state.killed[enemy.id] = true;
       player.coins += isBoss ? 50 + (map().number || 0) * 5 : 2;
       if (isBoss) {
         state.flags[`complete_${state.mapId}`] = true;
@@ -680,6 +698,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         camera.x = screenTransition.toX;
         camera.y = screenTransition.toY;
         screenTransition = null;
+        respawnRoomEnemies(state.mapId, camera.x, camera.y);
         markCurrentScreenDiscovered();
         announce(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), 1.4);
       }
