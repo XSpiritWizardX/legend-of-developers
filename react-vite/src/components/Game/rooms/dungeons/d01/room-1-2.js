@@ -1,8 +1,22 @@
 export default {
   id: "d01:1,2", variant: 0,
   wallRects: [[2, 2, 3, 5], [11, 2, 3, 5]],
+  floor: [
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mw mw mw mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mw mw mw mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mw mw mw mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mw mw mw mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mw mw mw mf ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+  ],
   assets: [
     { type: "neonSign", x: 7, y: 6, text: "LOGIN", solid: false },
-    { type: "streetLamp", x: 5, y: 7 }, { type: "streetLamp", x: 10, y: 7 },
+    { type: "dungeonPillar", x: 5, y: 7 },
+    { type: "dungeonPillar", x: 10, y: 7 },
+    { type: "dungeonDoor", x: 7, y: 1, solid: false },
   ],
 };

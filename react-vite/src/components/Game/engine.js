@@ -1621,12 +1621,22 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (key === "m" && mapOpen) { mapOpen = false; delete pressed.m; }
   }
   function keyup(event) { keys[event.key.toLowerCase()] = false; }
+  function releaseAllKeys() {
+    Object.keys(keys).forEach((key) => { keys[key] = false; });
+  }
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
+  window.addEventListener("blur", releaseAllKeys);
   frame = requestAnimationFrame(loop);
 
   return {
     start() { running = true; },
+    pressKey(key) {
+      keydown({ key, repeat: Boolean(keys[key.toLowerCase()]), preventDefault() {} });
+    },
+    releaseKey(key) {
+      keyup({ key });
+    },
     enterDebugLab() {
       if (state.mapId === "debugLab") return;
       debugReturnPosition = { x: player.x, y: player.y };
@@ -1637,6 +1647,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       cancelAnimationFrame(frame);
       document.removeEventListener("keydown", keydown);
       document.removeEventListener("keyup", keyup);
+      window.removeEventListener("blur", releaseAllKeys);
     },
   };
 }

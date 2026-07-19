@@ -8,6 +8,57 @@ import "./Game.css";
 const SLOTS = [1, 2, 3];
 const localKey = (slot) => `legend-of-devs-save-${slot}`;
 
+function TouchButton({ input, label, className = "", disabled, onPress, onRelease }) {
+  function press(event) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    onPress(input);
+  }
+
+  function release(event) {
+    event.preventDefault();
+    onRelease(input);
+  }
+
+  return (
+    <button
+      type="button"
+      className={className}
+      disabled={disabled}
+      aria-label={label}
+      onPointerDown={press}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onLostPointerCapture={release}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {label}
+    </button>
+  );
+}
+
+function MobileControls({ disabled, onPress, onRelease }) {
+  const buttonProps = { disabled, onPress, onRelease };
+  return (
+    <div className="mobile-controls" aria-label="Touch game controls">
+      <div className="touch-dpad">
+        <TouchButton {...buttonProps} input="arrowup" label="▲" className="touch-up" />
+        <TouchButton {...buttonProps} input="arrowleft" label="◀" className="touch-left" />
+        <span className="touch-center" aria-hidden="true" />
+        <TouchButton {...buttonProps} input="arrowright" label="▶" className="touch-right" />
+        <TouchButton {...buttonProps} input="arrowdown" label="▼" className="touch-down" />
+      </div>
+      <div className="touch-actions">
+        <TouchButton {...buttonProps} input="p" label="Pause" className="touch-menu" />
+        <TouchButton {...buttonProps} input="l" label="Talk" className="touch-talk" />
+        <TouchButton {...buttonProps} input="h" label="Sword" className="touch-sword" />
+        <TouchButton {...buttonProps} input="j" label="A" className="touch-a" />
+        <TouchButton {...buttonProps} input="k" label="B" className="touch-b" />
+      </div>
+    </div>
+  );
+}
+
 function readLocal(slot) {
   try { return JSON.parse(localStorage.getItem(localKey(slot))); }
   catch { return null; }
@@ -150,6 +201,14 @@ export default function Game() {
     setStarted(true);
   }
 
+  function pressGameKey(key) {
+    gameRef.current?.pressKey(key);
+  }
+
+  function releaseGameKey(key) {
+    gameRef.current?.releaseKey(key);
+  }
+
   if (!activeFile) {
     return (
       <main className="file-screen">
@@ -233,6 +292,11 @@ export default function Game() {
           </div>
         )}
       </section>
+      <MobileControls
+        disabled={!started}
+        onPress={pressGameKey}
+        onRelease={releaseGameKey}
+      />
       <footer><span className="save-dot" /> {saveStatus}</footer>
     </main>
   );
