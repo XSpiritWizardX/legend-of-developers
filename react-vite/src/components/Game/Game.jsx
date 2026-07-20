@@ -67,7 +67,9 @@ function readLocal(slot) {
 export default function Game() {
   const user = useSelector((state) => state.session.user);
   const location = useLocation();
-  const debugRequested = new URLSearchParams(location.search).get("mode") === "debug";
+  const requestedMode = new URLSearchParams(location.search).get("mode");
+  const debugRequested = requestedMode === "debug";
+  const playtestRequested = requestedMode === "playtest";
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const saveTimer = useRef(null);
@@ -104,7 +106,32 @@ export default function Game() {
   }, [user]);
 
   useEffect(() => {
+    if (playtestRequested && !loading && !activeFile) {
+      const query = new URLSearchParams(location.search);
+      const requestedMap = query.get("map");
+      const requestedRoom = query.get("room")?.split(",").map(Number);
+      const roomX = Number.isFinite(requestedRoom?.[0]) ? requestedRoom[0] : 1;
+      const roomY = Number.isFinite(requestedRoom?.[1]) ? requestedRoom[1] : 1;
+      const playtestSave = requestedMap ? {
+        version: 3,
+        mapId: requestedMap,
+        player: {
+          x: (roomX * 16 + 8) * 64 + 32,
+          y: (roomY * 10 + 5) * 64 + 32,
+          hp: 6,
+          maxHp: 6,
+          inventory: { htmlSword: true, maps: {} },
+          equippedSlots: [null, null],
+        },
+      } : null;
+      setActiveFile({ slot: 1, data: playtestSave });
+      setSaveStatus("Playtest save");
+    }
+  }, [playtestRequested, loading, activeFile, location.search]);
+
+  useEffect(() => {
     if (!activeFile || !canvasRef.current) return undefined;
+    let playtestTimer;
     const { slot, data } = activeFile;
     gameRef.current = createGame(canvasRef.current, {
       initialSave: data,
@@ -130,17 +157,27 @@ export default function Game() {
         }, 350);
       },
     });
-    if (debugRequested) {
+    if (debugRequested || playtestRequested) {
       gameRef.current.start();
-      gameRef.current.enterDebugLab();
+      if (debugRequested) gameRef.current.enterDebugLab();
       setStarted(true);
+      const query = new URLSearchParams(location.search);
+      const scriptedMove = query.get("move");
+      const moveSeconds = Number(query.get("seconds") || 0);
+      if (playtestRequested && scriptedMove && moveSeconds > 0) {
+        gameRef.current.pressKey(scriptedMove);
+        playtestTimer = setTimeout(() => {
+          gameRef.current?.releaseKey(scriptedMove);
+        }, moveSeconds * 1000);
+      }
     }
     return () => {
+      clearTimeout(playtestTimer);
       clearTimeout(saveTimer.current);
       gameRef.current?.destroy();
       gameRef.current = null;
     };
-  }, [activeFile, user, debugRequested]);
+  }, [activeFile, user, debugRequested, playtestRequested, location.search]);
 
   async function persistFile(slot, data) {
     localStorage.setItem(localKey(slot), JSON.stringify(data));
@@ -213,7 +250,7 @@ export default function Game() {
     return (
       <main className="file-screen">
         <div className="file-panel">
-          <p className="file-kicker">THE LEGEND OF DEVELOPERS</p>
+          <p className="file-kicker">THE LEGEND OF DEVELOPER · THE BLIGHT OF AI</p>
           <h1>Select a File</h1>
           <p className="file-instruction">
             {mode === "copy" && (copySource ? `Choose a destination for File ${copySource}` : "Choose a file to copy")}
@@ -236,12 +273,12 @@ export default function Game() {
                     <span className="file-details">
                       <b>
                         {data?.flags?.questComplete
-                          ? "JOB OFFER EARNED"
+                          ? "REALM RESTORED"
                           : (data?.flags?.backendApi
-                            ? "BACKEND API ONLINE"
+                            ? "CRYSTAL SIGIL CLAIMED"
                             : (data?.flags?.reactApp
-                              ? "REACT APP SHIPPED"
-                              : (data?.flags?.firstWebpage ? "FIRST WEBPAGE LIVE" : (player?.inventory?.htmlSword ? "LEARNING THE STACK" : "BEGINNER CODER"))))}
+                              ? "EMBER SIGIL CLAIMED"
+                              : (data?.flags?.firstWebpage ? "GROVE SIGIL CLAIMED" : (player?.inventory?.htmlSword ? "BEARER OF THE BLADE" : "A NEW ADVENTURE"))))}
                       </b>
                       <span className="file-stats">
                         <span className="mini-hearts">
@@ -249,7 +286,7 @@ export default function Game() {
                             <i className={(player?.hp || 6) > index * 2 ? "full" : ""} key={index}>♥</i>
                           ))}
                         </span>
-                        <span>¢ {player?.coins || 0} · Access {player?.keys || 0}</span>
+                        <span>◆ {player?.coins || 0} · Keys {player?.keys || 0}</span>
                       </span>
                     </span>
                   ) : (
@@ -274,21 +311,21 @@ export default function Game() {
   return (
     <main className="game-page">
       <header className="game-header">
-        <div><small>FILE {activeFile.slot} · BUILD YOUR CAREER</small><h1>Legend of Developers</h1></div>
+        <div><small>FILE {activeFile.slot} · RESTORE THE THREE SIGILS</small><h1>The Legend of Developer: The Blight of AI</h1></div>
         <div className="game-header-actions">
-          <div className="controls"><span>WASD Move</span><span>H HTML Sword</span><span>J Slot A</span><span>K Slot B</span><span>L Enter / Talk</span><span>P Pause Screens</span><span>Q/E Change Tab</span></div>
-          <button onClick={enterDebugLab}>Debug Lab</button>
+          <div className="controls"><span>WASD Move</span><span>H Willow Blade</span><span>J Item A</span><span>K Item B</span><span>L Enter / Talk</span><span>P Map & Gear</span><span>Q/E Change Tab</span></div>
+          <button onClick={enterDebugLab}>Training Hall</button>
           <button onClick={returnToFiles}>Save Files</button>
         </div>
       </header>
       <section className="game-frame">
-        <canvas ref={canvasRef} width="1024" height="708" aria-label="Legend of Devs game" />
+        <canvas ref={canvasRef} width="1024" height="708" aria-label="The Legend of Developer: The Blight of AI game" />
         {!started && (
           <div className="game-overlay">
-            <p>SPRINT 01 · HELLO, WORLD</p>
-            <h2>{activeFile.data ? "Resume Your Build" : "The First Commit"}</h2>
-            <span>You are a beginner coder in Neon Stack City.<br />Find the HTML Sword, learn CSS and JavaScript, then publish your first webpage.</span>
-            <button onClick={begin}>{activeFile.data ? "RESUME SESSION" : "START CODING"}</button>
+            <p>CHAPTER I · THE SLEEPING GROVE</p>
+            <h2>{activeFile.data ? "Continue the Quest" : "The Willow Blade"}</h2>
+            <span>Dark roots have sealed the roads beyond Willowbrook.<br />Find the lost blade, awaken the forest temple, and recover the Grove Sigil.</span>
+            <button onClick={begin}>{activeFile.data ? "CONTINUE" : "BEGIN ADVENTURE"}</button>
           </div>
         )}
       </section>

@@ -1,5 +1,5 @@
 export default {
-  id: "d01:1,1", variant: 0,
+  id: "d01:1,1", name: "Four-Root Hall", variant: 0,
   wallRects: [[2, 2, 4, 1], [10, 2, 4, 1], [2, 7, 3, 1], [11, 7, 3, 1]],
   floor: [
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
@@ -17,6 +17,5 @@ export default {
     { type: "dungeonStatue", x: 3, y: 4 },
     { type: "dungeonSwitch", x: 12, y: 4 },
     { type: "dungeonBarrier", x: 7, y: 6, solid: false },
-    { type: "dungeonLockedDoor", x: 7, y: 1, solid: false },
   ],
 };

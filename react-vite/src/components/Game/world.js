@@ -7,55 +7,76 @@ export const SCREEN_ROWS = 10;
 export const WORLD_COLS = 16;
 export const WORLD_ROWS = 16;
 
-const REGION_NAMES = [
-  "Legacy Frontier", "Open Source Ward", "Data Coast", "Cloud Reach",
-  "Callback Expanse", "Component Borough", "Runtime Badlands",
-  "Backend Depths", "Deployment Edge",
-  "Package Highlands", "Container Port", "Query Gardens", "Kernel Range",
-  "Pipeline Basin", "Release Coast", "Production Crown",
-];
+function biomeFor(roomX, roomY) {
+  if (roomX <= 3 && roomY <= 3) {
+    if ((roomX === 1 && roomY === 1) || (roomX === 2 && roomY === 2)) return "village";
+    return roomX === 3 && roomY === 2 ? "lake" : "forest";
+  }
+  if (roomX >= 12) return roomY % 4 === 2 ? "lake" : "stone";
+  if (roomY >= 12) return roomX < 7 ? "desert" : "stone";
+  if (roomX >= 9 && roomY >= 7) return "desert";
+  if (roomY <= 2 && roomX >= 7) return "stone";
+  if ((roomX === 6 && roomY >= 3 && roomY <= 9)
+    || (roomY === 6 && roomX >= 4 && roomX <= 10)) return "lake";
+  if ((roomX + roomY) % 7 === 0) return "forest";
+  return "grass";
+}
 
-const BIOME_ROWS = [
-  ["forest", "grass", "lake", "stone", "stone", "village", "desert", "stone", "desert"],
-  ["forest", "village", "grass", "desert", "grass", "village", "desert", "forest", "stone"],
-  ["grass", "forest", "lake", "grass", "desert", "stone", "forest", "grass", "desert"],
-  ["desert", "grass", "stone", "forest", "village", "lake", "stone", "desert", "forest"],
-  ["forest", "lake", "grass", "desert", "stone", "village", "forest", "lake", "stone"],
-  ["stone", "desert", "forest", "grass", "lake", "stone", "village", "forest", "desert"],
-  ["lake", "grass", "village", "forest", "desert", "grass", "stone", "village", "forest"],
-  ["desert", "stone", "grass", "lake", "forest", "desert", "grass", "stone", "village"],
-];
+function regionNameFor(roomX, roomY) {
+  if (roomX <= 3 && roomY <= 3) return "Greenwood Vale";
+  if (roomX >= 12) return "Stormbreak Coast";
+  if (roomY >= 12 && roomX < 7) return "Sunscar Desert";
+  if (roomY >= 12) return "Crystal Highlands";
+  if (roomX >= 9 && roomY >= 7) return "Amber Wastes";
+  if (roomY <= 2 && roomX >= 7) return "Crown Mountains";
+  if ((roomX === 6 && roomY >= 3) || (roomY === 6 && roomX >= 4)) return "Silverwater Reach";
+  return "Everdawn Fields";
+}
+
+function exitsFor(roomX, roomY) {
+  const exits = [];
+  if (roomY > 0 && (roomX % 3 === 1 || roomY % 4 === 0)) exits.push("n");
+  if (roomY < WORLD_ROWS - 1 && (roomX % 3 === 1 || (roomY + 1) % 4 === 0)) exits.push("s");
+  if (roomX > 0 && (roomY % 3 === 1 || roomX % 4 === 0)) exits.push("w");
+  if (roomX < WORLD_COLS - 1 && (roomY % 3 === 1 || (roomX + 1) % 4 === 0)) exits.push("e");
+  return exits;
+}
 
 function buildOverworldRooms() {
   const rooms = {};
   for (let ry = 0; ry < WORLD_ROWS; ry += 1) {
     for (let rx = 0; rx < WORLD_COLS; rx += 1) {
-      const exits = [];
-      if (ry > 0) exits.push("n");
-      if (ry < WORLD_ROWS - 1) exits.push("s");
-      if (rx > 0) exits.push("w");
-      if (rx < WORLD_COLS - 1) exits.push("e");
       rooms[`${rx},${ry}`] = {
-        name: `${REGION_NAMES[rx]} · NODE ${ry + 1}`,
-        biome: BIOME_ROWS[ry]?.[rx]
-          || ["grass", "forest", "stone", "village", "desert", "lake"][(rx * 5 + ry * 3) % 6],
-        exits,
+        name: regionNameFor(rx, ry),
+        biome: biomeFor(rx, ry),
+        exits: exitsFor(rx, ry),
       };
     }
   }
   Object.assign(rooms, {
-    "0,0": { ...rooms["0,0"], name: "Legacy Code Wilds" },
-    "1,0": { ...rooms["1,0"], name: "Markup Foundry" },
-    "2,0": { ...rooms["2,0"], name: "Data Stream Reservoir" },
-    "3,0": { ...rooms["3,0"], name: "Cloud Platform" },
-    "0,1": { ...rooms["0,1"], name: "Deprecated District" },
-    "1,1": { ...rooms["1,1"], name: "New Dev Quarter" },
-    "2,1": { ...rooms["2,1"], name: "Framework Freeway" },
-    "3,1": { ...rooms["3,1"], name: "Silicon Wastes" },
-    "4,3": { ...rooms["4,3"], name: "Callback Firewall" },
-    "5,3": { ...rooms["5,3"], name: "Component Campus" },
-    "7,6": { ...rooms["7,6"], name: "Serverless Citadel" },
-    "8,6": { ...rooms["8,6"], name: "Deployment Terminal" },
+    "0,0": { ...rooms["0,0"], name: "Oldgrowth Grove" },
+    "1,0": { ...rooms["1,0"], name: "Hero's Grove", exits: ["e", "s"] },
+    "2,0": { ...rooms["2,0"], name: "Whispering Wood", exits: ["w", "s"] },
+    "0,1": { ...rooms["0,1"], name: "Mosslight Clearing", exits: ["e"] },
+    "1,1": { ...rooms["1,1"], name: "Willowbrook Village", biome: "village", exits: ["n", "s", "w", "e"] },
+    "2,1": { ...rooms["2,1"], name: "Eastwind Meadow", exits: ["w", "s"] },
+    "1,2": { ...rooms["1,2"], name: "Applewood Orchard", exits: ["n", "e"] },
+    "2,2": { ...rooms["2,2"], name: "Millpond Crossing", biome: "lake", exits: ["n", "w", "e"] },
+    // The main quest road is authored as a reciprocal room graph. Optional
+    // wilderness branches still use the generated exits above.
+    "3,2": { ...rooms["3,2"], name: "Temple Trail", exits: ["n", "w", "e"] },
+    "3,1": { ...rooms["3,1"], name: "Oldgrowth Ascent", exits: ["n", "s"] },
+    "3,0": { ...rooms["3,0"], name: "Rootbound Approach", exits: ["s"] },
+    "4,2": { ...rooms["4,2"], name: "Briar Road", exits: ["w", "e"] },
+    "5,2": { ...rooms["5,2"], name: "Rosewall Road", exits: ["w", "s"] },
+    "4,3": { ...rooms["4,3"], name: "Briar Gate" },
+    "5,3": { ...rooms["5,3"], name: "Rosewall Hamlet", biome: "village", exits: ["n", "e"] },
+    "6,3": { ...rooms["6,3"], name: "Silverwater Gate", exits: ["w", "s"] },
+    "6,4": { ...rooms["6,4"], name: "Silverwater Bank", biome: "lake", exits: ["n", "s"] },
+    "6,5": { ...rooms["6,5"], name: "Pilgrim's Ford", biome: "lake", exits: ["n", "s"] },
+    "6,6": { ...rooms["6,6"], name: "Moonstone Road", exits: ["n", "e"] },
+    "7,6": { ...rooms["7,6"], name: "Moonstone Keep", biome: "stone", exits: ["w", "e"] },
+    "8,6": { ...rooms["8,6"], name: "Crystalwater Approach", biome: "stone", exits: ["w"] },
   });
   return rooms;
 }
@@ -76,21 +97,21 @@ const DUNGEON_ROOMS = {
 
 export const DUNGEONS = [
   {
-    id: "d01", name: "Browser Sandbox", number: 1, theme: "mainframe",
+    id: "d01", name: "Rootbound Temple", number: 1, theme: "forest",
     reward: "firstWebpage", entrance: { x: 56 * TILE + 32, y: 4 * TILE + 32 },
   },
   {
-    id: "d02", name: "Component Factory", number: 2, theme: "reactor",
+    id: "d02", name: "Emberstone Ruins", number: 2, theme: "fire",
     reward: "reactApp", entrance: { x: 88 * TILE + 32, y: 34 * TILE + 32 },
   },
   {
-    id: "d03", name: "Backend Core", number: 3, theme: "server",
+    id: "d03", name: "Crystalwater Vault", number: 3, theme: "water",
     reward: "backendApi", entrance: { x: 136 * TILE + 32, y: 64 * TILE + 32 },
   },
 ];
 
 export const MERCHANTS = [
-  { id: "village-shop", name: "Patch", x: 23, y: 15, stock: [["magicPatch", 15], ["potion", 35], ["heart", 80]] },
+  { id: "village-shop", name: "Rowan", x: 22, y: 15, stock: [["magicPatch", 15], ["potion", 35], ["heart", 80]] },
   { id: "grove-shop", name: "Root", x: 8, y: 15, stock: [["magicPatch", 15], ["potion", 35]] },
   { id: "component-shop", name: "Props", x: 82, y: 35, stock: [["magicPatch", 20], ["potion", 35], ["heart", 100]] },
   { id: "backend-shop", name: "Daemon", x: 119, y: 65, stock: [["magicPatch", 20], ["potion", 35], ["heart", 120]] },
@@ -102,7 +123,15 @@ function buildOverworldEnemies() {
   for (let ry = 0; ry < WORLD_ROWS; ry += 1) {
     for (let rx = 0; rx < WORLD_COLS; rx += 1) {
       if ((rx === 1 && ry === 1) || (rx === 1 && ry === 0)) continue;
-      const types = ["slime", "bat", "guard"];
+      const biomeTypes = {
+        forest: ["forestByteBeetle", "caveEchoBat"],
+        grass: ["forestByteBeetle", "waterCurrentBlob"],
+        village: ["forestByteBeetle"],
+        lake: ["waterCurrentBlob", "caveEchoBat"],
+        desert: ["desertSandSkitter", "caveEchoBat"],
+        stone: ["caveEchoBat", "desertSandSkitter"],
+      };
+      const types = biomeTypes[biomeFor(rx, ry)] || biomeTypes.grass;
       const type = types[(rx * 2 + ry) % types.length];
       enemies.push([
         `ow-${rx}-${ry}-a`, type,
@@ -127,11 +156,16 @@ function dungeonEnemies(id) {
     d02: "bossFluxSovereign",
     d03: "bossRootWarden",
   };
+  const commonTypes = {
+    d01: ["forestByteBeetle", "caveEchoBat"],
+    d02: ["desertSandSkitter", "dungeonFirewallDrone"],
+    d03: ["waterCurrentBlob", "caveEchoBat"],
+  }[id];
   return [
-    [`${id}-entry-a`, "slime", 21, 25], [`${id}-entry-b`, "slime", 27, 25],
-    [`${id}-west-guard`, "guard", 8, 15], [`${id}-east-guard`, "guard", 40, 15],
-    [`${id}-hall-bat-a`, "bat", 21, 15], [`${id}-hall-bat-b`, "bat", 27, 15],
-    [`${id}-north-bat`, "bat", 8, 5], [`${id}-east-slime`, "slime", 40, 5],
+    [`${id}-entry-a`, commonTypes[0], 21, 23], [`${id}-entry-b`, commonTypes[0], 27, 23],
+    [`${id}-west-guard`, commonTypes[1], 8, 15], [`${id}-east-guard`, commonTypes[1], 40, 15],
+    [`${id}-hall-bat-a`, commonTypes[1], 21, 15], [`${id}-hall-bat-b`, commonTypes[1], 27, 15],
+    [`${id}-north-bat`, commonTypes[1], 8, 5], [`${id}-east-slime`, commonTypes[0], 40, 5],
     [`${id}-boss`, bossTypes[id], 24, 4],
   ];
 }
@@ -147,7 +181,7 @@ function dungeonChests(id, reward) {
 export const MAPS = {
   overworld: {
     id: "overworld",
-    name: "Neon Stack City",
+    name: "The Realm of Everdawn",
     width: SCREEN_COLS * WORLD_COLS,
     height: SCREEN_ROWS * WORLD_ROWS,
     spawn: { x: 24 * TILE + 32, y: 15 * TILE + 32 },
@@ -164,7 +198,7 @@ export const MAPS = {
     ],
   },
   d01: {
-    id: "d01", name: "System I · Browser Sandbox", number: 1, theme: "mainframe",
+    id: "d01", name: "Temple I · Rootbound Temple", number: 1, theme: "forest",
     width: SCREEN_COLS * 3, height: SCREEN_ROWS * 3,
     spawn: { x: 24 * TILE + 32, y: 28 * TILE + 32 },
     exit: { x: 24 * TILE + 32, y: 29 * TILE + 32 },
@@ -172,7 +206,7 @@ export const MAPS = {
     chests: dungeonChests("d01", "firstWebpage"),
   },
   d02: {
-    id: "d02", name: "System II · Component Factory", number: 2, theme: "reactor",
+    id: "d02", name: "Temple II · Emberstone Ruins", number: 2, theme: "fire",
     width: SCREEN_COLS * 3, height: SCREEN_ROWS * 3,
     spawn: { x: 24 * TILE + 32, y: 28 * TILE + 32 },
     exit: { x: 24 * TILE + 32, y: 29 * TILE + 32 },
@@ -180,7 +214,7 @@ export const MAPS = {
     chests: dungeonChests("d02", "reactApp"),
   },
   d03: {
-    id: "d03", name: "System III · Backend Core", number: 3, theme: "server",
+    id: "d03", name: "Temple III · Crystalwater Vault", number: 3, theme: "water",
     width: SCREEN_COLS * 3, height: SCREEN_ROWS * 3,
     spawn: { x: 24 * TILE + 32, y: 28 * TILE + 32 },
     exit: { x: 24 * TILE + 32, y: 29 * TILE + 32 },
@@ -258,8 +292,8 @@ function overworldTile(tx, ty, flags) {
     return "grassAlt";
   }
   if (room.biome === "village") {
-    if ((lx > 2 && lx < 6 && ly > 2 && ly < 6) || (lx > 10 && lx < 14 && ly > 2 && ly < 6)) return "house";
-    return "village";
+    if (lx === 7 || lx === 8 || ly === 4 || ly === 5) return "village";
+    return (lx + ly) % 5 ? "grass" : "grassAlt";
   }
   if (room.biome === "desert") return (lx + ly) % 4 ? "desert" : "desertAlt";
   if (room.biome === "stone") return (lx + ly) % 3 ? "stone" : "stoneAlt";
@@ -317,12 +351,23 @@ export function tileAt(mapId, tx, ty, flags = {}) {
 }
 
 export function roomNameAt(mapId, x, y) {
-  if (mapId !== "overworld") return MAPS[mapId].name;
   const rx = Math.floor(x / (SCREEN_COLS * TILE));
   const ry = Math.floor(y / (SCREEN_ROWS * TILE));
+  if (mapId !== "overworld") {
+    const roomName = editableRoomAt(mapId, rx, ry)?.name;
+    return roomName ? `${MAPS[mapId].name} · ${roomName}` : MAPS[mapId].name;
+  }
   const roomName = OW_ROOMS[`${rx},${ry}`]?.name || MAPS.overworld.name;
   const coordinate = `${rx + 1}${String.fromCharCode(65 + ry)}`;
   return `${roomName} · ${coordinate}`;
+}
+
+export function roomExitsAt(mapId, roomX, roomY) {
+  if (mapId === "overworld") return OW_ROOMS[`${roomX},${roomY}`]?.exits || [];
+  if (mapId === "debugLab") return [];
+  const base = DUNGEON_ROOMS[`${roomX},${roomY}`];
+  const editable = editableRoomAt(mapId, roomX, roomY);
+  return (editable?.exits || base?.exits || []);
 }
 
 export function isSolid(tile) {

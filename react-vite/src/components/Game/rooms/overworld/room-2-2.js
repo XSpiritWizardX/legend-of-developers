@@ -1,1 +1,35 @@
-export default { id: "2,2", assets: [] };
+export default {
+  id: "2,2",
+  name: "Millpond Crossing",
+  floor: [
+    "gggggggppggggggg",
+    "gggggggppggggggg",
+    "ggggwwwbbwwwgggg",
+    "ggggwwwbbwwwgggg",
+    "ppppwwwbbwwwpppp",
+    "ppppwwwbbwwwpppp",
+    "ggggwwwbbwwwgggg",
+    "ggggwwwbbwwwgggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+  ],
+  walls: [
+    "TTTTTTT..TTTTTTT",
+    "T..............T",
+    "T..............T",
+    "T..............T",
+    "................",
+    "................",
+    "T..............T",
+    "T..............T",
+    "T..............T",
+    "TTTTTTTTTTTTTTTT",
+  ],
+  assets: [
+    { type: "coastReeds", x: 4, y: 3, solid: false },
+    { type: "coastReeds", x: 11, y: 6, solid: false },
+    { type: "coastLilyPad", x: 5, y: 6, solid: false },
+    { type: "coastLilyPad", x: 10, y: 3, solid: false },
+    { type: "villageSign", x: 13, y: 6, solid: false },
+  ],
+};

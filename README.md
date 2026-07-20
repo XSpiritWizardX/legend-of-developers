@@ -1,4 +1,4 @@
-# Legend of Devs
+# The Legend of Developer: The Blight of AI
 
 A full-stack cyberpunk, top-down action adventure about a beginner coder building
 skills, publishing projects, and ultimately earning a developer job.

@@ -7,7 +7,7 @@ export default function LandingPage() {
   return (
     <main className="landing-page">
       <p className="landing-kicker">A CYBERPUNK CODING ADVENTURE</p>
-      <h1>Legend of <span>Devs</span></h1>
+      <h1>The Legend of Developer: The Blight of AI</h1>
       <p>
         Begin with nothing but ambition. Explore Neon Stack City, hunt down the
         HTML Sword, wield CSS and JavaScript tech, defeat production bugs, and

@@ -16,6 +16,5 @@ export default {
     { type: "dungeonStatue", x: 3, y: 4 },
     { type: "dungeonSwitch", x: 12, y: 4 },
     { type: "dungeonBarrier", x: 7, y: 6, solid: false },
-    { type: "dungeonLockedDoor", x: 7, y: 1, solid: false },
   ],
 };

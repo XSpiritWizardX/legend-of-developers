@@ -1,9 +1,8 @@
 export default {
   id: "8,6",
   assets: [
-    { type: "windTurbine", x: 2, y: 2 }, { type: "satelliteDish", x: 13, y: 2 },
-    { type: "terminal", x: 3, y: 7 }, { type: "holoTable", x: 12, y: 7 },
-    { type: "neonSign", x: 5, y: 2, text: "DEPLOY", solid: false },
-    { type: "streetLamp", x: 10, y: 7 },
+    { type: "crystalLarge", x: 2, y: 2 }, { type: "crystalLarge", x: 13, y: 7 },
+    { type: "crystalSmall", x: 3, y: 7 }, { type: "crystalSmall", x: 12, y: 2 },
+    { type: "dungeonStatue", x: 5, y: 3 }, { type: "dungeonStatue", x: 10, y: 3 },
   ],
 };

@@ -104,13 +104,69 @@ export function roomAssetAt(mapId, tx, ty) {
   const roomY = Math.floor(ty / SCREEN_ROWS);
   const localX = tx - roomX * SCREEN_COLS;
   const localY = ty - roomY * SCREEN_ROWS;
-  return roomAssetsAt(mapId, roomX, roomY).find((asset) => (
-    asset.x === localX && asset.y === localY
-  ));
+  return roomAssetsAt(mapId, roomX, roomY).find((asset) => {
+    const collision = asset.collision;
+    if (!collision) return asset.x === localX && asset.y === localY;
+    return localX >= asset.x - (collision.left || 0)
+      && localX <= asset.x + (collision.right || 0)
+      && localY >= asset.y - (collision.top || 0)
+      && localY <= asset.y + (collision.bottom || 0);
+  });
 }
 
 export function roomAssetIsSolid(asset) {
   return Boolean(asset?.solid ?? ASSET_RULES[asset?.type]?.solid);
+}
+
+// Physical footprints are intentionally much smaller than the artwork.  The
+// asset's x/y point is its 64px placement anchor; tall scenery may extend far
+// above that point without turning its whole image into an invisible wall.
+const COLLISION_PROFILES = {
+  forestTree: { x: 17, y: 39, width: 30, height: 21, sortY: 60 },
+  cyberTree: { x: 17, y: 39, width: 30, height: 21, sortY: 60 },
+  forestBush: { x: 9, y: 35, width: 46, height: 24, sortY: 59 },
+  forestStump: { x: 13, y: 35, width: 38, height: 25, sortY: 60 },
+  forestLog: { x: 5, y: 38, width: 54, height: 20, sortY: 58 },
+  villageHouse: { x: -70, y: 30, width: 204, height: 30, sortY: 60 },
+  villageShop: { x: -70, y: 30, width: 204, height: 30, sortY: 60 },
+  villageWell: { x: 4, y: 30, width: 56, height: 29, sortY: 59 },
+  villageFence: { x: 2, y: 38, width: 60, height: 20, sortY: 58 },
+  villageSign: { x: 20, y: 36, width: 24, height: 23, sortY: 59 },
+  villageLamp: { x: 23, y: 39, width: 18, height: 21, sortY: 60 },
+  boulder: { x: 9, y: 31, width: 46, height: 28, sortY: 59 },
+  desertRock: { x: 9, y: 31, width: 46, height: 28, sortY: 59 },
+  desertCactus: { x: 19, y: 37, width: 26, height: 23, sortY: 60 },
+  caveStalagmite: { x: 17, y: 39, width: 30, height: 21, sortY: 60 },
+  crystalSmall: { x: 18, y: 39, width: 28, height: 21, sortY: 60 },
+  crystalLarge: { x: 13, y: 35, width: 38, height: 25, sortY: 60 },
+  dungeonPillar: { x: 13, y: 35, width: 38, height: 25, sortY: 60 },
+  dungeonStatue: { x: 11, y: 34, width: 42, height: 26, sortY: 60 },
+};
+
+const DEFAULT_FOOTPRINT = { x: 9, y: 35, width: 46, height: 24, sortY: 59 };
+
+export function roomAssetFootprint(asset) {
+  if (!roomAssetIsSolid(asset)) return null;
+  const profile = COLLISION_PROFILES[asset.type] || DEFAULT_FOOTPRINT;
+  return {
+    left: asset.worldX + profile.x,
+    top: asset.worldY + profile.y,
+    right: asset.worldX + profile.x + profile.width,
+    bottom: asset.worldY + profile.y + profile.height,
+  };
+}
+
+export function roomAssetSolidAt(mapId, worldX, worldY) {
+  return visibleRoomAssets(mapId, worldX - 256, worldY - 256, 512, 512)
+    .some((asset) => {
+      const box = roomAssetFootprint(asset);
+      return box && worldX >= box.left && worldX <= box.right
+        && worldY >= box.top && worldY <= box.bottom;
+    });
+}
+
+export function roomAssetSortY(asset) {
+  return asset.worldY + (COLLISION_PROFILES[asset.type]?.sortY ?? 59);
 }
 
 function pixel(ctx, x, y, width, height, color) {
@@ -281,8 +337,9 @@ export function drawPlacedRoomAsset(ctx, asset, screenX, screenY) {
 }
 
 export function visibleRoomAssets(mapId, cameraX, cameraY, viewWidth, viewHeight) {
-  const firstRoomX = Math.max(0, Math.floor(cameraX / (SCREEN_COLS * TILE)));
-  const firstRoomY = Math.max(0, Math.floor(cameraY / (SCREEN_ROWS * TILE)));
+  // Include neighboring rooms because buildings and trees can overhang an edge.
+  const firstRoomX = Math.max(0, Math.floor((cameraX - 256) / (SCREEN_COLS * TILE)));
+  const firstRoomY = Math.max(0, Math.floor((cameraY - 256) / (SCREEN_ROWS * TILE)));
   const lastRoomX = Math.floor((cameraX + viewWidth) / (SCREEN_COLS * TILE));
   const lastRoomY = Math.floor((cameraY + viewHeight) / (SCREEN_ROWS * TILE));
   const visible = [];

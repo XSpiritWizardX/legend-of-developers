@@ -1,6 +1,8 @@
-import { DUNGEONS, isSolid, MAPS, MERCHANTS, roomNameAt, TILE, tileAt } from "./world";
 import {
-  drawPlacedRoomAsset, roomAssetAt, roomAssetIsSolid, visibleRoomAssets,
+  DUNGEONS, isSolid, MAPS, MERCHANTS, roomExitsAt, roomNameAt, TILE, tileAt,
+} from "./world";
+import {
+  drawPlacedRoomAsset, roomAssetSolidAt, roomAssetSortY, visibleRoomAssets,
 } from "./roomAssets";
 import { drawCatalogArt } from "./art/artLoader";
 import { indexedRoomTileAt } from "./art/tileIndex";
@@ -21,15 +23,16 @@ const MAGIC_COSTS = {
   cape: 40, medallion: 60,
 };
 const ITEM_LABELS = {
-  boomerang: "JS CALLBACK DRONE", bombs: "CODE BOMBS", bow: "CSS PULSECASTER",
-  arrows: "STYLE CHARGES", hookshot: "API GRAPPLER", fireRod: "FIREWALL BREAKER",
-  iceRod: "FREEZE DEBUGGER", hammer: "REFACTOR HAMMER", lantern: "DARK MODE LAMP",
-  mirror: "GIT REVERT", cape: "VPN CLOAK", medallion: "ROOT ACCESS",
-  htmlSword: "HTML SWORD", javascriptCore: "JAVASCRIPT CORE", firstWebpage: "FIRST WEBPAGE",
-  devJacket: "DEV JACKET", shield: "DEBUG SHIELD", glove: "POWER GLOVES", boots: "SPEED BOOTS",
-  heart: "ENERGY UPGRADE", key: "ACCESS KEY", dungeonMap: "SYSTEM SCHEMATIC",
-  potion: "ENERGY PATCH",
-  magicPatch: "MAGIC CACHE REFILL",
+  boomerang: "WIND DISC", bombs: "BOMBS", bow: "OAK BOW",
+  arrows: "ARROWS", hookshot: "CHAINSHOT", fireRod: "EMBER ROD",
+  iceRod: "FROST ROD", hammer: "STONE HAMMER", lantern: "MOON LANTERN",
+  mirror: "RETURNING MIRROR", cape: "SHADOW CLOAK", medallion: "DAWN MEDALLION",
+  htmlSword: "WILLOW BLADE", masterSword: "EVERDAWN BLADE",
+  javascriptCore: "GROVE HEART", firstWebpage: "GROVE SIGIL",
+  devJacket: "WARDEN'S MAIL", shield: "CRYSTAL SHIELD", glove: "TITAN MITTS", boots: "WIND BOOTS",
+  heart: "HEART CONTAINER", key: "SMALL KEY", dungeonMap: "DUNGEON MAP",
+  potion: "RED POTION",
+  magicPatch: "MAGIC DRAUGHT",
 };
 const itemLabel = (type) => ITEM_LABELS[type] || type.replace(/([A-Z])/g, " $1").toUpperCase();
 
@@ -56,6 +59,10 @@ export function createGame(canvas, { initialSave, onSave }) {
   let merchantOpen = null;
   let merchantCursor = 0;
   let screenTransition = null;
+  let particles = [];
+  let screenShake = 0;
+  let roomTitle = "";
+  let roomTitleTime = 0;
   let debugReturnPosition = { ...MAPS.overworld.spawn };
 
   const saved = initialSave || {};
@@ -98,7 +105,8 @@ export function createGame(canvas, { initialSave, onSave }) {
       cape: saved.player?.inventory?.cape || false,
       mirror: saved.player?.inventory?.mirror || false,
       medallion: saved.player?.inventory?.medallion || false,
-      masterSword: saved.player?.inventory?.masterSword || false,
+      // Existing completed saves receive the sword upgrade retroactively.
+      masterSword: saved.player?.inventory?.masterSword || Boolean(state.flags.backendApi),
       htmlSword: saved.player?.inventory?.htmlSword || false,
       javascriptCore: saved.player?.inventory?.javascriptCore || false,
       firstWebpage: saved.player?.inventory?.firstWebpage || false,
@@ -141,7 +149,7 @@ export function createGame(canvas, { initialSave, onSave }) {
             const indexedTile = indexedRoomTileAt(mapId, footprintTileX, footprintTileY);
             return !(indexedTile?.solid
               ?? isSolid(tileAt(mapId, footprintTileX, footprintTileY, state.flags)))
-              && !roomAssetIsSolid(roomAssetAt(mapId, footprintTileX, footprintTileY));
+              && !roomAssetSolidAt(mapId, px, py);
           });
           if (footprintOpen) {
             return { x: centerX, y: centerY };
@@ -236,9 +244,10 @@ export function createGame(canvas, { initialSave, onSave }) {
   announce(
     player.inventory.htmlSword
       ? roomNameAt(state.mapId, player.x, player.y).toUpperCase()
-      : "OBJECTIVE: FIND THE HTML SWORD CACHE",
+      : "OBJECTIVE: FIND THE WILLOW BLADE IN HERO'S GROVE",
     4,
   );
+  showRoomTitle();
 
   function rect(x, y, w, h, color) {
     ctx.fillStyle = color;
@@ -254,11 +263,30 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function screenX(x) { return x - camera.x; }
   function screenY(y) { return y - camera.y + HUD_H; }
+  function spawnParticles(x, y, color, count = 8, speed = 120) {
+    for (let index = 0; index < count; index += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const force = speed * (0.35 + Math.random() * 0.65);
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * force,
+        vy: Math.sin(angle) * force,
+        life: 0.3 + Math.random() * 0.35,
+        maxLife: 0.65,
+        color,
+        size: 2 + Math.random() * 4,
+      });
+    }
+  }
+  function showRoomTitle() {
+    roomTitle = roomNameAt(state.mapId, player.x, player.y).toUpperCase();
+    roomTitleTime = 2.6;
+  }
 
   function solidAt(x, y) {
     const tileX = Math.floor(x / TILE);
     const tileY = Math.floor(y / TILE);
-    if (roomAssetIsSolid(roomAssetAt(state.mapId, tileX, tileY))) return true;
+    if (roomAssetSolidAt(state.mapId, x, y)) return true;
     const indexedTile = indexedRoomTileAt(state.mapId, tileX, tileY);
     if (indexedTile) {
       if (indexedTile.tile === "water" && player.inventory.flippers) return false;
@@ -268,10 +296,30 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (tile === "water" && player.inventory.flippers) return false;
     return isSolid(tile);
   }
-  function canMove(x, y) {
-    const r = 18;
-    return !solidAt(x - r, y - r) && !solidAt(x + r, y - r)
-      && !solidAt(x - r, y + r) && !solidAt(x + r, y + r);
+  function canMove(x, y, dx = 0, dy = 0) {
+    // Link-like movement uses the leading edge of a small foot box. The
+    // character's head and hat are visual overhang, not collision geometry.
+    const halfWidth = 11;
+    const top = -4;
+    const bottom = 15;
+    if (dx > 0) {
+      return !solidAt(x + halfWidth, y + top)
+        && !solidAt(x + halfWidth, y + 6)
+        && !solidAt(x + halfWidth, y + bottom);
+    }
+    if (dx < 0) {
+      return !solidAt(x - halfWidth, y + top)
+        && !solidAt(x - halfWidth, y + 6)
+        && !solidAt(x - halfWidth, y + bottom);
+    }
+    if (dy > 0) {
+      return !solidAt(x - halfWidth, y + bottom)
+        && !solidAt(x, y + bottom)
+        && !solidAt(x + halfWidth, y + bottom);
+    }
+    return !solidAt(x - halfWidth, y + top)
+      && !solidAt(x, y + top)
+      && !solidAt(x + halfWidth, y + top);
   }
   function enemyCanMove(enemy, x, y) {
     const radius = isPermanentEnemy(enemy.type) ? 27 : 15;
@@ -279,7 +327,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       const tileX = Math.floor(px / TILE);
       const tileY = Math.floor(py / TILE);
       const indexedTile = indexedRoomTileAt(state.mapId, tileX, tileY);
-      return !roomAssetIsSolid(roomAssetAt(state.mapId, tileX, tileY))
+      return !roomAssetSolidAt(state.mapId, px, py)
         && !(indexedTile?.solid
           ?? isSolid(tileAt(state.mapId, tileX, tileY, state.flags)));
     };
@@ -291,6 +339,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     state.mapId = mapId;
     player.x = position.x;
     player.y = position.y;
+    player.invincible = 1.5;
     buildEnemies(mapId);
     boomerang = null;
     bombs = [];
@@ -307,6 +356,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     respawnRoomEnemies(mapId, camera.x, camera.y);
     screenTransition = null;
     markCurrentScreenDiscovered();
+    showRoomTitle();
     announce(MAPS[mapId].name.toUpperCase(), 2.6);
     save();
   }
@@ -314,25 +364,26 @@ export function createGame(canvas, { initialSave, onSave }) {
   function reward(type) {
     if (type === "htmlSword") {
       player.inventory.htmlSword = true;
-      announce("HTML SWORD ACQUIRED · STRUCTURE THE WEB", 4);
+      announce("WILLOW BLADE ACQUIRED", 4);
     } else if (type === "firstWebpage") {
       player.inventory.firstWebpage = true;
       player.inventory.javascriptCore = true;
       player.inventory.boomerang = true;
       player.selectedItem = "boomerang";
       state.flags.firstWebpage = true;
-      announce("FIRST WEBPAGE DEPLOYED · JS CALLBACK DRONE ONLINE!", 8);
+      announce("GROVE SIGIL RESTORED · WIND DISC AWAKENED!", 8);
     } else if (type === "reactApp") {
       player.inventory.hookshot = true;
       state.flags.reactApp = true;
       if (!player.equippedSlots[0]) player.equippedSlots[0] = "hookshot";
-      announce("REACT APP SHIPPED · API GRAPPLER ONLINE!", 8);
+      announce("EMBER SIGIL RESTORED · CHAINSHOT AWAKENED!", 8);
     } else if (type === "backendApi") {
       player.inventory.fireRod = true;
       player.inventory.shield = true;
+      player.inventory.masterSword = true;
       state.flags.backendApi = true;
       if (!player.equippedSlots[1]) player.equippedSlots[1] = "fireRod";
-      announce("BACKEND API ONLINE · DEBUG SHIELD ACQUIRED!", 8);
+      announce("CRYSTAL SIGIL RESTORED · WILLOW BLADE FORGED INTO THE EVERDAWN BLADE!", 8);
     } else if (["boomerang", "bow", "hookshot", "fireRod", "iceRod", "hammer", "lantern", "flippers", "glove", "boots", "devJacket", "shield", "cape", "mirror", "medallion", "masterSword"].includes(type)) {
       player.inventory[type] = true;
       if (ITEM_ORDER.includes(type)) player.selectedItem = type;
@@ -340,7 +391,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     } else if (type === "bombs") {
       player.inventory.bombs += 8;
       player.selectedItem = "bombs";
-      announce("ACQUIRED: 8 CODE BOMBS");
+      announce("ACQUIRED: 8 BOMBS");
     } else if (type === "bombBag") {
       player.inventory.bombs += 20;
       announce("BOMB CAPACITY INCREASED");
@@ -349,10 +400,10 @@ export function createGame(canvas, { initialSave, onSave }) {
       announce("ACQUIRED: 15 STYLE CHARGES");
     } else if (type === "potion") {
       player.hp = player.maxHp;
-      announce("ENERGY RESTORED");
+      announce("HEARTS RESTORED");
     } else if (type === "magicPatch") {
       player.magic = player.maxMagic;
-      announce("MAGIC CACHE REFILLED");
+      announce("MAGIC RESTORED");
     } else if (type === "heart") {
       if (player.maxHp >= 40) {
         player.hp = player.maxHp;
@@ -361,17 +412,17 @@ export function createGame(canvas, { initialSave, onSave }) {
       }
       player.maxHp = Math.min(40, player.maxHp + 2);
       player.hp = player.maxHp;
-      announce("ENERGY CAPACITY UPGRADED");
+      announce("HEART CONTAINER ACQUIRED");
     } else if (type === "key") {
       player.keys += 1;
-      announce("ACCESS KEY ACQUIRED");
+      announce("SMALL KEY ACQUIRED");
     } else if (type === "dungeonMap") {
       player.inventory.maps[state.mapId] = true;
-      announce("SYSTEM SCHEMATIC DOWNLOADED");
+      announce("DUNGEON MAP ACQUIRED");
     } else if (type === "finalJobOffer") {
       state.flags.questComplete = true;
       player.hasEmber = true;
-      announce("FINAL INTERVIEW COMPLETE · JOB OFFER EARNED!", 8);
+      announce("THE REALM OF EVERDAWN IS RESTORED!", 8);
     }
   }
 
@@ -466,14 +517,24 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function directionVector() {
+    const diagonal = Math.SQRT1_2;
     return {
       up: { x: 0, y: -1 }, down: { x: 0, y: 1 },
       left: { x: -1, y: 0 }, right: { x: 1, y: 0 },
+      "up-left": { x: -diagonal, y: -diagonal },
+      "up-right": { x: diagonal, y: -diagonal },
+      "down-left": { x: -diagonal, y: diagonal },
+      "down-right": { x: diagonal, y: diagonal },
     }[player.dir];
+  }
+  function spriteDirection(direction) {
+    if (direction.endsWith?.("left")) return "left";
+    if (direction.endsWith?.("right")) return "right";
+    return direction;
   }
   function throwBoomerang() {
     if (!player.inventory.boomerang || boomerang) {
-      if (!player.inventory.boomerang) announce("JAVASCRIPT CALLBACK DRONE IS OFFLINE");
+      if (!player.inventory.boomerang) announce("YOU HAVE NOT FOUND THE WIND DISC");
       return;
     }
     const dir = directionVector();
@@ -490,7 +551,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function fireBow() {
     if (!player.inventory.bow) {
-      announce("CSS PULSECASTER NOT FOUND");
+      announce("YOU HAVE NOT FOUND THE OAK BOW");
       return;
     }
     const dir = directionVector();
@@ -549,16 +610,18 @@ export function createGame(canvas, { initialSave, onSave }) {
 
   function swordStrike() {
     if (!player.inventory.htmlSword) {
-      announce("FIND THE HTML SWORD TO FIGHT BUGS");
+        announce("FIND THE WILLOW BLADE TO FIGHT MONSTERS");
       return;
     }
     const dir = directionVector();
     weaponEffects.push({
       type: "sword", x: player.x, y: player.y, dir: { ...dir },
-      time: 0, duration: 0.24,
+      upgraded: Boolean(player.inventory.masterSword),
+      time: 0, duration: 0.13,
     });
     let clearedBrush = false;
-    for (let forward = 24; forward <= 76; forward += 16) {
+    const swordReach = player.inventory.masterSword ? 72 : 60;
+    for (let forward = 24; forward <= swordReach; forward += 15) {
       for (const lateral of [-20, 0, 20]) {
         const sampleX = player.x + dir.x * forward + dir.y * lateral;
         const sampleY = player.y + dir.y * forward + dir.x * lateral;
@@ -585,7 +648,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         Math.cos(enemyAngle - facingAngle),
       ));
       const enemyRadius = isPermanentEnemy(enemy.type) ? 30 : 16;
-      if (distance <= 78 + enemyRadius && angleDifference <= 0.92) {
+      if (distance <= swordReach + enemyRadius && angleDifference <= 1.02) {
         damageEnemy(enemy, player.inventory.masterSword || player.inventory.glove ? 2 : 1);
       }
     });
@@ -594,13 +657,23 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (enemy.hit > 0) return;
     enemy.hp -= amount;
     enemy.hit = 0.22;
+    screenShake = Math.max(screenShake, isPermanentEnemy(enemy.type) ? 9 : 4);
+    spawnParticles(
+      enemy.x,
+      enemy.y - 10,
+      isPermanentEnemy(enemy.type) ? "#f0c75e" : "#42efd4",
+      isPermanentEnemy(enemy.type) ? 16 : 9,
+      isPermanentEnemy(enemy.type) ? 190 : 125,
+    );
     if (enemy.hp <= 0) {
       const isBoss = isPermanentEnemy(enemy.type);
+      spawnParticles(enemy.x, enemy.y, isBoss ? "#f02ea5" : "#d9fff8", isBoss ? 36 : 18, 230);
+      screenShake = Math.max(screenShake, isBoss ? 18 : 7);
       if (isBoss) state.killed[enemy.id] = true;
       player.coins += isBoss ? 50 + (map().number || 0) * 5 : 2;
       if (isBoss) {
         state.flags[`complete_${state.mapId}`] = true;
-        announce("BROWSER BUG DEFEATED · DEPLOY YOUR FIRST PAGE", 5);
+        announce("TEMPLE GUARDIAN DEFEATED · CLAIM THE SIGIL", 5);
       }
       save();
     }
@@ -634,16 +707,16 @@ export function createGame(canvas, { initialSave, onSave }) {
         if (callbackTile === "callbackNode") {
           state.flags.callback_firewall_1 = true;
           boomerang.returning = true;
-          announce("CALLBACK RESOLVED · EASTERN NETWORK COMPILED", 5);
+          announce("ANCIENT SEAL BROKEN · EASTERN PATH OPEN", 5);
           save();
         } else if (callbackTile === "callbackNode2") {
           boomerang.returning = true;
           if (state.flags.complete_d02) {
             state.flags.callback_firewall_2 = true;
-            announce("ADVANCED CALLBACK RESOLVED · DEPLOYMENT EDGE OPEN", 5);
+            announce("ANCIENT SEAL BROKEN · HIGHLAND ROAD OPEN", 5);
             save();
           } else {
-            announce("DEPENDENCY MISSING · COMPLETE COMPONENT FACTORY", 4);
+            announce("THE SEAL ENDURES · RESTORE THE EMBER SIGIL", 4);
           }
         } else if (boomerang.distance > 230 || solidAt(boomerang.x, boomerang.y)) {
           boomerang.returning = true;
@@ -652,9 +725,15 @@ export function createGame(canvas, { initialSave, onSave }) {
         const dx = player.x - boomerang.x;
         const dy = player.y - boomerang.y;
         const distance = Math.hypot(dx, dy);
-        boomerang.x += dx / distance * 470 * dt;
-        boomerang.y += dy / distance * 470 * dt;
-        if (distance < 24) boomerang = null;
+        // Collect before normalizing the direction. At exactly zero distance,
+        // dividing by `distance` turns both coordinates into NaN and corrupts
+        // every subsequent projectile update.
+        if (distance < 24) {
+          boomerang = null;
+        } else {
+          boomerang.x += dx / distance * 470 * dt;
+          boomerang.y += dy / distance * 470 * dt;
+        }
       }
       if (boomerang) enemiesByMap[state.mapId].forEach((enemy) => {
         if (Math.hypot(boomerang.x - enemy.x, boomerang.y - enemy.y) < 30) enemy.stunned = 1.8;
@@ -678,7 +757,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           }
           if (foundSecret) {
             state.flags[`secret_${state.mapId}`] = true;
-            announce("HIDDEN ROUTE COMPILED");
+            announce("HIDDEN PASSAGE OPENED");
             save();
           }
         }
@@ -688,6 +767,16 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function update(dt) {
+    screenShake = Math.max(0, screenShake - dt * 34);
+    roomTitleTime = Math.max(0, roomTitleTime - dt);
+    particles.forEach((particle) => {
+      particle.life -= dt;
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vx *= 0.91;
+      particle.vy = particle.vy * 0.91 + 85 * dt;
+    });
+    particles = particles.filter((particle) => particle.life > 0);
     if (!running || paused || mapOpen || inventoryOpen || merchantOpen) return;
     if (screenTransition) {
       screenTransition.elapsed += dt;
@@ -703,6 +792,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         screenTransition = null;
         respawnRoomEnemies(state.mapId, camera.x, camera.y);
         markCurrentScreenDiscovered();
+        showRoomTitle();
         announce(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), 1.4);
       }
       return;
@@ -719,21 +809,21 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (dx || dy) {
       const length = Math.hypot(dx, dy);
       dx /= length; dy /= length;
-      player.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+      if (dx && dy) {
+        player.dir = `${dy < 0 ? "up" : "down"}-${dx < 0 ? "left" : "right"}`;
+      } else {
+        player.dir = dx ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
+      }
       const moveSpeed = player.inventory.boots ? player.speed * 1.32 : player.speed;
       const nextX = player.x + dx * moveSpeed * dt;
       const nextY = player.y + dy * moveSpeed * dt;
-      if (canMove(nextX, player.y)) player.x = nextX;
-      if (canMove(player.x, nextY)) player.y = nextY;
+      if (canMove(nextX, player.y, dx, 0)) player.x = nextX;
+      if (canMove(player.x, nextY, 0, dy)) player.y = nextY;
       player.walkTime += dt * 10;
     }
     if (pressed.h) {
-      if (!player.inventory.htmlSword) {
-        swordStrike();
-      } else if (spendMagic("htmlSword")) {
-        player.attackTime = 0.2;
-        swordStrike();
-      }
+      player.attackTime = 0.2;
+      swordStrike();
     }
     if (pressed.j) activateItem(player.equippedSlots[0]);
     if (pressed.k) activateItem(player.equippedSlots[1]);
@@ -760,12 +850,12 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (state.mapId !== "overworld" && !state.flags[doorFlag] && player.keys && facingTile === "lockedDoor") {
       player.keys -= 1;
       state.flags[doorFlag] = true;
-      announce("ACCESS TOKEN ACCEPTED");
+      announce("SMALL KEY USED");
       save();
     }
     if (state.mapId !== "overworld" && tileAt(state.mapId, tx, ty, state.flags) === "switch" && !state.flags[`switch_${state.mapId}`]) {
       state.flags[`switch_${state.mapId}`] = true;
-      announce("SECURITY FIREWALL DISABLED");
+      announce("MAGIC BARRIER DISABLED");
       save();
     }
 
@@ -787,10 +877,12 @@ export function createGame(canvas, { initialSave, onSave }) {
         const incomingDamage = boss && !player.inventory.shield ? 2 : 1;
         player.hp -= incomingDamage;
         player.invincible = player.inventory.devJacket ? 1.65 : 1.1;
+        screenShake = boss ? 14 : 8;
+        spawnParticles(player.x, player.y, "#ff6f7d", boss ? 18 : 10, 170);
         if (player.hp <= 0) {
           player.hp = player.maxHp;
           changeMap("overworld", MAPS.overworld.spawn);
-          announce("BUILD FAILED · RESPAWNING AT DEV QUARTER");
+          announce("YOU HAVE FALLEN · RETURNING TO WILLOWBROOK");
         }
       }
     });
@@ -807,13 +899,27 @@ export function createGame(canvas, { initialSave, onSave }) {
     let toX = camera.x;
     let toY = camera.y;
 
-    if (player.x > camera.x + VIEW_W - 18 && camera.x < maxCameraX) {
+    const roomX = Math.floor(camera.x / VIEW_W);
+    const roomY = Math.floor(camera.y / VIEW_H);
+    const exits = roomExitsAt(state.mapId, roomX, roomY);
+    const canCross = (direction) => {
+      const neighbor = {
+        e: [roomX + 1, roomY, "w"],
+        w: [roomX - 1, roomY, "e"],
+        s: [roomX, roomY + 1, "n"],
+        n: [roomX, roomY - 1, "s"],
+      }[direction];
+      return exits.includes(direction)
+        && roomExitsAt(state.mapId, neighbor[0], neighbor[1]).includes(neighbor[2]);
+    };
+
+    if (player.x > camera.x + VIEW_W - 18 && camera.x < maxCameraX && canCross("e")) {
       toX = Math.min(maxCameraX, camera.x + VIEW_W);
-    } else if (player.x < camera.x + 18 && camera.x > 0) {
+    } else if (player.x < camera.x + 18 && camera.x > 0 && canCross("w")) {
       toX = Math.max(0, camera.x - VIEW_W);
-    } else if (player.y > camera.y + VIEW_H - 18 && camera.y < maxCameraY) {
+    } else if (player.y > camera.y + VIEW_H - 18 && camera.y < maxCameraY && canCross("s")) {
       toY = Math.min(maxCameraY, camera.y + VIEW_H);
-    } else if (player.y < camera.y + 18 && camera.y > 0) {
+    } else if (player.y < camera.y + 18 && camera.y > 0 && canCross("n")) {
       toY = Math.max(0, camera.y - VIEW_H);
     }
 
@@ -872,8 +978,18 @@ export function createGame(canvas, { initialSave, onSave }) {
           color = palette[tile === "dungeonFloor" ? 0 : 1];
         }
         rect(x, y, TILE + 1, TILE + 1, color);
+        if (tile === "lockedDoor" && tx % 16 === 8) continue;
         const indexedTile = indexedRoomTileAt(state.mapId, tx, ty);
-        if (drawCatalogArt(ctx, "tiles", indexedTile?.code || tile, x, y, TILE, TILE)) continue;
+        const themedDungeonTiles = {
+          forest: { dungeonFloor: "mf", dungeonFloorAlt: "mf", wall: "mw" },
+          fire: { dungeonFloor: "rf", dungeonFloorAlt: "rf", wall: "rw" },
+          water: { dungeonFloor: "sf", dungeonFloorAlt: "sf", wall: "sv" },
+        };
+        const themedTile = themedDungeonTiles[map().theme]?.[tile];
+        const tileArtId = tile === "lockedDoor"
+          ? tile
+          : (indexedTile?.code || themedTile || tile);
+        if (drawCatalogArt(ctx, "tiles", tileArtId, x, y, TILE, TILE)) continue;
         // Tile decorations are authored on a 48-unit detail grid and scaled
         // into the new 64×64 art format, leaving more pixels for shading.
         ctx.save();
@@ -982,20 +1098,67 @@ export function createGame(canvas, { initialSave, onSave }) {
     const bob = player.moving && (walkFrame === 1 || walkFrame === 3) ? -1 : 0;
     const y = screenY(player.y) + bob;
     if (player.invincible > 0 && Math.floor(player.invincible * 12) % 2) return;
-    const playerArtId = `player${player.dir[0].toUpperCase()}${player.dir.slice(1)}`;
-    if (drawCatalogArt(ctx, "characters", playerArtId, x - 32, y - 44, 64, 64)) return;
+    ctx.fillStyle = "#02060a66";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 13, 16, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const renderDirection = spriteDirection(player.dir);
+    if (drawCatalogArt(
+      ctx,
+      "characters",
+      "playerWalk",
+      x - 32,
+      y - 53,
+      64,
+      64,
+      {
+        direction: renderDirection,
+        frame: walkFrame,
+      },
+    )) {
+      if (player.inventory.htmlSword && player.attackTime <= 0) {
+        const facing = directionVector();
+        const upgraded = player.inventory.masterSword;
+        const perpendicular = { x: -facing.y, y: facing.x };
+        const handX = x + facing.x * 6 + perpendicular.x * 12;
+        const handY = y - 8 + facing.y * 5 + perpendicular.y * 6;
+        const bladeLength = upgraded ? 34 : 29;
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.strokeStyle = upgraded ? "#e87838" : "#7c542f";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(handX - facing.x * 5, handY - facing.y * 5);
+        ctx.lineTo(handX + facing.x * 4, handY + facing.y * 4);
+        ctx.stroke();
+        ctx.strokeStyle = upgraded ? "#fff1a3" : "#d7fbff";
+        ctx.lineWidth = upgraded ? 5 : 4;
+        ctx.beginPath();
+        ctx.moveTo(handX + facing.x * 3, handY + facing.y * 3);
+        ctx.lineTo(
+          handX + facing.x * bladeLength,
+          handY + facing.y * bladeLength,
+        );
+        ctx.stroke();
+        ctx.strokeStyle = upgraded ? "#ff9b45" : "#3fdff5";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+      return;
+    }
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(1.28, 1.28);
+    ctx.scale(0.94, 0.94);
     ctx.translate(-x, -y);
 
-    // Shadow, boots, and legs animate independently from the upper body.
-    rect(x - 13, y + 14, 26, 6, "#0a101066");
+    // Boots and legs animate independently from the upper body. The oval
+    // ground shadow above anchors the character at this same foot position.
     const bootColor = player.inventory.boots ? "#42efd4" : "#111827";
     rect(x - 10 + step, y + 9, 8, 9, bootColor);
     rect(x + 2 - step, y + 9, 8, 9, bootColor);
 
-    if (player.dir === "down") {
+    if (renderDirection === "down") {
       rect(x - 11, y - 7, 22, 20, "#5a2a80");
       rect(x - 14, y - 4, 5, 13, "#d6ae7b");
       rect(x + 9, y - 4, 5, 13, "#d6ae7b");
@@ -1006,7 +1169,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       rect(x + 3, y - 14, 3, 3, "#243039");
       rect(x - 4, y - 8, 8, 2, "#a16c52");
       rect(x - 5, y - 1, 10, 5, "#12dcc2");
-    } else if (player.dir === "up") {
+    } else if (renderDirection === "up") {
       rect(x - 11, y - 7, 22, 20, "#5a2a80");
       rect(x - 9, y - 20, 18, 14, "#173f55");
       rect(x - 6, y - 18, 12, 4, "#225d6b");
@@ -1016,7 +1179,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       rect(x - 5, y - 1, 10, 8, "#b55b46");
       rect(x - 2, y + 1, 4, 4, "#d7b552");
     } else {
-      const facingRight = player.dir === "right";
+      const facingRight = renderDirection === "right";
       const mirror = facingRight ? 1 : -1;
       rect(x - 10, y - 7, 20, 20, "#5a2a80");
       rect(x - 8, y - 20, 16, 14, "#dfb780");
@@ -1040,29 +1203,52 @@ export function createGame(canvas, { initialSave, onSave }) {
       rect(x + 10, y + 1, 5, 8, "#ffd54a");
     }
     if (player.inventory.shield) {
-      const shieldX = player.dir === "left" ? x + 13 : x - 19;
+      const shieldX = renderDirection === "left" ? x + 13 : x - 19;
       rect(shieldX, y - 8, 9, 22, "#1a7181");
       rect(shieldX + 2, y - 5, 5, 14, "#42efd4");
     }
 
     ctx.restore();
   }
-  function drawRoomAssets() {
-    visibleRoomAssets(state.mapId, camera.x, camera.y, VIEW_W, VIEW_H)
-      .forEach((asset) => {
+  function drawDepthSortedActors() {
+    const renderables = visibleRoomAssets(state.mapId, camera.x, camera.y, VIEW_W, VIEW_H)
+      .filter((asset) => (
+        asset.type !== "dungeonBarrier" || !state.flags[`switch_${state.mapId}`]
+      ))
+      .map((asset) => ({
+        sortY: roomAssetSortY(asset),
+        draw() {
         drawPlacedRoomAsset(
           ctx,
           asset,
           screenX(asset.worldX),
           screenY(asset.worldY),
         );
-      });
+        },
+      }));
+    enemiesByMap[state.mapId].forEach((enemy) => {
+      renderables.push({ sortY: enemy.y + 15, draw: () => drawEnemy(enemy) });
+    });
+    renderables.push({ sortY: player.y + 15, draw: drawPlayer });
+    renderables.sort((a, b) => a.sortY - b.sortY).forEach((entry) => entry.draw());
   }
   function drawEnemy(enemy) {
     if (enemy.hit > 0 && Math.floor(enemy.hit * 15) % 2) return;
     const x = screenX(enemy.x);
     const y = screenY(enemy.y);
-    if (drawCatalogArt(ctx, "enemies", enemy.type, x - 32, y - 44, 64, 64)) return;
+    const boss = isPermanentEnemy(enemy.type);
+    ctx.fillStyle = boss ? "#02040b88" : "#02060a66";
+    ctx.beginPath();
+    ctx.ellipse(x, y + (boss ? 24 : 14), boss ? 34 : 18, boss ? 11 : 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (drawCatalogArt(ctx, "enemies", enemy.type, x - 32, y - 44, 64, 64)) {
+      if (boss) {
+        const maxHp = 14 + (map().number || 0);
+        rect(x - 43, y - 59, 86, 7, "#080914dd");
+        rect(x - 41, y - 57, 82 * Math.max(0, enemy.hp / maxHp), 3, "#f02ea5");
+      }
+      return;
+    }
     const stunned = enemy.stunned > 0;
     if (enemy.type === "slime") {
       const squish = Math.sin(enemy.phase * 6) > 0.5 ? 3 : 0;
@@ -1101,7 +1287,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function drawObjects() {
     const currentMap = map();
-    currentMap.chests.forEach(([id, tx, ty]) => {
+    currentMap.chests.forEach(([id, tx, ty, rewardType]) => {
       const x = screenX(tx * TILE + TILE / 2);
       const y = screenY(ty * TILE + TILE / 2);
       if (state.openedChests[id]) {
@@ -1109,11 +1295,24 @@ export function createGame(canvas, { initialSave, onSave }) {
         rect(x - 18, y - 16, 36, 7, "#69482d");
         rect(x - 13, y + 2, 26, 3, "#6e4b2e");
       } else {
-        rect(x - 18, y - 9, 36, 22, "#8a552f");
-        rect(x - 16, y - 14, 32, 12, "#b87938");
-        rect(x - 18, y - 3, 36, 4, "#5b3b29");
-        rect(x - 4, y - 7, 8, 14, "#e6c05d");
-        rect(x - 1, y - 4, 3, 4, "#6b5427");
+        if (!drawCatalogArt(ctx, "props", "dungeonChest", x - 32, y - 38, 64, 64)) {
+          rect(x - 18, y - 9, 36, 22, "#8a552f");
+          rect(x - 16, y - 14, 32, 12, "#b87938");
+          rect(x - 18, y - 3, 36, 4, "#5b3b29");
+          rect(x - 4, y - 7, 8, 14, "#e6c05d");
+          rect(x - 1, y - 4, 3, 4, "#6b5427");
+        }
+        if (rewardType === "htmlSword") {
+          const bob = Math.sin(performance.now() / 260) * 4;
+          ctx.globalAlpha = 0.28;
+          ctx.fillStyle = "#42efd4";
+          ctx.beginPath();
+          ctx.arc(x, y - 50 + bob, 27, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          drawCatalogArt(ctx, "items", "htmlSword", x - 23, y - 75 + bob, 46, 46);
+          text("WILLOW BLADE", x, y - 82 + bob, 8, "center", "#fff4c7");
+        }
       }
     });
     if (state.mapId === "overworld") {
@@ -1133,18 +1332,15 @@ export function createGame(canvas, { initialSave, onSave }) {
         const x = screenX(merchant.x * TILE + TILE / 2);
         const y = screenY(merchant.y * TILE + TILE / 2);
         if (x < -60 || y < -60 || x > VIEW_W + 60 || y > VIEW_H + 60) return;
-        rect(x - 18, y - 9, 36, 31, "#8c5542");
-        rect(x - 11, y - 23, 22, 17, "#d8ad77");
-        rect(x - 22, y - 29, 44, 10, "#d3ae58");
-        rect(x - 15, y - 34, 30, 7, "#9d733e");
-        rect(x - 6, y - 17, 3, 3, "#29232a");
-        rect(x + 4, y - 17, 3, 3, "#29232a");
-        rect(x - 15, y + 3, 30, 5, "#e0bd5c");
-        text("CODE SHOP", x, y + 39, 9, "center", "#47f2d7");
+        const merchantArt = merchant.id === "village-shop"
+          ? "villagerGardener"
+          : "villagerMechanic";
+        drawCatalogArt(ctx, "characters", merchantArt, x - 32, y - 58, 64, 88);
+        text("SHOP", x, y + 39, 9, "center", "#f0d697");
       });
     } else {
       const exit = currentMap.exit;
-      text("▼ LOG OUT", screenX(exit.x), screenY(exit.y), 10, "center", "#47f2d7");
+      text("▼ RETURN TO SURFACE", screenX(exit.x), screenY(exit.y), 10, "center", "#47f2d7");
     }
     bombs.forEach((bomb) => {
       const x = screenX(bomb.x);
@@ -1223,21 +1419,69 @@ export function createGame(canvas, { initialSave, onSave }) {
       const y = screenY(followsPlayer ? player.y : effect.y);
       ctx.save();
       if (effect.type === "sword") {
-        ctx.globalAlpha = 1 - progress * 0.55;
-        const slashDrawn = drawCatalogArt(
-          ctx, "effects", "htmlSlash", x - 48, y - 48, 96, 96,
+        const facing = Math.atan2(effect.dir.y, effect.dir.x);
+        const upgraded = effect.upgraded;
+        const bladeLength = upgraded ? 68 : 57;
+        const radius = upgraded ? 59 : 49;
+        const sweepProgress = Math.min(1, progress / 0.72);
+        // Right-facing poses are mirrored artwork, so their screen-space
+        // sweep must also be mirrored. This keeps up-right, right, and
+        // down-right attacks moving downward instead of lifting upward.
+        const reverseForRight = effect.dir.x > 0.1;
+        const startAngle = facing + (reverseForRight ? -1.02 : 1.02);
+        const sweepDirection = reverseForRight ? 1 : -1;
+        const endAngle = startAngle + 2.04 * sweepProgress * sweepDirection;
+        const swordAngle = endAngle;
+        const fade = Math.max(0, 1 - Math.max(0, progress - 0.62) / 0.38);
+
+        ctx.lineCap = "round";
+        ctx.strokeStyle = upgraded
+          ? `rgba(255,239,137,${fade})`
+          : `rgba(190,249,255,${fade})`;
+        ctx.lineWidth = upgraded ? 8 : 6;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, radius, startAngle, endAngle, !reverseForRight);
+        ctx.stroke();
+
+        ctx.strokeStyle = upgraded
+          ? `rgba(255,126,70,${fade})`
+          : `rgba(55,224,255,${fade})`;
+        ctx.lineWidth = upgraded ? 3 : 2;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, radius + 1, startAngle, endAngle, !reverseForRight);
+        ctx.stroke();
+
+        // Render the weapon itself sweeping through the same arc that deals
+        // damage, so the visual trail and combat reach agree.
+        const swordX = Math.cos(swordAngle);
+        const swordY = Math.sin(swordAngle);
+        const handDistance = 12;
+        const tipX = x + swordX * bladeLength;
+        const tipY = y - 4 + swordY * bladeLength;
+        ctx.strokeStyle = upgraded ? "#e87838" : "#7c542f";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(
+          x + swordX * (handDistance - 8),
+          y - 4 + swordY * (handDistance - 8),
         );
-        ctx.globalAlpha = 1;
-        if (!slashDrawn) {
-          const facing = Math.atan2(effect.dir.y, effect.dir.x);
-          const startAngle = facing - 0.85;
-          const angle = startAngle + progress * 1.7;
-          ctx.strokeStyle = `rgba(240,46,165,${0.8 - progress * 0.35})`;
-          ctx.lineWidth = 5;
-          ctx.beginPath();
-          ctx.arc(x, y, 40, startAngle, angle, false);
-          ctx.stroke();
-        }
+        ctx.lineTo(
+          x + swordX * (handDistance + 4),
+          y - 4 + swordY * (handDistance + 4),
+        );
+        ctx.stroke();
+        ctx.strokeStyle = upgraded ? "#fff1a3" : "#d7fbff";
+        ctx.lineWidth = upgraded ? 6 : 5;
+        ctx.beginPath();
+        ctx.moveTo(
+          x + swordX * handDistance,
+          y - 4 + swordY * handDistance,
+        );
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.strokeStyle = upgraded ? "#ff9b45" : "#3fdff5";
+        ctx.lineWidth = 2;
+        ctx.stroke();
       }
       if (effect.type === "hookshot") {
         const endX = screenX(effect.endX);
@@ -1337,7 +1581,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.lineWidth = 3;
       ctx.strokeRect(80, 64, 864, 512);
     }
-    text(state.mapId === "overworld" ? "NEON STACK CITY NETWORK" : map().name.toUpperCase(), VIEW_W / 2, 103, 22, "center", "#42efd4");
+    text(state.mapId === "overworld" ? "THE REALM OF EVERDAWN" : map().name.toUpperCase(), VIEW_W / 2, 103, 22, "center", "#42efd4");
 
     const scale = Math.min(10, 760 / map().width, 330 / map().height);
     const mapWidth = map().width * scale;
@@ -1378,7 +1622,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         10 * scale - 4,
       );
       text(
-        "CURRENT NODE",
+        "CURRENT CHAMBER",
         originX + (currentRoomX * 16 + 8) * scale,
         originY + currentRoomY * 10 * scale - 7,
         8,
@@ -1426,9 +1670,9 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.strokeStyle = "#151622"; ctx.lineWidth = 2; ctx.stroke();
     }
 
-    if (!revealAll) text(state.mapId === "overworld" ? "EXPLORE TO DECRYPT EACH DISTRICT" : "UNKNOWN NODES HIDDEN · DOWNLOAD THE SYSTEM SCHEMATIC", VIEW_W / 2, 500, 10, "center", "#8c8c8c");
+    if (!revealAll) text(state.mapId === "overworld" ? "EXPLORE TO REVEAL EACH REGION" : "UNKNOWN ROOMS HIDDEN · FIND THE DUNGEON MAP", VIEW_W / 2, 500, 10, "center", "#8c8c8c");
     text(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), VIEW_W / 2, 530, 12, "center", "#d5c89c");
-    text("■ SYSTEM   ■ CODE SHOP   ■ CACHE   ● YOU", VIEW_W / 2, 553, 9, "center", "#85867f");
+    text("■ TEMPLE   ■ TRADER   ■ TREASURE   ● YOU", VIEW_W / 2, 553, 9, "center", "#85867f");
     text(paused ? "PAUSE MAP SCREEN" : "M  CLOSE MAP", VIEW_W / 2, 574, 10, "center", "#aaa99f");
     ctx.restore();
   }
@@ -1450,7 +1694,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (!merchantOpen) return;
     rect(180, 82, 600, 430, "#11131ff8");
     drawCatalogArt(ctx, "ui", "menuPanelFrame", 180, 82, 600, 430);
-    text(`${merchantOpen.name.toUpperCase()}'S CODE SHOP`, 480, 140, 22, "center", "#42efd4");
+    text(`${merchantOpen.name.toUpperCase()}'S TRADING POST`, 480, 140, 22, "center", "#42efd4");
     merchantOpen.stock.forEach(([item, price], index) => {
       const selected = merchantCursor === index;
       const label = itemLabel(item);
@@ -1476,7 +1720,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
     if (exitSelected) drawCatalogArt(ctx, "ui", "selectionCursor", 250, exitY + 7, 36, 36);
     text("EXIT SHOP", 290, exitY + 28, 14, "left", exitSelected ? "#ffffff" : "#bbb7aa");
-    text(`YOUR CREDITS: ${player.coins}`, 480, 445, 12, "center", "#bfc3b5");
+    text(`YOUR GOLD: ${player.coins}`, 480, 445, 12, "center", "#bfc3b5");
     text("MOVE TO SELECT · L / TALK TO CONFIRM", 480, 480, 10, "center", "#777a76");
   }
 
@@ -1549,19 +1793,19 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.lineWidth = 3;
       ctx.strokeRect(160, 110, 704, 450);
     }
-    text("DEVELOPER STATUS", 512, 155, 25, "center", "#42efd4");
+    text("ADVENTURER STATUS", 512, 155, 25, "center", "#42efd4");
     text(`HEARTS  ${Math.ceil(player.hp / 2)} / ${player.maxHp / 2}`, 220, 215, 15, "left", "#ed5353");
     text(`MAGIC  ${Math.floor(player.magic)} / ${player.maxMagic}`, 220, 255, 15, "left", "#f02ea5");
-    text(`CREDITS  ${player.coins}`, 220, 295, 15, "left", "#42efd4");
-    text(`ACCESS KEYS  ${player.keys}`, 220, 335, 15, "left", "#f0d697");
+    text(`GOLD  ${player.coins}`, 220, 295, 15, "left", "#42efd4");
+    text(`SMALL KEYS  ${player.keys}`, 220, 335, 15, "left", "#f0d697");
     text("CURRENT MILESTONE", 570, 210, 10, "center", "#8595a0");
     const milestone = state.flags.questComplete
-      ? "JOB OFFER EARNED"
+      ? "EVERDAWN RESTORED"
       : (state.flags.backendApi
-        ? "BACKEND API ONLINE"
+        ? "CRYSTAL SIGIL RESTORED"
         : (state.flags.reactApp
-          ? "REACT APP SHIPPED"
-          : (state.flags.firstWebpage ? "FIRST WEBPAGE LIVE" : "FIND YOUR FIRST BUILD")));
+          ? "EMBER SIGIL RESTORED"
+          : (state.flags.firstWebpage ? "GROVE SIGIL RESTORED" : "SEEK THE WILLOW BLADE")));
     text(milestone, 570, 242, 14, "center", "#ffffff");
     text("PASSIVE LOADOUT", 570, 300, 10, "center", "#8595a0");
     const activeEquipment = [
@@ -1590,7 +1834,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (!offer) return;
     const [item, price] = offer;
     if (player.coins < price) {
-      announce("NOT ENOUGH CREDITS");
+      announce("NOT ENOUGH GOLD");
       return;
     }
     player.coins -= price;
@@ -1598,13 +1842,95 @@ export function createGame(canvas, { initialSave, onSave }) {
     save();
   }
 
+  function drawParticles() {
+    particles.forEach((particle) => {
+      const alpha = Math.max(0, Math.min(1, particle.life / particle.maxLife));
+      ctx.globalAlpha = alpha;
+      rect(
+        screenX(particle.x) - particle.size / 2,
+        screenY(particle.y) - particle.size / 2,
+        particle.size,
+        particle.size,
+        particle.color,
+      );
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawAtmosphere() {
+    const theme = state.mapId === "overworld" ? "overworld" : map().theme;
+    const tint = {
+      overworld: "rgba(40,220,180,.035)",
+      cave: "rgba(80,65,120,.09)",
+      crystal: "rgba(60,220,255,.08)",
+      water: "rgba(35,150,220,.08)",
+      fire: "rgba(255,90,35,.08)",
+      desert: "rgba(245,175,80,.07)",
+      shadow: "rgba(45,25,80,.14)",
+      void: "rgba(45,20,75,.16)",
+      reactor: "rgba(240,45,120,.07)",
+      mainframe: "rgba(35,230,205,.055)",
+      server: "rgba(30,180,220,.06)",
+    }[theme] || "rgba(85,75,150,.045)";
+    rect(0, HUD_H, VIEW_W, VIEW_H, tint);
+
+    const time = performance.now() / 1000;
+    const moteColor = ["fire", "reactor"].includes(theme) ? "#ff9e52" : "#78f7e5";
+    ctx.globalAlpha = 0.18;
+    for (let index = 0; index < 18; index += 1) {
+      const x = (index * 193 + time * (7 + index % 4) * 9) % VIEW_W;
+      const y = HUD_H + ((index * 97 + Math.sin(time * 0.6 + index) * 35) % VIEW_H + VIEW_H) % VIEW_H;
+      rect(x, y, index % 3 === 0 ? 3 : 2, index % 3 === 0 ? 3 : 2, moteColor);
+    }
+    ctx.globalAlpha = 1;
+
+    const vignette = ctx.createRadialGradient(
+      VIEW_W / 2, HUD_H + VIEW_H / 2, VIEW_H * 0.28,
+      VIEW_W / 2, HUD_H + VIEW_H / 2, VIEW_W * 0.7,
+    );
+    vignette.addColorStop(0, "rgba(0,0,0,0)");
+    vignette.addColorStop(1, "rgba(0,3,10,.34)");
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, HUD_H, VIEW_W, VIEW_H);
+  }
+
+  function drawRoomTitle() {
+    if (roomTitleTime <= 0 || paused || mapOpen || inventoryOpen || merchantOpen) return;
+    const progress = roomTitleTime / 2.6;
+    const alpha = Math.min(1, (1 - progress) * 4, progress * 2.5);
+    ctx.globalAlpha = alpha;
+    rect(342, HUD_H + 18, 340, 42, "#070b18dd");
+    rect(354, HUD_H + 56, 316, 2, "#42efd4aa");
+    text(roomTitle, VIEW_W / 2, HUD_H + 45, 13, "center", "#ecfff9");
+    ctx.globalAlpha = 1;
+  }
+
   function draw() {
+    ctx.clearRect(0, 0, VIEW_W, VIEW_H + HUD_H);
+    ctx.save();
+    if (screenShake > 0) {
+      ctx.translate(
+        (Math.random() - 0.5) * screenShake,
+        (Math.random() - 0.5) * screenShake,
+      );
+    }
     drawTiles();
-    drawRoomAssets();
     drawObjects();
-    enemiesByMap[state.mapId].forEach(drawEnemy);
-    drawPlayer();
+    drawDepthSortedActors();
     drawWeaponEffects();
+    drawParticles();
+    ctx.restore();
+    drawAtmosphere();
+    if (screenTransition) {
+      const progress = Math.min(1, screenTransition.elapsed / screenTransition.duration);
+      const transitionAlpha = Math.sin(progress * Math.PI);
+      rect(0, HUD_H, VIEW_W, VIEW_H, `rgba(3,5,15,${transitionAlpha * 0.36})`);
+      ctx.globalAlpha = transitionAlpha * 0.55;
+      for (let line = 0; line < 8; line += 1) {
+        rect((line * 173 + progress * 500) % VIEW_W, HUD_H, 3, VIEW_H, "#42efd4");
+      }
+      ctx.globalAlpha = 1;
+    }
     rect(0, 0, VIEW_W, 68, "#10121ded");
     rect(0, HUD_H - 2, VIEW_W, 2, "#42efd477");
     for (let hp = 0; hp < player.maxHp; hp += 2) {
@@ -1670,6 +1996,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, HUD_H, VIEW_W, VIEW_H);
     }
+    drawRoomTitle();
     drawMerchant();
   }
 
@@ -1758,6 +2085,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   function keyup(event) { keys[event.key.toLowerCase()] = false; }
   function releaseAllKeys() {
     Object.keys(keys).forEach((key) => { keys[key] = false; });
+    Object.keys(pressed).forEach((key) => { delete pressed[key]; });
   }
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
@@ -1776,7 +2104,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       if (state.mapId === "debugLab") return;
       debugReturnPosition = { x: player.x, y: player.y };
       changeMap("debugLab", MAPS.debugLab.spawn);
-      announce("DEBUG LAB ONLINE · OPEN CACHES AND TEST YOUR BUILD", 5);
+      announce("TRAINING HALL · TRY WEAPONS AND ITEMS", 5);
     },
     destroy() {
       cancelAnimationFrame(frame);

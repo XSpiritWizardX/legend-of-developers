@@ -1,1 +1,37 @@
-export default { id: "0,1", assets: [] };
+export default {
+  id: "0,1",
+  name: "Mosslight Clearing",
+  floor: [
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "ggggggggpppppppp",
+    "ggggggggpppppppp",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+  ],
+  walls: [
+    "TTTTTTTTTTTTTTTT",
+    "T..............T",
+    "T..............T",
+    "T..............T",
+    "T...............",
+    "T...............",
+    "T..............T",
+    "T..............T",
+    "T..............T",
+    "TTTTTTTTTTTTTTTT",
+  ],
+  assets: [
+    { type: "forestTree", x: 3, y: 3 },
+    { type: "forestTree", x: 12, y: 2 },
+    { type: "forestTree", x: 3, y: 7 },
+    { type: "forestBush", x: 12, y: 7 },
+    { type: "forestLog", x: 6, y: 7 },
+    { type: "forestFlowers", x: 7, y: 3, solid: false },
+    { type: "forestMushrooms", x: 10, y: 6, solid: false },
+  ],
+};
