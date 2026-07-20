@@ -195,6 +195,7 @@ export const MAPS = {
       ["ow-firewall", 100, 44, "fireRod"],
       ["ow-jacket", 120, 54, "devJacket"],
       ["ow-gloves", 136, 74, "glove"],
+      ["ow-boots", 151, 85, "boots"],
     ],
   },
   d01: {

@@ -40,7 +40,8 @@ Demo account: `demo@aa.io` / `password`
 ## Controls
 
 - WASD or arrow keys: move
-- H: HTML Sword
+- Shift: dash in the facing direction; boot upgrades improve distance and cooldown
+- H: tap for a sword slash; hold and release for a charged spin attack
 - J/K: assigned item slots
 - L: interact, talk, confirm, and enter
 - P: open the Status/Map/Gear pause screens

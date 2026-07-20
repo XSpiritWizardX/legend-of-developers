@@ -130,7 +130,7 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
       : requestedFrame % sheet.framesPerDirection;
     const source = trimmedSheetFrame(record, sheet, animationFrame, directionIndex);
     const scale = sheet.trimTransparent
-      ? (sheet.trimScale || Math.min(drawWidth / source.width, drawHeight / source.height))
+      ? (options.trimScale || sheet.trimScale || Math.min(drawWidth / source.width, drawHeight / source.height))
       : 1;
     const fittedWidth = sheet.trimTransparent ? source.width * scale : drawWidth;
     const fittedHeight = sheet.trimTransparent ? source.height * scale : drawHeight;

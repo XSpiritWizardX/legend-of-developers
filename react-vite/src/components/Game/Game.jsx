@@ -313,7 +313,7 @@ export default function Game() {
       <header className="game-header">
         <div><small>FILE {activeFile.slot} · RESTORE THE THREE SIGILS</small><h1>The Legend of Developer: The Blight of AI</h1></div>
         <div className="game-header-actions">
-          <div className="controls"><span>WASD Move</span><span>H Willow Blade</span><span>J Item A</span><span>K Item B</span><span>L Enter / Talk</span><span>P Map & Gear</span><span>Q/E Change Tab</span></div>
+          <div className="controls"><span>WASD Move</span><span>Shift Dash</span><span>H Tap / Hold Blade</span><span>J Item A</span><span>K Item B</span><span>L Enter / Talk</span><span>P Map & Gear</span><span>Q/E Change Tab</span></div>
           <button onClick={enterDebugLab}>Training Hall</button>
           <button onClick={returnToFiles}>Save Files</button>
         </div>
@@ -323,8 +323,8 @@ export default function Game() {
         {!started && (
           <div className="game-overlay">
             <p>CHAPTER I · THE SLEEPING GROVE</p>
-            <h2>{activeFile.data ? "Continue the Quest" : "The Willow Blade"}</h2>
-            <span>Dark roots have sealed the roads beyond Willowbrook.<br />Find the lost blade, awaken the forest temple, and recover the Grove Sigil.</span>
+            <h2>{activeFile.data ? "Continue the Quest" : "The HTML Sword"}</h2>
+            <span>Dark roots have sealed the roads beyond Willowbrook.<br />Upgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil.</span>
             <button onClick={begin}>{activeFile.data ? "CONTINUE" : "BEGIN ADVENTURE"}</button>
           </div>
         )}

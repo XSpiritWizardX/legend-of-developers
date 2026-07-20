@@ -27,14 +27,21 @@ const ITEM_LABELS = {
   arrows: "ARROWS", hookshot: "CHAINSHOT", fireRod: "EMBER ROD",
   iceRod: "FROST ROD", hammer: "STONE HAMMER", lantern: "MOON LANTERN",
   mirror: "RETURNING MIRROR", cape: "SHADOW CLOAK", medallion: "DAWN MEDALLION",
-  htmlSword: "WILLOW BLADE", masterSword: "EVERDAWN BLADE",
+  htmlSword: "HTML SWORD", masterSword: "REACT SABER",
   javascriptCore: "GROVE HEART", firstWebpage: "GROVE SIGIL",
-  devJacket: "WARDEN'S MAIL", shield: "CRYSTAL SHIELD", glove: "TITAN MITTS", boots: "WIND BOOTS",
+  devJacket: "PYTHON JACKET", shield: "CSS SHIELD", glove: "TITAN MITTS", boots: "NODE RUNNERS",
   heart: "HEART CONTAINER", key: "SMALL KEY", dungeonMap: "DUNGEON MAP",
   potion: "RED POTION",
   magicPatch: "MAGIC DRAUGHT",
 };
 const itemLabel = (type) => ITEM_LABELS[type] || type.replace(/([A-Z])/g, " $1").toUpperCase();
+const MAX_EQUIPMENT_LEVEL = 5;
+const EQUIPMENT_TIERS = {
+  sword: ["", "REGULAR BLADE", "HTML SWORD", "REACT SABER", "TYPESCRIPT EDGE", "AI BREAKER"],
+  shield: ["", "REGULAR SHIELD", "CSS SHIELD", "SQL SHIELD", "API FIREWALL", "NEURAL AEGIS"],
+  armor: ["", "REGULAR CLOTHES", "PYTHON JACKET", "JAVASCRIPT COAT", "COAT OF CLOUD COMPUTE", "ARCHITECT'S MANTLE"],
+  boots: ["", "REGULAR BOOTS", "NODE RUNNERS", "DOCKER TREADS", "KUBERNETES GREAVES", "QUANTUM BOOTS"],
+};
 
 export function createGame(canvas, { initialSave, onSave }) {
   const ctx = canvas.getContext("2d");
@@ -88,6 +95,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     maxMagic: saved.player?.maxMagic || 100,
     hasEmber: saved.player?.hasEmber || false,
     inventory: {
+      regularSword: true,
       boomerang: saved.player?.inventory?.boomerang || false,
       bombs: saved.player?.inventory?.bombs || 0,
       arrows: saved.player?.inventory?.arrows || 0,
@@ -112,11 +120,26 @@ export function createGame(canvas, { initialSave, onSave }) {
       firstWebpage: saved.player?.inventory?.firstWebpage || false,
       maps: saved.player?.inventory?.maps || {},
     },
+    equipmentLevels: {
+      sword: Math.min(MAX_EQUIPMENT_LEVEL, saved.player?.equipmentLevels?.sword
+        || ((saved.player?.inventory?.masterSword || state.flags.backendApi)
+          ? 3
+          : (saved.player?.inventory?.htmlSword ? 2 : 1))),
+      shield: Math.min(MAX_EQUIPMENT_LEVEL, saved.player?.equipmentLevels?.shield
+        || (saved.player?.inventory?.shield ? 2 : 1)),
+      armor: Math.min(MAX_EQUIPMENT_LEVEL, saved.player?.equipmentLevels?.armor
+        || (saved.player?.inventory?.devJacket ? 2 : 1)),
+      boots: Math.min(MAX_EQUIPMENT_LEVEL, saved.player?.equipmentLevels?.boots
+        || (saved.player?.inventory?.boots ? 2 : 1)),
+    },
     selectedItem: saved.player?.selectedItem || "boomerang",
     equippedSlots: (saved.player?.equippedSlots || ["bow", "boomerang"])
       .map((item) => (item === "htmlSword" ? null : item)),
     speed: 225,
     attackTime: 0,
+    swordCharge: 0,
+    swordCharging: false,
+    dashCooldown: 0,
     invincible: 0,
     moving: false,
     walkTime: 0,
@@ -195,7 +218,9 @@ export function createGame(canvas, { initialSave, onSave }) {
     return {
       id, type, x: spawnPoint.x, y: spawnPoint.y,
       homeX: spawnPoint.x, homeY: spawnPoint.y,
-      hp: isPermanentEnemy(type) ? 14 + (MAPS[mapId].number || 0) : type === "guard" ? 4 : 2,
+      hp: isPermanentEnemy(type)
+        ? 24 + (MAPS[mapId].number || 0) * 4
+        : (type === "guard" ? 6 : 4),
       phase: Math.random() * 6, hit: 0, stunned: 0,
     };
   }
@@ -232,6 +257,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         hasEmber: player.hasEmber, inventory: player.inventory,
         selectedItem: player.selectedItem,
         equippedSlots: player.equippedSlots,
+        equipmentLevels: player.equipmentLevels,
       },
       openedChests: state.openedChests,
       killed: state.killed,
@@ -244,7 +270,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   announce(
     player.inventory.htmlSword
       ? roomNameAt(state.mapId, player.x, player.y).toUpperCase()
-      : "OBJECTIVE: FIND THE WILLOW BLADE IN HERO'S GROVE",
+      : "OBJECTIVE: FIND THE HTML SWORD IN HERO'S GROVE",
     4,
   );
   showRoomTitle();
@@ -364,7 +390,8 @@ export function createGame(canvas, { initialSave, onSave }) {
   function reward(type) {
     if (type === "htmlSword") {
       player.inventory.htmlSword = true;
-      announce("WILLOW BLADE ACQUIRED", 4);
+      player.equipmentLevels.sword = Math.max(player.equipmentLevels.sword, 2);
+      announce("HTML SWORD · LEVEL 2 ACQUIRED", 4);
     } else if (type === "firstWebpage") {
       player.inventory.firstWebpage = true;
       player.inventory.javascriptCore = true;
@@ -381,11 +408,17 @@ export function createGame(canvas, { initialSave, onSave }) {
       player.inventory.fireRod = true;
       player.inventory.shield = true;
       player.inventory.masterSword = true;
+      player.equipmentLevels.sword = Math.max(player.equipmentLevels.sword, 3);
+      player.equipmentLevels.shield = Math.max(player.equipmentLevels.shield, 2);
       state.flags.backendApi = true;
       if (!player.equippedSlots[1]) player.equippedSlots[1] = "fireRod";
-      announce("CRYSTAL SIGIL RESTORED · WILLOW BLADE FORGED INTO THE EVERDAWN BLADE!", 8);
+      announce("CRYSTAL SIGIL RESTORED · HTML SWORD FORGED INTO THE REACT SABER!", 8);
     } else if (["boomerang", "bow", "hookshot", "fireRod", "iceRod", "hammer", "lantern", "flippers", "glove", "boots", "devJacket", "shield", "cape", "mirror", "medallion", "masterSword"].includes(type)) {
       player.inventory[type] = true;
+      if (type === "boots") player.equipmentLevels.boots = Math.max(player.equipmentLevels.boots, 2);
+      if (type === "devJacket") player.equipmentLevels.armor = Math.max(player.equipmentLevels.armor, 2);
+      if (type === "shield") player.equipmentLevels.shield = Math.max(player.equipmentLevels.shield, 2);
+      if (type === "masterSword") player.equipmentLevels.sword = Math.max(player.equipmentLevels.sword, 3);
       if (ITEM_ORDER.includes(type)) player.selectedItem = type;
       announce(`ACQUIRED: ${itemLabel(type)}`);
     } else if (type === "bombs") {
@@ -609,10 +642,6 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function swordStrike() {
-    if (!player.inventory.htmlSword) {
-        announce("FIND THE WILLOW BLADE TO FIGHT MONSTERS");
-      return;
-    }
     const dir = directionVector();
     weaponEffects.push({
       type: "sword", x: player.x, y: player.y, dir: { ...dir },
@@ -620,7 +649,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       time: 0, duration: 0.13,
     });
     let clearedBrush = false;
-    const swordReach = player.inventory.masterSword ? 72 : 60;
+    const swordReach = 56 + player.equipmentLevels.sword * 4;
     for (let forward = 24; forward <= swordReach; forward += 15) {
       for (const lateral of [-20, 0, 20]) {
         const sampleX = player.x + dir.x * forward + dir.y * lateral;
@@ -649,9 +678,77 @@ export function createGame(canvas, { initialSave, onSave }) {
       ));
       const enemyRadius = isPermanentEnemy(enemy.type) ? 30 : 16;
       if (distance <= swordReach + enemyRadius && angleDifference <= 1.02) {
-        damageEnemy(enemy, player.inventory.masterSword || player.inventory.glove ? 2 : 1);
+        damageEnemy(enemy, Math.max(
+          player.equipmentLevels.sword,
+          player.inventory.glove ? 2 : 1,
+        ));
       }
     });
+  }
+  function chargedSwordStrike() {
+    const swordLevel = player.equipmentLevels.sword;
+    const upgraded = swordLevel > 1;
+    const radius = 98 + swordLevel * 10;
+    const damage = 2 + swordLevel;
+    player.attackTime = 0.38;
+    weaponEffects.push({
+      type: "swordSpin",
+      x: player.x,
+      y: player.y,
+      upgraded,
+      time: 0,
+      duration: 0.42,
+    });
+    screenShake = Math.max(screenShake, upgraded ? 9 : 6);
+    enemiesByMap[state.mapId].forEach((enemy) => {
+      const enemyRadius = isPermanentEnemy(enemy.type) ? 30 : 16;
+      if (Math.hypot(enemy.x - player.x, enemy.y - player.y) <= radius + enemyRadius) {
+        damageEnemy(enemy, damage);
+      }
+    });
+  }
+  function dash() {
+    if (player.dashCooldown > 0) return;
+    const dir = directionVector();
+    const startX = player.x;
+    const startY = player.y;
+    const distance = 112 + player.equipmentLevels.boots * 18;
+    for (let traveled = 0; traveled < distance; traveled += 8) {
+      const nextX = player.x + dir.x * 8;
+      const nextY = player.y + dir.y * 8;
+      let moved = false;
+      if (dir.x && canMove(nextX, player.y, dir.x, 0)) {
+        player.x = nextX;
+        moved = true;
+      }
+      if (dir.y && canMove(player.x, nextY, 0, dir.y)) {
+        player.y = nextY;
+        moved = true;
+      }
+      if (!moved) break;
+    }
+    player.dashCooldown = Math.max(0.28, 0.58 - player.equipmentLevels.boots * 0.06);
+    player.invincible = Math.max(player.invincible, 0.2);
+    weaponEffects.push({
+      type: "dash",
+      x: startX,
+      y: startY,
+      endX: player.x,
+      endY: player.y,
+      time: 0,
+      duration: 0.28,
+    });
+  }
+  function releaseSwordCharge() {
+    if (!player.swordCharging) return;
+    const charged = player.swordCharge >= 0.62;
+    player.swordCharging = false;
+    player.swordCharge = 0;
+    if (charged) chargedSwordStrike();
+    else {
+      player.attackTime = 0.2;
+      swordStrike();
+    }
   }
   function damageEnemy(enemy, amount) {
     if (enemy.hit > 0) return;
@@ -798,6 +895,10 @@ export function createGame(canvas, { initialSave, onSave }) {
       return;
     }
     player.attackTime = Math.max(0, player.attackTime - dt);
+    player.dashCooldown = Math.max(0, player.dashCooldown - dt);
+    if (player.swordCharging && keys.h) {
+      player.swordCharge = Math.min(1.35, player.swordCharge + dt);
+    }
     player.invincible = Math.max(0, player.invincible - dt);
     player.magic = Math.min(player.maxMagic, player.magic + 14 * dt);
     weaponEffects.forEach((effect) => { effect.time += dt; });
@@ -814,19 +915,16 @@ export function createGame(canvas, { initialSave, onSave }) {
       } else {
         player.dir = dx ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
       }
-      const moveSpeed = player.inventory.boots ? player.speed * 1.32 : player.speed;
+      const moveSpeed = player.speed;
       const nextX = player.x + dx * moveSpeed * dt;
       const nextY = player.y + dy * moveSpeed * dt;
       if (canMove(nextX, player.y, dx, 0)) player.x = nextX;
       if (canMove(player.x, nextY, 0, dy)) player.y = nextY;
       player.walkTime += dt * 10;
     }
-    if (pressed.h) {
-      player.attackTime = 0.2;
-      swordStrike();
-    }
     if (pressed.j) activateItem(player.equippedSlots[0]);
     if (pressed.k) activateItem(player.equippedSlots[1]);
+    if (pressed.shift) dash();
     if (pressed.l) interact();
     if (pressed.p) {
       paused = true;
@@ -1102,6 +1200,25 @@ export function createGame(canvas, { initialSave, onSave }) {
     ctx.beginPath();
     ctx.ellipse(x, y + 13, 16, 5, 0, 0, Math.PI * 2);
     ctx.fill();
+    if (player.swordCharging && player.swordCharge > 0.08) {
+      const chargeProgress = Math.min(1, player.swordCharge / 0.62);
+      const pulse = Math.sin(performance.now() / 55) * 3;
+      ctx.save();
+      ctx.globalAlpha = 0.35 + chargeProgress * 0.55;
+      ctx.strokeStyle = player.inventory.masterSword ? "#ffd45e" : "#42e9ff";
+      ctx.lineWidth = 2 + chargeProgress * 3;
+      ctx.beginPath();
+      ctx.arc(x, y - 4, 20 + chargeProgress * 18 + pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      if (chargeProgress >= 1) {
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, 32 - pulse, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     const renderDirection = spriteDirection(player.dir);
     if (drawCatalogArt(
       ctx,
@@ -1116,9 +1233,9 @@ export function createGame(canvas, { initialSave, onSave }) {
         frame: walkFrame,
       },
     )) {
-      if (player.inventory.htmlSword && player.attackTime <= 0) {
+      if (player.attackTime <= 0) {
         const facing = directionVector();
-        const upgraded = player.inventory.masterSword;
+        const upgraded = player.equipmentLevels.sword > 1;
         const perpendicular = { x: -facing.y, y: facing.x };
         const handX = x + facing.x * 6 + perpendicular.x * 12;
         const handY = y - 8 + facing.y * 5 + perpendicular.y * 6;
@@ -1311,7 +1428,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           ctx.fill();
           ctx.globalAlpha = 1;
           drawCatalogArt(ctx, "items", "htmlSword", x - 23, y - 75 + bob, 46, 46);
-          text("WILLOW BLADE", x, y - 82 + bob, 8, "center", "#fff4c7");
+          text("HTML SWORD · LV 2", x, y - 82 + bob, 8, "center", "#fff4c7");
         }
       }
     });
@@ -1482,6 +1599,40 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.strokeStyle = upgraded ? "#ff9b45" : "#3fdff5";
         ctx.lineWidth = 2;
         ctx.stroke();
+      }
+      if (effect.type === "swordSpin") {
+        const eased = 1 - Math.pow(1 - Math.min(1, progress), 3);
+        const radius = (effect.upgraded ? 65 : 56) + Math.sin(progress * Math.PI) * 10;
+        const rotation = eased * Math.PI * 2.35;
+        const fade = Math.max(0, 1 - progress * 0.82);
+        ctx.lineCap = "round";
+        ctx.strokeStyle = effect.upgraded
+          ? `rgba(255,211,78,${fade})`
+          : `rgba(190,249,255,${fade})`;
+        ctx.lineWidth = effect.upgraded ? 13 : 10;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, radius, rotation - 2.3, rotation + 1.8);
+        ctx.stroke();
+        ctx.strokeStyle = effect.upgraded
+          ? `rgba(255,112,45,${fade})`
+          : `rgba(55,224,255,${fade})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, radius + 2, rotation - 2.3, rotation + 1.8);
+        ctx.stroke();
+      }
+      if (effect.type === "dash") {
+        const endX = screenX(effect.endX);
+        const endY = screenY(effect.endY);
+        ctx.globalAlpha = Math.max(0, 0.65 * (1 - progress));
+        ctx.strokeStyle = effect.upgraded ? "#ffd45e" : "#42e9ff";
+        ctx.lineWidth = 16 - progress * 10;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
       }
       if (effect.type === "hookshot") {
         const endX = screenX(effect.endX);
@@ -1732,57 +1883,79 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.lineWidth = 3;
       ctx.strokeRect(100, 82, 824, 480);
     }
-    text("GEAR LOADOUT", 512, 123, 25, "center", "#42efd4");
-    text("PASSIVE EQUIPMENT", 125, 158, 10, "left", "#f09bd6");
-    const equipment = [
-      ["CLOTHES", "devJacket"], ["SHIELD", "shield"], ["GLOVES", "glove"], ["BOOTS", "boots"],
-    ];
-    equipment.forEach(([slot, item], index) => {
-      const x = 125 + index * 195;
-      const acquired = Boolean(player.inventory[item]);
-      rect(x, 170, 180, 62, acquired ? "#263657" : "#101522");
-      ctx.strokeStyle = acquired ? "#42efd4" : "#343b4c";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, 170, 180, 62);
-      const hasItemArt = acquired
-        && drawCatalogArt(ctx, "items", item, x + 8, 181, 40, 40);
-      text(slot, x + (hasItemArt ? 54 : 12), 190, 9, "left", "#8ea0ad");
-      text(
-        acquired ? itemLabel(item) : "NOT ACQUIRED",
-        x + (hasItemArt ? 111 : 90),
-        217,
-        10,
-        "center",
-        acquired ? "#ffffff" : "#59616d",
-      );
+    text("EQUIPMENT", 512, 116, 25, "center", "#42efd4");
+
+    // Player paper-doll preview.
+    rect(118, 140, 190, 205, "#0d1525");
+    ctx.strokeStyle = "#42efd4";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(118, 140, 190, 205);
+    text("ADVENTURER", 213, 163, 10, "center", "#f09bd6");
+    drawCatalogArt(ctx, "characters", "playerWalk", 153, 166, 120, 145, {
+      direction: "down",
+      frame: 0,
+      trimScale: 0.56,
     });
-    text("WEAPON / ITEM SLOTS", 125, 258, 10, "left", "#f09bd6");
-    text(paused ? "MOVE · J ASSIGN A · K ASSIGN B" : "MOVE · J ASSIGN A · K ASSIGN B · Q CLOSE", 899, 258, 9, "right", "#a9b9c3");
+    drawCatalogArt(
+      ctx,
+      "items",
+      "htmlSword",
+      231,
+      213,
+      player.equipmentLevels.sword > 1 ? 64 : 56,
+      player.equipmentLevels.sword > 1 ? 64 : 56,
+    );
+    text(`HEARTS ${Math.ceil(player.hp / 2)} / ${player.maxHp / 2}`, 213, 324, 10, "center", "#ff8b83");
+
+    const equipment = [
+      ["SWORD", EQUIPMENT_TIERS.sword[player.equipmentLevels.sword], player.equipmentLevels.sword, "htmlSword"],
+      ["SHIELD", EQUIPMENT_TIERS.shield[player.equipmentLevels.shield], player.equipmentLevels.shield, "shield"],
+      ["ARMOR", EQUIPMENT_TIERS.armor[player.equipmentLevels.armor], player.equipmentLevels.armor, "devJacket"],
+      ["BOOTS", EQUIPMENT_TIERS.boots[player.equipmentLevels.boots], player.equipmentLevels.boots, "boots"],
+    ];
+    equipment.forEach(([slot, label, level, item], index) => {
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+      const x = 330 + column * 285;
+      const y = 145 + row * 82;
+      const acquired = level > 0;
+      rect(x, y, 260, 68, acquired ? "#263657" : "#101522");
+      ctx.strokeStyle = level > 0 ? "#42efd4" : "#343b4c";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, 260, 68);
+      if (level > 0) drawCatalogArt(ctx, "items", item, x + 10, y + 14, 42, 42);
+      text(slot, x + 62, y + 21, 9, "left", "#8ea0ad");
+      text(label, x + 62, y + 43, 11, "left", acquired ? "#ffffff" : "#59616d");
+      text(level ? `LV ${level}` : "--", x + 242, y + 43, 11, "right", level > 1 ? "#ffd45e" : "#42efd4");
+    });
+    text("SHIFT · DASH", 875, 323, 10, "right", "#42efd4");
+
+    text("EQUIPPABLE WEAPONS & ITEMS", 125, 370, 10, "left", "#f09bd6");
+    text(paused ? "MOVE · J EQUIP A · K EQUIP B" : "MOVE · J EQUIP A · K EQUIP B · Q CLOSE", 899, 370, 9, "right", "#a9b9c3");
     if (!gear.length) {
-      text("NO ASSIGNABLE ITEMS ACQUIRED", 512, 390, 18, "center", "#f09bd6");
+      text("NO ASSIGNABLE ITEMS ACQUIRED", 512, 455, 18, "center", "#f09bd6");
       return;
     }
     gear.forEach((item, index) => {
       const column = index % 3;
       const row = Math.floor(index / 3);
-      const x = 135 + column * 255;
-      const y = 275 + row * 64;
+      const x = 125 + column * 265;
+      const y = 386 + row * 43;
       const selected = index === loadoutCursor;
-      rect(x, y, 230, 50, selected ? "#263657" : "#11182a");
+      rect(x, y, 245, 36, selected ? "#263657" : "#11182a");
       if (selected) {
         ctx.strokeStyle = "#f02ea5";
         ctx.lineWidth = 3;
-        ctx.strokeRect(x, y, 230, 50);
-        drawCatalogArt(ctx, "ui", "selectionCursor", x - 25, y + 7, 36, 36);
+        ctx.strokeRect(x, y, 245, 36);
+        drawCatalogArt(ctx, "ui", "selectionCursor", x - 22, y + 2, 32, 32);
       }
-      const hasItemArt = drawCatalogArt(ctx, "items", item, x + 8, y + 5, 40, 40);
-      text(itemLabel(item), x + (hasItemArt ? 54 : 14), y + 22, 10, "left", selected ? "#ffffff" : "#b8c7d0");
+      const hasItemArt = drawCatalogArt(ctx, "items", item, x + 7, y + 3, 30, 30);
+      text(itemLabel(item), x + (hasItemArt ? 42 : 12), y + 22, 9, "left", selected ? "#ffffff" : "#b8c7d0");
       const badges = [];
       if (player.equippedSlots[0] === item) badges.push("A");
       if (player.equippedSlots[1] === item) badges.push("B");
       if (item === "bombs") badges.push(`${player.inventory.bombs}`);
-      badges.push(`${MAGIC_COSTS[item] || 0} MP`);
-      text(badges.join(" · "), x + 214, y + 40, 10, "right", "#42efd4");
+      text(badges.join(" · "), x + 232, y + 22, 9, "right", "#42efd4");
     });
   }
 
@@ -1805,7 +1978,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         ? "CRYSTAL SIGIL RESTORED"
         : (state.flags.reactApp
           ? "EMBER SIGIL RESTORED"
-          : (state.flags.firstWebpage ? "GROVE SIGIL RESTORED" : "SEEK THE WILLOW BLADE")));
+          : (state.flags.firstWebpage ? "GROVE SIGIL RESTORED" : "SEEK THE HTML SWORD")));
     text(milestone, 570, 242, 14, "center", "#ffffff");
     text("PASSIVE LOADOUT", 570, 300, 10, "center", "#8595a0");
     const activeEquipment = [
@@ -2078,14 +2251,24 @@ export function createGame(canvas, { initialSave, onSave }) {
       }
       return;
     }
+    if (key === "h" && !keys.h && !event.repeat) {
+      player.swordCharging = true;
+      player.swordCharge = 0;
+    }
     if (!keys[key]) pressed[key] = true;
     keys[key] = true;
     if (key === "m" && mapOpen) { mapOpen = false; delete pressed.m; }
   }
-  function keyup(event) { keys[event.key.toLowerCase()] = false; }
+  function keyup(event) {
+    const key = event.key.toLowerCase();
+    if (key === "h" && keys.h) releaseSwordCharge();
+    keys[key] = false;
+  }
   function releaseAllKeys() {
     Object.keys(keys).forEach((key) => { keys[key] = false; });
     Object.keys(pressed).forEach((key) => { delete pressed[key]; });
+    player.swordCharging = false;
+    player.swordCharge = 0;
   }
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
