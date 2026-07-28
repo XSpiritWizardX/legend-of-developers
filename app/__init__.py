@@ -18,8 +18,8 @@ login.login_view = 'auth.unauthorized'
 
 
 @login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
 
 
 # Tell flask about our seed commands
