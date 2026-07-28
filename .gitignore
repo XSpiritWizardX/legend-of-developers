@@ -9,3 +9,6 @@ instance/*.db
 instance/dev.db
 todo.md
 react-vite/dist/
+react-vite/coverage/
+.pytest_cache/
+.coverage

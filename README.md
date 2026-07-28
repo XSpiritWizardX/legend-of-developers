@@ -37,6 +37,20 @@ Open <http://localhost:5173>.
 
 Demo account: `demo@aa.io` / `password`
 
+## Tests
+
+Run the complete Python and JavaScript unit/integration test suite from the
+repository root:
+
+```bash
+make test
+```
+
+The individual suites are also available with `python -m pytest` and
+`npm --prefix react-vite test`. Each test uses an isolated state; pytest uses an
+in-memory SQLite database and does not modify the local development database.
+Run `make coverage` for terminal coverage reports from both frameworks.
+
 ## Controls
 
 - WASD or arrow keys: move
