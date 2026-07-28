@@ -42,11 +42,15 @@ Demo account: `demo@aa.io` / `password`
 Install both sets of dependencies first:
 
 ```bash
-pipenv install --dev
+python -m pip install -r requirements.txt
 cd react-vite
 npm install
 cd ..
 ```
+
+If you use Pipenv instead of an activated virtual environment, run
+`pipenv install --dev` and invoke the combined suite with
+`pipenv run make test`.
 
 ### Backend tests
 
