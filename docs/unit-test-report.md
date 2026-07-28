@@ -6,9 +6,9 @@ Run on July 28, 2026 with Python 3.9.4, pytest 8.3.4, and Jest 30.4.2.
 
 Command: `make test`
 
-- pytest: 6 passed
+- pytest: 6 passed, 1 intentionally skipped future-feature test
 - Jest: 10 passed
-- Total: 16 passed, 0 failed, 0 skipped
+- Total: 16 passed, 0 failed, 1 skipped
 
 ## Coverage results
 

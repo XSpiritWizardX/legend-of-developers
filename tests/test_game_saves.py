@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_anonymous_user_cannot_read_saves(anonymous_client):
     # An unauthenticated request should be rejected instead of exposing save data.
     response = anonymous_client.get("/api/game/saves", follow_redirects=True)
@@ -42,3 +45,11 @@ def test_delete_missing_slot_is_idempotent(client):
     response = client.delete("/api/game/saves/99")
     assert response.status_code == 200
     assert response.get_json() == {"message": "Save file deleted."}
+
+
+@pytest.mark.skip(reason="Future feature: limit players to three game-save slots")
+def test_save_slot_above_limit_is_rejected(client):
+    # Once the three-slot limit is implemented, a fourth slot should be rejected.
+    response = client.put("/api/game/saves/4", json={"data": {}})
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Save slot must be between 1 and 3."}
