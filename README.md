@@ -39,17 +39,55 @@ Demo account: `demo@aa.io` / `password`
 
 ## Tests
 
-Run the complete Python and JavaScript unit/integration test suite from the
-repository root:
+Install both sets of dependencies first:
+
+```bash
+pipenv install --dev
+cd react-vite
+npm install
+cd ..
+```
+
+### Backend tests
+
+From the repository root, run the Flask API tests with pytest:
+
+```bash
+pytest
+```
+
+The backend suite uses an in-memory SQLite database and never modifies the
+local development database. The expected result is 6 passing tests and 1
+intentionally skipped test for the planned three-save-slot limit.
+
+### Frontend tests
+
+From the frontend directory, run the Jest tests:
+
+```bash
+cd react-vite
+npm run test
+```
+
+The expected result is 10 passing tests across the session reducer and game
+world suites. Return to the repository root with `cd ..` when finished.
+
+### Run everything
+
+Run both suites from the repository root with:
 
 ```bash
 make test
 ```
 
-The individual suites are also available with `python -m pytest` and
-`npm --prefix react-vite test`. Each test uses an isolated state; pytest uses an
-in-memory SQLite database and does not modify the local development database.
-Run `make coverage` for terminal coverage reports from both frameworks.
+Generate terminal coverage reports for both suites with:
+
+```bash
+make coverage
+```
+
+The saved results summary is available in
+[`docs/unit-test-report.md`](docs/unit-test-report.md).
 
 ## Controls
 
