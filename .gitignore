@@ -12,3 +12,5 @@ react-vite/dist/
 react-vite/coverage/
 .pytest_cache/
 .coverage
+.agents/
+.codex/
