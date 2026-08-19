@@ -7,6 +7,9 @@ import {
 import { drawCatalogArt } from "./art/artLoader";
 import { indexedRoomTileAt } from "./art/tileIndex";
 import {
+  decayKnockback, hitStopFor, knockbackVector, movementScale, nearestFacingTarget, targetInFront,
+} from "./actionFeel";
+import {
   resolveRoomRuntime, roomChanged, settleCamera, smoothCamera,
 } from "./roomRuntime";
 import { showcaseTerrainAt } from "./showcaseTerrain";
@@ -81,6 +84,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   let screenTransition = null;
   let particles = [];
   let screenShake = 0;
+  let hitStop = 0;
   let roomTitle = "";
   let roomTitleTime = 0;
   let activeRoomId = null;
@@ -273,7 +277,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       hp: isPermanentEnemy(type)
         ? 24 + (MAPS[mapId].number || 0) * 4
         : (type === "guard" ? 6 : 4),
-      phase: Math.random() * 6, hit: 0, stunned: 0,
+      phase: Math.random() * 6, hit: 0, stunned: 0, knockbackX: 0, knockbackY: 0,
     };
   }
   function buildEnemies(mapId) {
@@ -690,33 +694,56 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (interactWorldObject()) return;
     const currentMap = map();
     if (state.mapId === "overworld") {
-      const dungeon = DUNGEONS.find((entry) => Math.hypot(player.x - entry.entrance.x, player.y - entry.entrance.y) < 88);
+      const dungeon = nearestFacingTarget({
+        player,
+        targets: DUNGEONS.map((entry) => ({ ...entry, x: entry.entrance.x, y: entry.entrance.y })),
+        reach: 96,
+        halfAngle: 1.08,
+      });
       if (dungeon) {
         changeMap(dungeon.id, MAPS[dungeon.id].spawn);
         return;
       }
-      const merchant = MERCHANTS.find((entry) => Math.hypot(player.x - (entry.x * TILE + TILE / 2), player.y - (entry.y * TILE + TILE / 2)) < 82);
+      const merchant = nearestFacingTarget({
+        player,
+        targets: MERCHANTS.map((entry) => ({
+          ...entry,
+          x: entry.x * TILE + TILE / 2,
+          y: entry.y * TILE + TILE / 2,
+        })),
+        reach: 86,
+        halfAngle: 1.02,
+      });
       if (merchant) {
-        merchantOpen = merchant;
+        merchantOpen = MERCHANTS.find((entry) => entry.id === merchant.id);
         merchantCursor = 0;
         return;
       }
-    } else if (state.mapId === "debugLab" && Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {
+    } else if (state.mapId === "debugLab" && targetInFront({ player, target: currentMap.exit, reach: 86, halfAngle: 1.08 })) {
       changeMap("overworld", debugReturnPosition);
       announce("RETURNED FROM DEBUG LAB");
       return;
-    } else if (Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {
+    } else if (targetInFront({ player, target: currentMap.exit, reach: 86, halfAngle: 1.08 })) {
       const dungeon = DUNGEONS.find((entry) => entry.id === state.mapId);
       changeMap("overworld", dungeonReturnPosition(dungeon));
       return;
     }
 
-    const chest = currentMap.chests.find((entry) => {
-      const [id, tx, ty] = entry;
-      if (state.openedChests[id]) return false;
-      if (id.endsWith("-reward") && enemiesByMap[state.mapId].some((enemy) => isPermanentEnemy(enemy.type))) return false;
-      return Math.hypot(player.x - (tx * TILE + TILE / 2), player.y - (ty * TILE + TILE / 2)) < 76;
+    const chestTarget = nearestFacingTarget({
+      player,
+      targets: currentMap.chests
+        .filter(([id]) => !state.openedChests[id])
+        .filter(([id]) => !(id.endsWith("-reward")
+          && enemiesByMap[state.mapId].some((enemy) => isPermanentEnemy(enemy.type))))
+        .map((entry) => ({
+          entry,
+          x: entry[1] * TILE + TILE / 2,
+          y: entry[2] * TILE + TILE / 2,
+        })),
+      reach: 80,
+      halfAngle: 1.04,
     });
+    const chest = chestTarget?.entry;
     if (chest) {
       state.openedChests[chest[0]] = true;
       reward(chest[3]);
@@ -1004,9 +1031,14 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function damageEnemy(enemy, amount) {
     if (enemy.hit > 0) return;
+    const boss = isPermanentEnemy(enemy.type);
     enemy.hp -= amount;
     enemy.hit = 0.22;
-    screenShake = Math.max(screenShake, isPermanentEnemy(enemy.type) ? 9 : 4);
+    const knockback = knockbackVector(player, enemy, boss ? 135 : 225);
+    enemy.knockbackX = knockback.x;
+    enemy.knockbackY = knockback.y;
+    hitStop = Math.max(hitStop, hitStopFor({ damage: amount, boss }));
+    screenShake = Math.max(screenShake, boss ? 9 : 4);
     spawnParticles(
       enemy.x,
       enemy.y - 10,
@@ -1015,12 +1047,11 @@ export function createGame(canvas, { initialSave, onSave }) {
       isPermanentEnemy(enemy.type) ? 190 : 125,
     );
     if (enemy.hp <= 0) {
-      const isBoss = isPermanentEnemy(enemy.type);
-      spawnParticles(enemy.x, enemy.y, isBoss ? "#f02ea5" : "#d9fff8", isBoss ? 36 : 18, 230);
-      screenShake = Math.max(screenShake, isBoss ? 18 : 7);
-      if (isBoss) state.killed[enemy.id] = true;
-      player.coins += isBoss ? 50 + (map().number || 0) * 5 : 2;
-      if (isBoss) {
+      spawnParticles(enemy.x, enemy.y, boss ? "#f02ea5" : "#d9fff8", boss ? 36 : 18, 230);
+      screenShake = Math.max(screenShake, boss ? 18 : 7);
+      if (boss) state.killed[enemy.id] = true;
+      player.coins += boss ? 50 + (map().number || 0) * 5 : 2;
+      if (boss) {
         state.flags[`complete_${state.mapId}`] = true;
         announce("TEMPLE GUARDIAN DEFEATED · CLAIM THE SIGIL", 5);
       }
@@ -1151,6 +1182,10 @@ export function createGame(canvas, { initialSave, onSave }) {
     });
     particles = particles.filter((particle) => particle.life > 0);
     if (!running || paused || mapOpen || inventoryOpen || merchantOpen) return;
+    if (hitStop > 0) {
+      hitStop = Math.max(0, hitStop - dt);
+      return;
+    }
     if (screenTransition) {
       screenTransition.elapsed += dt;
       const progress = Math.min(1, screenTransition.elapsed / screenTransition.duration);
@@ -1195,7 +1230,11 @@ export function createGame(canvas, { initialSave, onSave }) {
       } else {
         player.dir = dx ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
       }
-      const moveSpeed = player.speed * (carriedObject ? 0.82 : 1);
+      const moveSpeed = player.speed * movementScale({
+        carrying: Boolean(carriedObject),
+        attacking: player.attackTime > 0,
+        charging: player.swordCharging,
+      });
       const nextX = player.x + dx * moveSpeed * dt;
       const nextY = player.y + dy * moveSpeed * dt;
       if (canMove(nextX, player.y, dx, 0)) player.x = nextX;
@@ -1272,8 +1311,21 @@ export function createGame(canvas, { initialSave, onSave }) {
       enemy.hit = Math.max(0, enemy.hit - dt);
       enemy.stunned = Math.max(0, enemy.stunned - dt);
       enemy.phase += dt;
+      const knockbackSpeed = Math.hypot(enemy.knockbackX || 0, enemy.knockbackY || 0);
+      if (knockbackSpeed > 4) {
+        const knockX = enemy.x + enemy.knockbackX * dt;
+        const knockY = enemy.y + enemy.knockbackY * dt;
+        if (enemyCanMove(enemy, knockX, enemy.y)) enemy.x = knockX;
+        if (enemyCanMove(enemy, enemy.x, knockY)) enemy.y = knockY;
+        const decayed = decayKnockback(
+          { x: enemy.knockbackX, y: enemy.knockbackY },
+          dt,
+        );
+        enemy.knockbackX = decayed.x;
+        enemy.knockbackY = decayed.y;
+      }
       const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-      if (!enemy.stunned && distance < 310 && distance > 0) {
+      if (!enemy.stunned && knockbackSpeed < 18 && distance < 310 && distance > 0) {
         const speed = enemy.type === "bat" ? 100 : isPermanentEnemy(enemy.type) ? 80 : 58;
         const nx = enemy.x + (player.x - enemy.x) / distance * speed * dt;
         const ny = enemy.y + (player.y - enemy.y) / distance * speed * dt;
@@ -1285,6 +1337,12 @@ export function createGame(canvas, { initialSave, onSave }) {
         const incomingDamage = boss && !player.inventory.shield ? 2 : 1;
         player.hp -= incomingDamage;
         player.invincible = player.inventory.devJacket ? 1.65 : 1.1;
+        const playerKnockback = knockbackVector(enemy, player, boss ? 245 : 185);
+        const hurtX = player.x + playerKnockback.x * 0.085;
+        const hurtY = player.y + playerKnockback.y * 0.085;
+        if (canMove(hurtX, player.y, Math.sign(playerKnockback.x), 0)) player.x = hurtX;
+        if (canMove(player.x, hurtY, 0, Math.sign(playerKnockback.y))) player.y = hurtY;
+        hitStop = Math.max(hitStop, 0.04);
         screenShake = boss ? 14 : 8;
         spawnParticles(player.x, player.y, "#ff6f7d", boss ? 18 : 10, 170);
         if (player.hp <= 0) {
