@@ -1,0 +1,48 @@
+name: Apply contextual world objects
+
+on:
+  push:
+    branches:
+      - feature/contextual-world-objects
+
+permissions:
+  contents: write
+
+jobs:
+  integrate-objects:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/contextual-world-objects
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: react-vite/package-lock.json
+      - name: Apply guarded engine patch
+        run: python scripts/patch_contextual_world_objects.py
+      - name: Install frontend dependencies
+        working-directory: react-vite
+        run: npm ci
+      - name: Run Jest
+        working-directory: react-vite
+        run: npm test
+      - name: Lint
+        working-directory: react-vite
+        run: npm run lint
+      - name: Production build
+        working-directory: react-vite
+        run: npm run build
+      - name: Commit validated contextual object gameplay
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add react-vite/src/components/Game/engine.js
+          git rm scripts/patch_contextual_world_objects.py .github/workflows/apply-contextual-world-objects.yml
+          git diff --cached --check
+          git commit -m "Add contextual lift push and breakable objects"
+          git push origin HEAD:feature/contextual-world-objects
