@@ -14,6 +14,11 @@ import {
   TERRAIN, TRAVERSAL_STATE, canHopLedge, isDirectionalLedge,
   ledgeLandingPoint, recoveryPoint, rememberSafeGround, terrainTraversalFor,
 } from "./terrainInteractions";
+import {
+  WORLD_OBJECT_KIND, activeWorldObjects, breakableBySword, canLiftWorldObject,
+  facingWorldObject, moveWorldObject, pushDestination, removeWorldObject,
+  worldObjectAtPoint,
+} from "./worldObjects";
 
 const VIEW_W = 1024;
 const VIEW_H = 640;
@@ -82,6 +87,8 @@ export function createGame(canvas, { initialSave, onSave }) {
   let traversal = null;
   let safeGroundHistory = [];
   let lastSafeTile = null;
+  let carriedObject = null;
+  let thrownObject = null;
   let debugReturnPosition = { ...MAPS.overworld.spawn };
 
   const saved = initialSave || {};
@@ -354,10 +361,15 @@ export function createGame(canvas, { initialSave, onSave }) {
     roomTitleTime = 2.6;
   }
 
+  function currentWorldObjects() {
+    return activeWorldObjects(state.mapId, state.flags, TILE)
+      .filter((object) => object.id !== carriedObject?.id);
+  }
   function solidAt(x, y) {
     const tileX = Math.floor(x / TILE);
     const tileY = Math.floor(y / TILE);
     if (roomAssetSolidAt(state.mapId, x, y)) return true;
+    if (worldObjectAtPoint(currentWorldObjects(), x, y, 24)) return true;
     const showcaseTile = showcaseTerrainAt(state.mapId, tileX, tileY);
     if (showcaseTile) {
       if (showcaseTile === TERRAIN.DEEP_WATER && player.inventory.flippers) return false;
@@ -507,6 +519,8 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function changeMap(mapId, position) {
+    carriedObject = null;
+    thrownObject = null;
     state.mapId = mapId;
     player.x = position.x;
     player.y = position.y;
@@ -604,7 +618,76 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
   }
 
+  function interactionDirection() {
+    return spriteDirection(player.dir);
+  }
+  function worldObjectDestinationOpen(object, destination) {
+    const x = destination.tx * TILE + TILE / 2;
+    const y = destination.ty * TILE + TILE / 2;
+    const tile = tileAt(state.mapId, destination.tx, destination.ty, state.flags);
+    if (isSolid(tile) || tile === TERRAIN.PIT || isDirectionalLedge(tile)) return false;
+    if (roomAssetSolidAt(state.mapId, x, y)) return false;
+    return !worldObjectAtPoint(currentWorldObjects(), x, y, 34, object.id);
+  }
+  function throwCarriedWorldObject() {
+    if (!carriedObject) return false;
+    const dir = directionVector();
+    const object = carriedObject;
+    carriedObject = null;
+    removeWorldObject(state.flags, object.id);
+    thrownObject = {
+      ...object,
+      fromX: player.x,
+      fromY: player.y - 16,
+      x: player.x,
+      y: player.y - 16,
+      toX: player.x + dir.x * 112,
+      toY: player.y + dir.y * 112,
+      elapsed: 0,
+      duration: 0.36,
+    };
+    announce(`THREW ${object.kind.toUpperCase()}`, 1.2);
+    save();
+    return true;
+  }
+  function interactWorldObject() {
+    if (carriedObject) return throwCarriedWorldObject();
+    const direction = interactionDirection();
+    const object = facingWorldObject({
+      objects: currentWorldObjects(),
+      player,
+      direction,
+      distance: 44,
+      radius: 34,
+    });
+    if (!object) return false;
+    if (canLiftWorldObject(object, player.inventory)) {
+      carriedObject = object;
+      announce(`LIFTED ${object.kind.toUpperCase()} · L TO THROW`, 1.8);
+      return true;
+    }
+    if (object.pushable) {
+      const destination = pushDestination(object, direction);
+      if (!destination || !worldObjectDestinationOpen(object, destination)) {
+        announce("IT WILL NOT BUDGE THAT WAY", 1.4);
+        return true;
+      }
+      moveWorldObject(state.flags, object.id, destination.tx, destination.ty);
+      screenShake = Math.max(screenShake, 3);
+      spawnParticles(object.x, object.y, "#9ea29f", 6, 70);
+      announce(player.inventory.glove ? "HEAVY ROCK MOVED" : "PUSHED THE HEAVY ROCK", 1.4);
+      save();
+      return true;
+    }
+    if (object.cuttable) {
+      announce("THIS BRUSH CAN BE CUT WITH YOUR SWORD", 1.5);
+      return true;
+    }
+    return false;
+  }
+
   function interact() {
+    if (interactWorldObject()) return;
     const currentMap = map();
     if (state.mapId === "overworld") {
       const dungeon = DUNGEONS.find((entry) => Math.hypot(player.x - entry.entrance.x, player.y - entry.entrance.y) < 88);
@@ -811,6 +894,30 @@ export function createGame(canvas, { initialSave, onSave }) {
       announce("CORRUPTED BRUSH CLEARED");
       save();
     }
+    let brokeWorldObject = false;
+    currentWorldObjects().forEach((object) => {
+      if (!breakableBySword(object)) return;
+      const objectDx = object.x - player.x;
+      const objectDy = object.y - player.y;
+      const objectDistance = Math.hypot(objectDx, objectDy);
+      const objectAngle = Math.atan2(objectDy, objectDx);
+      const facingAngle = Math.atan2(dir.y, dir.x);
+      const angleDifference = Math.abs(Math.atan2(
+        Math.sin(objectAngle - facingAngle),
+        Math.cos(objectAngle - facingAngle),
+      ));
+      if (objectDistance <= swordReach + 24 && angleDifference <= 1.08) {
+        removeWorldObject(state.flags, object.id);
+        spawnParticles(
+          object.x, object.y,
+          object.kind === WORLD_OBJECT_KIND.POT ? "#d89467" : "#68aa68",
+          12, 130,
+        );
+        if (object.kind === WORLD_OBJECT_KIND.POT) player.coins += 1;
+        brokeWorldObject = true;
+      }
+    });
+    if (brokeWorldObject) save();
     enemiesByMap[state.mapId].forEach((enemy) => {
       const dx = enemy.x - player.x;
       const dy = enemy.y - player.y;
@@ -921,7 +1028,31 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
   }
 
+  function updateThrownWorldObject(dt) {
+    if (!thrownObject) return;
+    const object = thrownObject;
+    object.elapsed += dt;
+    const progress = Math.min(1, object.elapsed / object.duration);
+    const eased = progress * progress * (3 - 2 * progress);
+    object.x = object.fromX + (object.toX - object.fromX) * eased;
+    object.y = object.fromY + (object.toY - object.fromY) * eased;
+    if (progress < 1) return;
+    enemiesByMap[state.mapId].forEach((enemy) => {
+      if (Math.hypot(enemy.x - object.x, enemy.y - object.y) < 55) {
+        damageEnemy(enemy, object.kind === WORLD_OBJECT_KIND.ROCK ? 4 : 2);
+      }
+    });
+    spawnParticles(
+      object.x, object.y,
+      object.kind === WORLD_OBJECT_KIND.ROCK ? "#9ea29f" : "#d89467",
+      18, 170,
+    );
+    screenShake = Math.max(screenShake, object.kind === WORLD_OBJECT_KIND.ROCK ? 8 : 5);
+    thrownObject = null;
+  }
+
   function updateProjectiles(dt) {
+    updateThrownWorldObject(dt);
     cssPulses.forEach((pulse) => {
       pulse.age += dt;
       pulse.x += pulse.vx * dt;
@@ -1064,7 +1195,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       } else {
         player.dir = dx ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
       }
-      const moveSpeed = player.speed;
+      const moveSpeed = player.speed * (carriedObject ? 0.82 : 1);
       const nextX = player.x + dx * moveSpeed * dt;
       const nextY = player.y + dy * moveSpeed * dt;
       if (canMove(nextX, player.y, dx, 0)) player.x = nextX;
@@ -1534,6 +1665,32 @@ export function createGame(canvas, { initialSave, onSave }) {
 
     ctx.restore();
   }
+  function drawWorldObject(object, x = screenX(object.x), y = screenY(object.y), carried = false) {
+    ctx.save();
+    const shadowY = carried ? y + 18 : y + 12;
+    ctx.fillStyle = "#02060a66";
+    ctx.beginPath();
+    ctx.ellipse(x, shadowY, carried ? 12 : 18, carried ? 4 : 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (object.kind === WORLD_OBJECT_KIND.POT) {
+      rect(x - 15, y - 18, 30, 27, "#985334");
+      rect(x - 18, y - 20, 36, 7, "#d08352");
+      rect(x - 11, y - 13, 22, 4, "#bd7045");
+      rect(x - 8, y + 5, 16, 4, "#5e382b");
+    } else if (object.kind === WORLD_OBJECT_KIND.ROCK) {
+      rect(x - 20, y - 18, 40, 30, "#686e72");
+      rect(x - 14, y - 24, 28, 11, "#898e8d");
+      rect(x - 13, y - 10, 10, 5, "#4a4e53");
+      rect(x + 5, y - 4, 11, 4, "#4a4e53");
+    } else {
+      rect(x - 18, y - 10, 36, 22, "#285538");
+      rect(x - 12, y - 18, 24, 25, "#43804b");
+      rect(x - 21, y - 2, 16, 13, "#397343");
+      rect(x + 6, y - 4, 16, 14, "#397343");
+      rect(x - 2, y - 22, 5, 34, "#5b8f50");
+    }
+    ctx.restore();
+  }
   function drawDepthSortedActors() {
     const renderables = visibleRoomAssets(state.mapId, camera.x, camera.y, VIEW_W, VIEW_H)
       .filter((asset) => (
@@ -1550,10 +1707,40 @@ export function createGame(canvas, { initialSave, onSave }) {
         );
         },
       }));
+    currentWorldObjects().forEach((object) => {
+      renderables.push({
+        sortY: object.y + 14,
+        draw: () => drawWorldObject(object),
+      });
+    });
     enemiesByMap[state.mapId].forEach((enemy) => {
       renderables.push({ sortY: enemy.y + 15, draw: () => drawEnemy(enemy) });
     });
     renderables.push({ sortY: player.y + 15, draw: drawPlayer });
+    if (carriedObject) {
+      renderables.push({
+        sortY: player.y + 15.5,
+        draw: () => drawWorldObject(
+          carriedObject,
+          screenX(player.x),
+          screenY(player.y) - 54,
+          true,
+        ),
+      });
+    }
+    if (thrownObject) {
+      const progress = Math.min(1, thrownObject.elapsed / thrownObject.duration);
+      const arc = Math.sin(progress * Math.PI) * 42;
+      renderables.push({
+        sortY: thrownObject.y + 15,
+        draw: () => drawWorldObject(
+          thrownObject,
+          screenX(thrownObject.x),
+          screenY(thrownObject.y) - arc,
+          true,
+        ),
+      });
+    }
     renderables.sort((a, b) => a.sortY - b.sortY).forEach((entry) => entry.draw());
   }
   function drawEnemy(enemy) {
