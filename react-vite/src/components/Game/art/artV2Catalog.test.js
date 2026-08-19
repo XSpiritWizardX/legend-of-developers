@@ -15,6 +15,8 @@ describe("v2 game art overrides", () => {
     expect(catalogArtV2("props", "villageWell").source).toContain("village-well.svg");
     expect(catalogArtV2("props", "villageSign").source).toContain("village-sign.svg");
     expect(catalogArtV2("props", "villageLamp").source).toContain("village-lamp.svg");
+    expect(catalogArtV2("props", "villageFence").source).toContain("village-fence.svg");
+    expect(catalogArtV2("props", "bridgeVertical").source).toContain("bridge-vertical.svg");
     expect(catalogArtV2("props", "forestFlowers").source).toContain("forest-flowers.svg");
     expect(catalogArtV2("props", "forestMushrooms").source).toContain("forest-mushrooms.svg");
     expect(catalogArtV2("characters", "villagerGardener").source).toContain("villager-gardener.svg");
@@ -27,16 +29,20 @@ describe("v2 game art overrides", () => {
     expect(catalogArtV2("tiles", "wall").source).toBe("/art/v2/tiles/cave-wall.svg");
     expect(catalogArtV2("tiles", "pit").source).toBe("/art/v2/tiles/pit.svg");
     expect(catalogArtV2("props", "caveStalagmite").source).toContain("cave-stalagmite.svg");
+    expect(catalogArtV2("props", "caveBones").source).toContain("cave-bones.svg");
     expect(catalogArtV2("props", "caveTorch").source).toContain("cave-torch.svg");
   });
 
-  test("water and desert biomes use v2 terrain instead of legacy PNGs", () => {
+  test("water and desert biomes use v2 terrain and scenery instead of legacy PNGs", () => {
     expect(catalogArtV2("tiles", "water").frames).toHaveLength(2);
     expect(catalogArtV2("tiles", "deepWater").source).toContain("deep-water.svg");
     expect(catalogArtV2("tiles", "sw").source).toContain("shallow-water.svg");
     expect(catalogArtV2("tiles", "desert").source).toContain("desert-sand.svg");
     expect(catalogArtV2("tiles", "desertAlt").source).toContain("desert-cracked.svg");
     expect(catalogArtV2("tiles", "dc").source).toContain("desert-cliff.svg");
+    expect(catalogArtV2("props", "desertCactus").source).toContain("desert-cactus.svg");
+    expect(catalogArtV2("props", "desertDryBush").source).toContain("desert-dry-bush.svg");
+    expect(catalogArtV2("props", "desertRock").source).toContain("desert-rock.svg");
   });
 
   test("early combat silhouettes are all on the v2 enemy family", () => {
