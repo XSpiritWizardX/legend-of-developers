@@ -2,6 +2,8 @@ import { catalogArt } from "./artCatalog";
 import { catalogArtV2 } from "./artV2Catalog";
 import { catalogBossArtV2 } from "./bossV2Catalog";
 import { catalogEffectsArtV2 } from "./effectsV2Catalog";
+import { catalogEquipmentArtV2 } from "./equipmentV2Catalog";
+import { catalogNpcArtV2 } from "./npcV2Catalog";
 import { catalogPlayerCombatArtV2 } from "./playerCombatV2Catalog";
 import { catalogUiArtV2 } from "./uiV2Catalog";
 
@@ -107,6 +109,8 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
   const entry = catalogArtV2(category, id)
     || catalogBossArtV2(category, id)
     || catalogEffectsArtV2(category, id)
+    || catalogEquipmentArtV2(category, id)
+    || catalogNpcArtV2(category, id)
     || catalogPlayerCombatArtV2(category, id)
     || catalogUiArtV2(category, id)
     || catalogArt(category, id);
