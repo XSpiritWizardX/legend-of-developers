@@ -57,6 +57,10 @@ function contextConstructor() {
   return window.AudioContext || window.webkitAudioContext || null;
 }
 
+export function currentGameAudioContext() {
+  return audioContext;
+}
+
 export function unlockGameAudio() {
   const AudioContextClass = contextConstructor();
   if (!AudioContextClass) return null;
