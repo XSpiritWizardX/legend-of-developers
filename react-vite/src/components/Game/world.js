@@ -1,5 +1,6 @@
 import { editableRoomAt } from "./rooms/roomRegistry";
 import { indexedRoomTileAt } from "./art/tileIndex";
+import { showcaseTerrainAt } from "./showcaseTerrain";
 
 export const TILE = 64;
 export const SCREEN_COLS = 16;
@@ -191,6 +192,7 @@ export const MAPS = {
       ["ow-css", 44, 15, "bow"],
       ["ow-bombs", 58, 15, "bombs"],
       ["ow-heart-01", 4, 4, "heart"],
+      ["ow-cliff-heart", 26, 23, "heart"],
       ["ow-heart-02", 73, 24, "heart"],
       ["ow-firewall", 100, 44, "fireRod"],
       ["ow-jacket", 120, 54, "devJacket"],
@@ -344,6 +346,8 @@ function debugLabTile(tx, ty) {
 export function tileAt(mapId, tx, ty, flags = {}) {
   const map = MAPS[mapId];
   if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return "void";
+  const showcaseTile = showcaseTerrainAt(mapId, tx, ty);
+  if (showcaseTile) return showcaseTile;
   const indexedTile = indexedRoomTileAt(mapId, tx, ty);
   if (indexedTile) return indexedTile.tile;
   if (mapId === "overworld") return overworldTile(tx, ty, flags);
