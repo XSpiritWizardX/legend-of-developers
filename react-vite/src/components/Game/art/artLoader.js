@@ -1,5 +1,6 @@
 import { catalogArt } from "./artCatalog";
 import { catalogArtV2 } from "./artV2Catalog";
+import { catalogBossArtV2 } from "./bossV2Catalog";
 
 const imageCache = new Map();
 
@@ -100,7 +101,9 @@ function cachedImage(source) {
 }
 
 export function drawCatalogArt(ctx, category, id, x, y, width, height, options = {}) {
-  const entry = catalogArtV2(category, id) || catalogArt(category, id);
+  const entry = catalogArtV2(category, id)
+    || catalogBossArtV2(category, id)
+    || catalogArt(category, id);
   const sources = entry?.frames || (entry?.source ? [entry.source] : []);
   sources.forEach(cachedImage);
   const frameDuration = entry?.frameDuration || 240;

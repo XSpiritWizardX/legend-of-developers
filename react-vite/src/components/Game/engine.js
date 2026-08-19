@@ -22,6 +22,7 @@ import {
   facingWorldObject, moveWorldObject, pushDestination, removeWorldObject,
   worldObjectAtPoint,
 } from "./worldObjects";
+import { worldObjectDrawBox } from "./worldObjectArt";
 
 const VIEW_W = 1024;
 const VIEW_H = 640;
@@ -1730,6 +1731,19 @@ export function createGame(canvas, { initialSave, onSave }) {
     ctx.beginPath();
     ctx.ellipse(x, shadowY, carried ? 12 : 18, carried ? 4 : 6, 0, 0, Math.PI * 2);
     ctx.fill();
+    const artBox = worldObjectDrawBox(object.kind, x, y, { carried });
+    if (artBox && drawCatalogArt(
+      ctx,
+      "props",
+      artBox.id,
+      artBox.x,
+      artBox.y,
+      artBox.width,
+      artBox.height,
+    )) {
+      ctx.restore();
+      return;
+    }
     if (object.kind === WORLD_OBJECT_KIND.POT) {
       rect(x - 15, y - 18, 30, 27, "#985334");
       rect(x - 18, y - 20, 36, 7, "#d08352");
