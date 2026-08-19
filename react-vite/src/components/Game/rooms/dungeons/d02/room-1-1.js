@@ -1,5 +1,6 @@
 export default {
-  id: "d02:1,1", variant: 0, wallRects: [[2, 2, 3, 1], [11, 2, 3, 1], [2, 7, 4, 1], [10, 7, 4, 1]],
+  id: "d02:1,1", name: "Pressure Core", variant: 0,
+  wallRects: [[2, 2, 3, 1], [11, 2, 3, 1], [2, 7, 4, 1], [10, 7, 4, 1]],
   floor: [
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
     ".. rf rf rf rf rf rf rf rf rf rf rf rf rf rf ..",
@@ -13,8 +14,11 @@ export default {
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
   ],
   assets: [
-    { type: "dungeonStatue", x: 3, y: 4 },
-    { type: "dungeonSwitch", x: 12, y: 4 },
+    { type: "dungeonPillar", x: 3, y: 4 },
+    { type: "dungeonPillar", x: 12, y: 4 },
+    { type: "dungeonTerminal", x: 8, y: 5, solid: false },
     { type: "dungeonBarrier", x: 7, y: 6, solid: false },
+    { type: "caveTorch", x: 6, y: 3, solid: false },
+    { type: "caveTorch", x: 9, y: 3, solid: false },
   ],
 };
