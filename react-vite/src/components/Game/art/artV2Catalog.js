@@ -173,6 +173,21 @@ export const ART_V2_CATALOG = {
       offsetX: -4,
       offsetY: -8,
     },
+    worldPot: {
+      source: "/art/v2/props/world-pot.svg",
+      width: 64,
+      height: 72,
+    },
+    worldRock: {
+      source: "/art/v2/props/world-rock.svg",
+      width: 72,
+      height: 64,
+    },
+    worldBrush: {
+      source: "/art/v2/props/world-brush.svg",
+      width: 72,
+      height: 56,
+    },
   },
   buildings: {
     villageHouse: {
