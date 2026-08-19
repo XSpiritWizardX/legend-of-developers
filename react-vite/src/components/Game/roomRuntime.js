@@ -22,7 +22,7 @@ export function resolveRoomRuntime({
     targetCamera: { x: targetCamera.x, y: targetCamera.y },
     discoveryKey: `${mapId}:room:${room.id}`,
     title: room.name,
-    usesLegacyTransitions: Boolean(room.legacy),
+    usesLegacyTransitions: Boolean(room.legacy || room.useLegacyTransitions),
   };
 }
 
