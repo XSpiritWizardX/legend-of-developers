@@ -1,11 +1,17 @@
-import { interiorByMapId } from "./interiors";
-import { MAPS, TILE, isSolid, tileAt } from "./world";
+import { interiorByMapId, interiorPixelPosition } from "./interiors";
+import { DUNGEONS, MAPS, TILE, isSolid, tileAt } from "./world";
 
 describe("Willowbrook Hollow world", () => {
   test("map dimensions match the authored 12x8 logical room", () => {
     const hollow = interiorByMapId("willowCave");
     expect(MAPS.willowCave.width).toBe(hollow.size.width);
     expect(MAPS.willowCave.height).toBe(hollow.size.height);
+  });
+
+  test("existing portal machinery points at the canonical Hollow entrance", () => {
+    const hollow = interiorByMapId("willowCave");
+    const portal = DUNGEONS.find((entry) => entry.id === "willowCave");
+    expect(portal?.entrance).toEqual(interiorPixelPosition(hollow.entrance, TILE));
   });
 
   test("outer cave walls enclose the small room except for its south exit", () => {
