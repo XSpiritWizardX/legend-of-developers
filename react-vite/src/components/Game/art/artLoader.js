@@ -1,4 +1,5 @@
 import { catalogArt } from "./artCatalog";
+import { catalogArtV2 } from "./artV2Catalog";
 
 const imageCache = new Map();
 
@@ -99,7 +100,7 @@ function cachedImage(source) {
 }
 
 export function drawCatalogArt(ctx, category, id, x, y, width, height, options = {}) {
-  const entry = catalogArt(category, id);
+  const entry = catalogArtV2(category, id) || catalogArt(category, id);
   const sources = entry?.frames || (entry?.source ? [entry.source] : []);
   sources.forEach(cachedImage);
   const frameDuration = entry?.frameDuration || 240;
@@ -111,8 +112,8 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
 
   const drawWidth = entry.width || width;
   const drawHeight = entry.height || height;
-  const drawX = x + (entry.offsetX || 0);
-  const drawY = y + (entry.offsetY || 0);
+  const drawX = Math.round(x + (entry.offsetX || 0));
+  const drawY = Math.round(y + (entry.offsetY || 0));
   const flipX = options.flipX ?? entry.flipX;
 
   ctx.save();
@@ -134,8 +135,8 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
       : 1;
     const fittedWidth = sheet.trimTransparent ? source.width * scale : drawWidth;
     const fittedHeight = sheet.trimTransparent ? source.height * scale : drawHeight;
-    const fittedX = drawX + (drawWidth - fittedWidth) / 2;
-    const fittedY = drawY + drawHeight - fittedHeight;
+    const fittedX = Math.round(drawX + (drawWidth - fittedWidth) / 2);
+    const fittedY = Math.round(drawY + drawHeight - fittedHeight);
     if (flipX) {
       ctx.translate(drawX + drawWidth, drawY);
       ctx.scale(-1, 1);
@@ -145,7 +146,7 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
         source.y,
         source.width,
         source.height,
-        drawWidth - (fittedX - drawX) - fittedWidth,
+        Math.round(drawWidth - (fittedX - drawX) - fittedWidth),
         fittedY - drawY,
         fittedWidth,
         fittedHeight,
