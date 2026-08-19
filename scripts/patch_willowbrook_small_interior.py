@@ -1,7 +1,6 @@
 from pathlib import Path
 
 WORLD = Path("react-vite/src/components/Game/world.js")
-ENGINE = Path("react-vite/src/components/Game/engine.js")
 
 
 def replace_once(text, old, new, label):
@@ -12,6 +11,12 @@ def replace_once(text, old, new, label):
 
 
 world = WORLD.read_text()
+world = replace_once(
+    world,
+    '  {\n    id: "d03", name: "Crystalwater Vault", number: 3, theme: "water",\n    reward: "backendApi", entrance: { x: 136 * TILE + 32, y: 64 * TILE + 32 },\n  },\n];',
+    '  {\n    id: "d03", name: "Crystalwater Vault", number: 3, theme: "water",\n    reward: "backendApi", entrance: { x: 136 * TILE + 32, y: 64 * TILE + 32 },\n  },\n  {\n    id: "willowCave", name: "Willowbrook Hollow", number: "H", theme: "cave",\n    reward: null, entrance: { x: 37 * TILE + 32, y: 16 * TILE + 32 },\n  },\n];',
+    "small interior entrance",
+)
 world = replace_once(
     world,
     '  d01: {\n    id: "d01", name: "Temple I · Rootbound Temple", number: 1, theme: "forest",',
@@ -49,45 +54,3 @@ world = replace_once(
     "small interior no legacy exits",
 )
 WORLD.write_text(world)
-
-engine = ENGINE.read_text()
-engine = replace_once(
-    engine,
-    'import {\n  WORLD_OBJECT_KIND, activeWorldObjects, breakableBySword, canLiftWorldObject,\n  facingWorldObject, moveWorldObject, pushDestination, removeWorldObject,\n  worldObjectAtPoint,\n} from "./worldObjects";\n',
-    'import {\n  WORLD_OBJECT_KIND, activeWorldObjects, breakableBySword, canLiftWorldObject,\n  facingWorldObject, moveWorldObject, pushDestination, removeWorldObject,\n  worldObjectAtPoint,\n} from "./worldObjects";\nimport {\n  INTERIORS, interiorByMapId, interiorEntranceNear, interiorPixelPosition,\n} from "./interiors";\n',
-    "interior imports",
-)
-engine = replace_once(
-    engine,
-    '    if (state.mapId === "overworld") {\n      const dungeon = DUNGEONS.find((entry) => Math.hypot(player.x - entry.entrance.x, player.y - entry.entrance.y) < 88);\n',
-    '    if (state.mapId === "overworld") {\n      const interior = interiorEntranceNear({\n        mapId: state.mapId, x: player.x, y: player.y, tileSize: TILE, radius: 82,\n      });\n      if (interior) {\n        changeMap(interior.id, interiorPixelPosition(interior.spawn, TILE));\n        announce(`ENTERED ${interior.name.toUpperCase()}`, 2);\n        return;\n      }\n      const dungeon = DUNGEONS.find((entry) => Math.hypot(player.x - entry.entrance.x, player.y - entry.entrance.y) < 88);\n',
-    "enter small interior",
-)
-engine = replace_once(
-    engine,
-    '    } else if (state.mapId === "debugLab" && Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {\n',
-    '    } else if (interiorByMapId(state.mapId) && Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {\n      const interior = interiorByMapId(state.mapId);\n      changeMap(interior.returnTo.mapId, interiorPixelPosition(interior.returnTo, TILE));\n      announce(`LEFT ${interior.name.toUpperCase()}`, 1.8);\n      return;\n    } else if (state.mapId === "debugLab" && Math.hypot(player.x - currentMap.exit.x, player.y - currentMap.exit.y) < 82) {\n',
-    "exit small interior",
-)
-engine = replace_once(
-    engine,
-    '    if (state.mapId === "overworld") {\n      DUNGEONS.forEach((dungeon) => {\n',
-    '''    if (state.mapId === "overworld") {
-      INTERIORS.forEach((interior) => {
-        const entrance = interiorPixelPosition(interior.entrance, TILE);
-        const x = screenX(entrance.x);
-        const y = screenY(entrance.y);
-        if (x < -80 || y < -80 || x > VIEW_W + 80 || y > VIEW_H + 80) return;
-        rect(x - 43, y - 28, 86, 55, "#4a4e52");
-        rect(x - 35, y - 21, 70, 48, "#292e34");
-        rect(x - 25, y - 13, 50, 40, "#05070b");
-        rect(x - 39, y - 31, 78, 8, "#777c74");
-        rect(x - 34, y - 25, 8, 45, "#62675f");
-        rect(x + 26, y - 25, 8, 45, "#62675f");
-        text("HOLLOW", x, y + 43, 8, "center", "#d9d3b4");
-      });
-      DUNGEONS.forEach((dungeon) => {
-''',
-    "draw small interior entrance",
-)
-ENGINE.write_text(engine)
