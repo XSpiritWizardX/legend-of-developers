@@ -8,7 +8,9 @@ describe("contextual action prompts", () => {
   test("world objects expose lift, push, and cut actions", () => {
     expect(contextActionLabel({ worldObject: { kind: "pot" }, canLift: true })).toEqual({ key: "L", label: "LIFT" });
     expect(contextActionLabel({ worldObject: { pushable: true }, canLift: false })).toEqual({ key: "L", label: "PUSH" });
-    expect(contextActionLabel({ worldObject: { cuttable: true }, canLift: false })).toEqual({ key: "H", label: "CUT" });
+    const cut = contextActionLabel({ worldObject: { cuttable: true }, canLift: false });
+    expect(cut).toEqual({ key: "H", label: "CUT" });
+    expect(contextActionText(cut)).toBe("H · CUT");
   });
 
   test("world interactions expose clear verbs", () => {
