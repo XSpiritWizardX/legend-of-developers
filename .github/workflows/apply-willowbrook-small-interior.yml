@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: apply-willowbrook-small-interior
+  cancel-in-progress: true
+
 jobs:
   integrate-interior:
     if: github.actor != 'github-actions[bot]'
