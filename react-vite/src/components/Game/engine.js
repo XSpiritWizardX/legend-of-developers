@@ -17,6 +17,7 @@ import {
 } from "./enemyAttacks";
 import { enemyMotion } from "./enemyBehaviors";
 import { GAME_SFX, playGameSfx, unlockGameAudio } from "./gameAudio";
+import { stopAdaptiveMusic, syncAdaptiveMusic } from "./gameMusic";
 import {
   ROOTBOUND_FLAG, nextRootboundStoryBeat, resolveRootboundAction,
   rootboundBossAttackCooldown, rootboundBossPhase, rootboundBossSpeedScale,
@@ -322,6 +323,18 @@ export function createGame(canvas, { initialSave, onSave }) {
     });
   }
   buildEnemies(state.mapId);
+
+  function syncMusic() {
+    const livingBoss = (enemiesByMap[state.mapId] || [])
+      .find((enemy) => isPermanentEnemy(enemy.type) && enemy.hp > 0);
+    syncAdaptiveMusic({
+      mapId: state.mapId,
+      mapTheme: map().theme,
+      roomTitle: roomRuntimeTitle(),
+      bossType: livingBoss?.type,
+      bossPhase: livingBoss?.rootboundPhase || 1,
+    });
+  }
 
   function snapshot() {
     return {
@@ -1334,7 +1347,9 @@ export function createGame(canvas, { initialSave, onSave }) {
       particle.vy = particle.vy * 0.91 + 85 * dt;
     });
     particles = particles.filter((particle) => particle.life > 0);
-    if (!running || paused || mapOpen || inventoryOpen || merchantOpen) return;
+    if (!running) return;
+    syncMusic();
+    if (paused || mapOpen || inventoryOpen || merchantOpen) return;
     if (hitStop > 0) {
       hitStop = Math.max(0, hitStop - dt);
       return;
@@ -3074,6 +3089,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     },
     destroy() {
       cancelAnimationFrame(frame);
+      stopAdaptiveMusic();
       document.removeEventListener("keydown", keydown);
       document.removeEventListener("keyup", keyup);
       window.removeEventListener("blur", releaseAllKeys);
