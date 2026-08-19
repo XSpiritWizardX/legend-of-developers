@@ -1044,12 +1044,12 @@ export function createGame(canvas, { initialSave, onSave }) {
     spawnParticles(
       enemy.x,
       enemy.y - 10,
-      isPermanentEnemy(enemy.type) ? "#f0c75e" : "#42efd4",
+      isPermanentEnemy(enemy.type) ? "#f0c75e" : "#8fa39a",
       isPermanentEnemy(enemy.type) ? 16 : 9,
       isPermanentEnemy(enemy.type) ? 190 : 125,
     );
     if (enemy.hp <= 0) {
-      spawnParticles(enemy.x, enemy.y, boss ? "#f02ea5" : "#d9fff8", boss ? 36 : 18, 230);
+      spawnParticles(enemy.x, enemy.y, boss ? "#b96f5d" : "#d9fff8", boss ? 36 : 18, 230);
       screenShake = Math.max(screenShake, boss ? 18 : 7);
       if (boss) state.killed[enemy.id] = true;
       player.coins += boss ? 50 + (map().number || 0) * 5 : 2;
@@ -1469,7 +1469,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.translate(-x, -y);
         if (tile === "grass" || tile === "grassAlt") {
           rect(x + 4, y + 9, 20, 2, "#1b7774");
-          rect(x + 34, y + 31, 10, 2, "#d52f9a");
+          rect(x + 34, y + 31, 10, 2, "#a76558");
           rect(x + 10, y + 38, 3, 3, "#45f3d2");
         }
         if (tile === "water") {
@@ -1496,7 +1496,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           rect(x + 6, y + 12, 17, 25, "#12675f");
           rect(x + 22, y + 5, 20, 34, "#164b5e");
           rect(x + 10, y + 18, 28, 3, "#31e1c8");
-          rect(x + 18, y + 10, 3, 29, "#d52f9a");
+          rect(x + 18, y + 10, 3, 29, "#a76558");
           text("</>", x + 24, y + 31, 9, "center", "#b9fff5");
         }
         if (tile === "callbackNode" || tile === "callbackNode2") {
@@ -1504,7 +1504,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           rect(x + 3, y + 3, 42, 42, advanced ? "#421b4d" : "#182650");
           rect(x + 7, y + 7, 34, 34, "#080d1b");
           const pulse = 4 + (animationFrame % 3) * 2;
-          ctx.strokeStyle = advanced ? "#f02ea5" : "#42efd4";
+          ctx.strokeStyle = advanced ? "#b96f5d" : "#8fa39a";
           ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(x + 24, y + 24, 8 + pulse, 0, Math.PI * 2); ctx.stroke();
           text(advanced ? "await" : "JS", x + 24, y + 28, advanced ? 7 : 10, "center", advanced ? "#f09bd6" : "#b9fff5");
@@ -1603,7 +1603,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       const pulse = Math.sin(performance.now() / 55) * 3;
       ctx.save();
       ctx.globalAlpha = 0.35 + chargeProgress * 0.55;
-      ctx.strokeStyle = player.inventory.masterSword ? "#ffd45e" : "#42e9ff";
+      ctx.strokeStyle = player.inventory.masterSword ? "#d4b76b" : "#9aa9a1";
       ctx.lineWidth = 2 + chargeProgress * 3;
       ctx.beginPath();
       ctx.arc(x, y - 4, 20 + chargeProgress * 18 + pulse, 0, Math.PI * 2);
@@ -1649,7 +1649,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.moveTo(handX - facing.x * 5, handY - facing.y * 5);
         ctx.lineTo(handX + facing.x * 4, handY + facing.y * 4);
         ctx.stroke();
-        ctx.strokeStyle = upgraded ? "#fff1a3" : "#d7fbff";
+        ctx.strokeStyle = upgraded ? "#e9dfbf" : "#ddd8c7";
         ctx.lineWidth = upgraded ? 5 : 4;
         ctx.beginPath();
         ctx.moveTo(handX + facing.x * 3, handY + facing.y * 3);
@@ -1658,7 +1658,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           handY + facing.y * bladeLength,
         );
         ctx.stroke();
-        ctx.strokeStyle = upgraded ? "#ff9b45" : "#3fdff5";
+        ctx.strokeStyle = upgraded ? "#bf7d4b" : "#8e9b96";
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
@@ -1672,49 +1672,49 @@ export function createGame(canvas, { initialSave, onSave }) {
 
     // Boots and legs animate independently from the upper body. The oval
     // ground shadow above anchors the character at this same foot position.
-    const bootColor = player.inventory.boots ? "#42efd4" : "#111827";
+    const bootColor = player.inventory.boots ? "#8fa39a" : "#111827";
     rect(x - 10 + step, y + 9, 8, 9, bootColor);
     rect(x + 2 - step, y + 9, 8, 9, bootColor);
 
     if (renderDirection === "down") {
-      rect(x - 11, y - 7, 22, 20, "#5a2a80");
+      rect(x - 11, y - 7, 22, 20, "#405777");
       rect(x - 14, y - 4, 5, 13, "#d6ae7b");
       rect(x + 9, y - 4, 5, 13, "#d6ae7b");
       rect(x - 9, y - 20, 18, 14, "#e3bd86");
       rect(x - 10, y - 24, 20, 8, "#10283f");
-      rect(x + 7, y - 26, 10, 5, "#11bda8");
+      rect(x + 7, y - 26, 10, 5, "#71887a");
       rect(x - 5, y - 14, 3, 3, "#243039");
       rect(x + 3, y - 14, 3, 3, "#243039");
       rect(x - 4, y - 8, 8, 2, "#a16c52");
-      rect(x - 5, y - 1, 10, 5, "#12dcc2");
+      rect(x - 5, y - 1, 10, 5, "#7d9182");
     } else if (renderDirection === "up") {
-      rect(x - 11, y - 7, 22, 20, "#5a2a80");
+      rect(x - 11, y - 7, 22, 20, "#405777");
       rect(x - 9, y - 20, 18, 14, "#173f55");
       rect(x - 6, y - 18, 12, 4, "#225d6b");
       rect(x - 11, y - 24, 22, 9, "#10283f");
-      rect(x - 17, y - 25, 12, 5, "#11bda8");
+      rect(x - 17, y - 25, 12, 5, "#71887a");
       rect(x - 8, y - 4, 16, 15, "#9b493d");
       rect(x - 5, y - 1, 10, 8, "#b55b46");
       rect(x - 2, y + 1, 4, 4, "#d7b552");
     } else {
       const facingRight = renderDirection === "right";
       const mirror = facingRight ? 1 : -1;
-      rect(x - 10, y - 7, 20, 20, "#5a2a80");
+      rect(x - 10, y - 7, 20, 20, "#405777");
       rect(x - 8, y - 20, 16, 14, "#dfb780");
       rect(x - 9, y - 24, 18, 8, "#10283f");
-      rect(x + mirror * 6, y - 23, mirror * 12, 5, "#11bda8");
+      rect(x + mirror * 6, y - 23, mirror * 12, 5, "#71887a");
       rect(x + mirror * 5 - (facingRight ? 0 : 3), y - 14, 3, 3, "#243039");
       rect(x - mirror * 12 - (facingRight ? 4 : 0), y - 2, 7, 14, "#9b493d");
       rect(x + mirror * 7 - (facingRight ? 0 : 5), y - 3, 5, 13, "#d6ae7b");
     }
 
     // Tunic hem gives the character a stronger animated silhouette.
-    rect(x - 12, y + 7, 24, 5, "#41205f");
-    rect(x - 8, y + 12, 6, 3, "#41205f");
-    rect(x + 2, y + 12, 6, 3, "#41205f");
+    rect(x - 12, y + 7, 24, 5, "#334864");
+    rect(x - 8, y + 12, 6, 3, "#334864");
+    rect(x + 2, y + 12, 6, 3, "#334864");
     if (player.inventory.devJacket) {
-      rect(x - 10, y - 6, 20, 5, "#f02ea5aa");
-      rect(x - 7, y, 14, 3, "#42efd4");
+      rect(x - 10, y - 6, 20, 5, "#b96f5daa");
+      rect(x - 7, y, 14, 3, "#8fa39a");
     }
     if (player.inventory.glove) {
       rect(x - 15, y + 1, 5, 8, "#ffd54a");
@@ -1723,7 +1723,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (player.inventory.shield) {
       const shieldX = renderDirection === "left" ? x + 13 : x - 19;
       rect(shieldX, y - 8, 9, 22, "#1a7181");
-      rect(shieldX + 2, y - 5, 5, 14, "#42efd4");
+      rect(shieldX + 2, y - 5, 5, 14, "#8fa39a");
     }
 
     ctx.restore();
@@ -1832,7 +1832,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       if (boss) {
         const maxHp = 14 + (map().number || 0);
         rect(x - 43, y - 59, 86, 7, "#080914dd");
-        rect(x - 41, y - 57, 82 * Math.max(0, enemy.hp / maxHp), 3, "#f02ea5");
+        rect(x - 41, y - 57, 82 * Math.max(0, enemy.hp / maxHp), 3, "#b96f5d");
       }
       return;
     }
@@ -1840,7 +1840,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (enemy.type === "slime") {
       const squish = Math.sin(enemy.phase * 6) > 0.5 ? 3 : 0;
       rect(x - 17, y - 8 + squish, 34, 20 - squish, stunned ? "#ffe75c" : "#b21a7b");
-      rect(x - 13, y - 14 + squish, 26, 17 - squish, stunned ? "#fff18c" : "#f02ea5");
+      rect(x - 13, y - 14 + squish, 26, 17 - squish, stunned ? "#fff18c" : "#b96f5d");
       rect(x - 8, y - 5 + squish, 4, 5, "#17201b");
       rect(x + 5, y - 5 + squish, 4, 5, "#17201b");
       rect(x - 11, y - 11 + squish, 8, 3, "#bddd6d");
@@ -1892,7 +1892,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         if (rewardType === "htmlSword") {
           const bob = Math.sin(performance.now() / 260) * 4;
           ctx.globalAlpha = 0.28;
-          ctx.fillStyle = "#42efd4";
+          ctx.fillStyle = "#8fa39a";
           ctx.beginPath();
           ctx.arc(x, y - 50 + bob, 27, 0, Math.PI * 2);
           ctx.fill();
@@ -1948,7 +1948,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         rect(x - 10 - fusePulse, y - 8 - fusePulse, 20 + fusePulse * 2, 18 + fusePulse * 2, fusePulse ? "#4b204b" : "#171722");
         rect(x - 7, y - 12, 14, 7, "#29293a");
         rect(x + 4, y - 15, 3, 8, "#efb950");
-        rect(x + 3 - fusePulse * 2, y - 19 - fusePulse * 2, 7 + fusePulse * 4, 7 + fusePulse * 4, fusePulse ? "#fff27a" : "#f02ea5");
+        rect(x + 3 - fusePulse * 2, y - 19 - fusePulse * 2, 7 + fusePulse * 4, 7 + fusePulse * 4, fusePulse ? "#fff27a" : "#b96f5d");
       }
     });
     cssPulses.forEach((pulse) => {
@@ -1963,13 +1963,13 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx, "effects", "cssPulse", -flare * 1.5, -flare * 1.5, flare * 3, flare * 3,
       );
       if (!pulseDrawn) {
-        ctx.strokeStyle = "#f02ea5";
+        ctx.strokeStyle = "#b96f5d";
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.arc(0, 0, flare, 0, Math.PI * 2);
         ctx.stroke();
-        text("{", -15, 7, 19, "center", "#42efd4");
-        text("}", 15, 7, 19, "center", "#42efd4");
+        text("{", -15, 7, 19, "center", "#8fa39a");
+        text("}", 15, 7, 19, "center", "#8fa39a");
       }
       ctx.restore();
       ctx.fillStyle = "#b8fff6aa";
@@ -2024,7 +2024,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.lineCap = "round";
         ctx.strokeStyle = upgraded
           ? `rgba(255,239,137,${fade})`
-          : `rgba(190,249,255,${fade})`;
+          : `rgba(221,216,199,${fade})`;
         ctx.lineWidth = upgraded ? 8 : 6;
         ctx.beginPath();
         ctx.arc(x, y - 4, radius, startAngle, endAngle, !reverseForRight);
@@ -2032,7 +2032,7 @@ export function createGame(canvas, { initialSave, onSave }) {
 
         ctx.strokeStyle = upgraded
           ? `rgba(255,126,70,${fade})`
-          : `rgba(55,224,255,${fade})`;
+          : `rgba(142,155,150,${fade})`;
         ctx.lineWidth = upgraded ? 3 : 2;
         ctx.beginPath();
         ctx.arc(x, y - 4, radius + 1, startAngle, endAngle, !reverseForRight);
@@ -2057,7 +2057,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           y - 4 + swordY * (handDistance + 4),
         );
         ctx.stroke();
-        ctx.strokeStyle = upgraded ? "#fff1a3" : "#d7fbff";
+        ctx.strokeStyle = upgraded ? "#e9dfbf" : "#ddd8c7";
         ctx.lineWidth = upgraded ? 6 : 5;
         ctx.beginPath();
         ctx.moveTo(
@@ -2066,7 +2066,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         );
         ctx.lineTo(tipX, tipY);
         ctx.stroke();
-        ctx.strokeStyle = upgraded ? "#ff9b45" : "#3fdff5";
+        ctx.strokeStyle = upgraded ? "#bf7d4b" : "#8e9b96";
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -2077,15 +2077,15 @@ export function createGame(canvas, { initialSave, onSave }) {
         const fade = Math.max(0, 1 - progress * 0.82);
         ctx.lineCap = "round";
         ctx.strokeStyle = effect.upgraded
-          ? `rgba(255,211,78,${fade})`
-          : `rgba(190,249,255,${fade})`;
+          ? `rgba(212,183,107,${fade})`
+          : `rgba(221,216,199,${fade})`;
         ctx.lineWidth = effect.upgraded ? 13 : 10;
         ctx.beginPath();
         ctx.arc(x, y - 4, radius, rotation - 2.3, rotation + 1.8);
         ctx.stroke();
         ctx.strokeStyle = effect.upgraded
-          ? `rgba(255,112,45,${fade})`
-          : `rgba(55,224,255,${fade})`;
+          ? `rgba(191,125,75,${fade})`
+          : `rgba(142,155,150,${fade})`;
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.arc(x, y - 4, radius + 2, rotation - 2.3, rotation + 1.8);
@@ -2095,7 +2095,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         const endX = screenX(effect.endX);
         const endY = screenY(effect.endY);
         ctx.globalAlpha = Math.max(0, 0.65 * (1 - progress));
-        ctx.strokeStyle = effect.upgraded ? "#ffd45e" : "#42e9ff";
+        ctx.strokeStyle = effect.upgraded ? "#d4b76b" : "#9aa9a1";
         ctx.lineWidth = 16 - progress * 10;
         ctx.lineCap = "round";
         ctx.beginPath();
@@ -2110,12 +2110,12 @@ export function createGame(canvas, { initialSave, onSave }) {
         const reach = progress < 0.55 ? progress / 0.55 : (1 - progress) / 0.45;
         const tipX = x + (endX - x) * Math.max(0, reach);
         const tipY = y + (endY - y) * Math.max(0, reach);
-        ctx.strokeStyle = "#42efd4";
+        ctx.strokeStyle = "#8fa39a";
         ctx.lineWidth = 5;
         ctx.setLineDash([10, 6]);
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tipX, tipY); ctx.stroke();
         ctx.setLineDash([]);
-        rect(tipX - 8, tipY - 8, 16, 16, "#f02ea5");
+        rect(tipX - 8, tipY - 8, 16, 16, "#b96f5d");
       }
       if (effect.type === "fire" || effect.type === "ice") {
         const hot = effect.type === "fire";
@@ -2133,7 +2133,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         );
         ctx.globalAlpha = 1;
         if (!burstDrawn) {
-          ctx.strokeStyle = hot ? `rgba(255,80,90,${1 - progress})` : `rgba(80,235,255,${1 - progress})`;
+          ctx.strokeStyle = hot ? `rgba(185,94,80,${1 - progress})` : `rgba(141,165,165,${1 - progress})`;
           ctx.lineWidth = 9 - progress * 6;
           ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke();
         }
@@ -2144,10 +2144,10 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.translate(x, y);
         ctx.rotate(facing + angle);
         rect(12, -5, 40, 10, "#8656a5");
-        rect(42, -17, 27, 34, "#42efd4");
+        rect(42, -17, 27, 34, "#8fa39a");
         ctx.rotate(-(facing + angle));
         ctx.translate(-x, -y);
-        ctx.strokeStyle = `rgba(240,46,165,${1 - progress})`;
+        ctx.strokeStyle = `rgba(185,111,93,${1 - progress})`;
         ctx.lineWidth = 5;
         ctx.beginPath(); ctx.arc(x, y, 30 + progress * 65, 0, Math.PI * 2); ctx.stroke();
       }
@@ -2155,7 +2155,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         const radius = 35 + Math.sin(progress * Math.PI) * 150;
         const glow = ctx.createRadialGradient(x, y, 4, x, y, radius);
         glow.addColorStop(0, "rgba(255,245,145,.75)");
-        glow.addColorStop(1, "rgba(66,239,212,0)");
+        glow.addColorStop(1, "rgba(143,163,154,0)");
         ctx.fillStyle = glow;
         ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
         text("</>", x, y + 7, 14, "center", "#fff59a");
@@ -2163,15 +2163,15 @@ export function createGame(canvas, { initialSave, onSave }) {
       if (effect.type === "mirror") {
         for (let band = 0; band < 7; band += 1) {
           const width = 45 + band * 18 + progress * 60;
-          rect(x - width / 2 + Math.sin(progress * 30 + band) * 12, y - 52 + band * 17, width, 4, band % 2 ? "#42efd4aa" : "#f02ea5aa");
+          rect(x - width / 2 + Math.sin(progress * 30 + band) * 12, y - 52 + band * 17, width, 4, band % 2 ? "#8fa39aaa" : "#b96f5daa");
         }
       }
       if (effect.type === "cape") {
-        ctx.strokeStyle = `rgba(240,46,165,${1 - progress})`;
+        ctx.strokeStyle = `rgba(185,111,93,${1 - progress})`;
         ctx.lineWidth = 8;
         ctx.beginPath(); ctx.ellipse(x, y, 28 + progress * 55, 42 + progress * 35, 0, 0, Math.PI * 2); ctx.stroke();
-        rect(x - 20 - progress * 20, y - 35, 8, 70, "#42efd455");
-        rect(x + 12 + progress * 20, y - 35, 8, 70, "#42efd455");
+        rect(x - 20 - progress * 20, y - 35, 8, 70, "#8fa39a55");
+        rect(x + 12 + progress * 20, y - 35, 8, 70, "#8fa39a55");
       }
       if (effect.type === "root") {
         const size = 90 + progress * 240;
@@ -2183,7 +2183,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         if (!rootDrawn) {
           for (let ring = 0; ring < 4; ring += 1) {
             const ringProgress = Math.max(0, progress - ring * 0.1);
-            ctx.strokeStyle = ring % 2 ? `rgba(66,239,212,${1 - progress})` : `rgba(240,46,165,${1 - progress})`;
+            ctx.strokeStyle = ring % 2 ? `rgba(143,163,154,${1 - progress})` : `rgba(185,111,93,${1 - progress})`;
             ctx.lineWidth = 5;
             ctx.beginPath(); ctx.arc(x, y, ringProgress * (180 + ring * 45), 0, Math.PI * 2); ctx.stroke();
           }
@@ -2202,7 +2202,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.lineWidth = 3;
       ctx.strokeRect(80, 64, 864, 512);
     }
-    text(state.mapId === "overworld" ? "THE REALM OF EVERDAWN" : map().name.toUpperCase(), VIEW_W / 2, 103, 22, "center", "#42efd4");
+    text(state.mapId === "overworld" ? "THE REALM OF EVERDAWN" : map().name.toUpperCase(), VIEW_W / 2, 103, 22, "center", "#8fa39a");
 
     const scale = Math.min(10, 760 / map().width, 330 / map().height);
     const mapWidth = map().width * scale;
@@ -2222,7 +2222,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       }
     }
 
-    ctx.strokeStyle = "#d52f9a66";
+    ctx.strokeStyle = "#a7655866";
     ctx.lineWidth = 2;
     for (let sx = 0; sx <= map().width; sx += 16) {
       ctx.beginPath(); ctx.moveTo(originX + sx * scale, originY); ctx.lineTo(originX + sx * scale, originY + mapHeight); ctx.stroke();
@@ -2315,14 +2315,14 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (!merchantOpen) return;
     rect(180, 82, 600, 430, "#11131ff8");
     drawCatalogArt(ctx, "ui", "menuPanelFrame", 180, 82, 600, 430);
-    text(`${merchantOpen.name.toUpperCase()}'S TRADING POST`, 480, 140, 22, "center", "#42efd4");
+    text(`${merchantOpen.name.toUpperCase()}'S TRADING POST`, 480, 140, 22, "center", "#8fa39a");
     merchantOpen.stock.forEach(([item, price], index) => {
       const selected = merchantCursor === index;
       const label = itemLabel(item);
       const y = 174 + index * 58;
       rect(245, y, 470, 44, selected ? "#263657" : "#171a29");
       if (selected) {
-        ctx.strokeStyle = "#42efd4";
+        ctx.strokeStyle = "#8fa39a";
         ctx.lineWidth = 3;
         ctx.strokeRect(245, y, 470, 44);
       }
@@ -2335,7 +2335,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     const exitSelected = merchantCursor === exitIndex;
     rect(245, exitY, 470, 44, exitSelected ? "#4a233d" : "#171a29");
     if (exitSelected) {
-      ctx.strokeStyle = "#f02ea5";
+      ctx.strokeStyle = "#b96f5d";
       ctx.lineWidth = 3;
       ctx.strokeRect(245, exitY, 470, 44);
     }
@@ -2349,15 +2349,15 @@ export function createGame(canvas, { initialSave, onSave }) {
     const gear = availableLoadout();
     rect(90, 72, 844, 500, "#070b18fa");
     if (!drawCatalogArt(ctx, "ui", "menuPanelFrame", 90, 72, 844, 500)) {
-      ctx.strokeStyle = "#42efd4";
+      ctx.strokeStyle = "#8fa39a";
       ctx.lineWidth = 3;
       ctx.strokeRect(100, 82, 824, 480);
     }
-    text("EQUIPMENT", 512, 116, 25, "center", "#42efd4");
+    text("EQUIPMENT", 512, 116, 25, "center", "#8fa39a");
 
     // Player paper-doll preview.
     rect(118, 140, 190, 205, "#0d1525");
-    ctx.strokeStyle = "#42efd4";
+    ctx.strokeStyle = "#8fa39a";
     ctx.lineWidth = 2;
     ctx.strokeRect(118, 140, 190, 205);
     text("ADVENTURER", 213, 163, 10, "center", "#f09bd6");
@@ -2390,15 +2390,15 @@ export function createGame(canvas, { initialSave, onSave }) {
       const y = 145 + row * 82;
       const acquired = level > 0;
       rect(x, y, 260, 68, acquired ? "#263657" : "#101522");
-      ctx.strokeStyle = level > 0 ? "#42efd4" : "#343b4c";
+      ctx.strokeStyle = level > 0 ? "#8fa39a" : "#343b4c";
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, 260, 68);
       if (level > 0) drawCatalogArt(ctx, "items", item, x + 10, y + 14, 42, 42);
       text(slot, x + 62, y + 21, 9, "left", "#8ea0ad");
       text(label, x + 62, y + 43, 11, "left", acquired ? "#ffffff" : "#59616d");
-      text(level ? `LV ${level}` : "--", x + 242, y + 43, 11, "right", level > 1 ? "#ffd45e" : "#42efd4");
+      text(level ? `LV ${level}` : "--", x + 242, y + 43, 11, "right", level > 1 ? "#d4b76b" : "#8fa39a");
     });
-    text("SHIFT · DASH", 875, 323, 10, "right", "#42efd4");
+    text("SHIFT · DASH", 875, 323, 10, "right", "#8fa39a");
 
     text("EQUIPPABLE WEAPONS & ITEMS", 125, 370, 10, "left", "#f09bd6");
     text(paused ? "MOVE · J EQUIP A · K EQUIP B" : "MOVE · J EQUIP A · K EQUIP B · Q CLOSE", 899, 370, 9, "right", "#a9b9c3");
@@ -2414,7 +2414,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       const selected = index === loadoutCursor;
       rect(x, y, 245, 36, selected ? "#263657" : "#11182a");
       if (selected) {
-        ctx.strokeStyle = "#f02ea5";
+        ctx.strokeStyle = "#b96f5d";
         ctx.lineWidth = 3;
         ctx.strokeRect(x, y, 245, 36);
         drawCatalogArt(ctx, "ui", "selectionCursor", x - 22, y + 2, 32, 32);
@@ -2425,21 +2425,21 @@ export function createGame(canvas, { initialSave, onSave }) {
       if (player.equippedSlots[0] === item) badges.push("A");
       if (player.equippedSlots[1] === item) badges.push("B");
       if (item === "bombs") badges.push(`${player.inventory.bombs}`);
-      text(badges.join(" · "), x + 232, y + 22, 9, "right", "#42efd4");
+      text(badges.join(" · "), x + 232, y + 22, 9, "right", "#8fa39a");
     });
   }
 
   function drawPauseStatus() {
     rect(150, 100, 724, 470, "#070b18fa");
     if (!drawCatalogArt(ctx, "ui", "menuPanelFrame", 150, 100, 724, 470)) {
-      ctx.strokeStyle = "#42efd4";
+      ctx.strokeStyle = "#8fa39a";
       ctx.lineWidth = 3;
       ctx.strokeRect(160, 110, 704, 450);
     }
-    text("ADVENTURER STATUS", 512, 155, 25, "center", "#42efd4");
+    text("ADVENTURER STATUS", 512, 155, 25, "center", "#8fa39a");
     text(`HEARTS  ${Math.ceil(player.hp / 2)} / ${player.maxHp / 2}`, 220, 215, 15, "left", "#ed5353");
-    text(`MAGIC  ${Math.floor(player.magic)} / ${player.maxMagic}`, 220, 255, 15, "left", "#f02ea5");
-    text(`GOLD  ${player.coins}`, 220, 295, 15, "left", "#42efd4");
+    text(`MAGIC  ${Math.floor(player.magic)} / ${player.maxMagic}`, 220, 255, 15, "left", "#b96f5d");
+    text(`GOLD  ${player.coins}`, 220, 295, 15, "left", "#8fa39a");
     text(`SMALL KEYS  ${player.keys}`, 220, 335, 15, "left", "#f0d697");
     text("CURRENT MILESTONE", 570, 210, 10, "center", "#8595a0");
     const milestone = state.flags.questComplete
@@ -2457,7 +2457,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       player.inventory.glove && "GLOVES",
       player.inventory.boots && "BOOTS",
     ].filter(Boolean).join(" · ") || "NONE";
-    text(activeEquipment, 570, 333, 11, "center", "#42efd4");
+    text(activeEquipment, 570, 333, 11, "center", "#8fa39a");
     text("H  SWORD      J  SLOT A      K  SLOT B      L  INTERACT", 512, 495, 11, "center", "#aab7bd");
   }
 
@@ -2465,7 +2465,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     const tabs = ["STATUS", "MAP", "GEAR"];
     tabs.forEach((tab, index) => {
       const x = 322 + index * 130;
-      rect(x, 670, 120, 28, index === pauseTab ? "#f02ea5" : "#151d30");
+      rect(x, 670, 120, 28, index === pauseTab ? "#b96f5d" : "#151d30");
       text(tab, x + 60, 689, 10, "center", index === pauseTab ? "#ffffff" : "#82909b");
     });
     text("Q / E  CHANGE SCREEN", 190, 689, 9, "center", "#82909b");
@@ -2543,7 +2543,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     const alpha = Math.min(1, (1 - progress) * 4, progress * 2.5);
     ctx.globalAlpha = alpha;
     rect(342, HUD_H + 18, 340, 42, "#070b18dd");
-    rect(354, HUD_H + 56, 316, 2, "#42efd4aa");
+    rect(354, HUD_H + 56, 316, 2, "#8fa39aaa");
     text(roomTitle, VIEW_W / 2, HUD_H + 45, 13, "center", "#ecfff9");
     ctx.globalAlpha = 1;
   }
@@ -2570,12 +2570,12 @@ export function createGame(canvas, { initialSave, onSave }) {
       rect(0, HUD_H, VIEW_W, VIEW_H, `rgba(3,5,15,${transitionAlpha * 0.36})`);
       ctx.globalAlpha = transitionAlpha * 0.55;
       for (let line = 0; line < 8; line += 1) {
-        rect((line * 173 + progress * 500) % VIEW_W, HUD_H, 3, VIEW_H, "#42efd4");
+        rect((line * 173 + progress * 500) % VIEW_W, HUD_H, 3, VIEW_H, "#8fa39a");
       }
       ctx.globalAlpha = 1;
     }
     rect(0, 0, VIEW_W, 68, "#10121ded");
-    rect(0, HUD_H - 2, VIEW_W, 2, "#42efd477");
+    rect(0, HUD_H - 2, VIEW_W, 2, "#8fa39a77");
     for (let hp = 0; hp < player.maxHp; hp += 2) {
       const heartIndex = hp / 2;
       drawHeart(15 + (heartIndex % 10) * 27, 5 + Math.floor(heartIndex / 10) * 26, player.hp > hp);
@@ -2583,16 +2583,16 @@ export function createGame(canvas, { initialSave, onSave }) {
     const hasMagicGear = player.inventory.htmlSword
       || LOADOUT_ORDER.some((item) => Boolean(player.inventory[item]));
     if (hasMagicGear) {
-      text("MAGIC", 302, 25, 10, "left", "#42efd4");
-      rect(353, 14, Math.round(106 * (player.magic / player.maxMagic)), 10, "#d52f9a");
+      text("MAGIC", 302, 25, 10, "left", "#8fa39a");
+      rect(353, 14, Math.round(106 * (player.magic / player.maxMagic)), 10, "#a76558");
       rect(353, 14, Math.round(106 * (player.magic / player.maxMagic) * 0.55), 3, "#ff83cf");
       if (!drawCatalogArt(ctx, "ui", "magicMeterFrame", 348, 9, 116, 20)) {
-        ctx.strokeStyle = "#42efd4";
+        ctx.strokeStyle = "#8fa39a";
         ctx.strokeRect(350, 11, 112, 16);
       }
     }
     drawCatalogArt(ctx, "ui", "creditToken", 298, 37, 18, 18);
-    text(`${player.coins}`, 320, 55, 11, "left", "#42efd4");
+    text(`${player.coins}`, 320, 55, 11, "left", "#8fa39a");
     drawCatalogArt(ctx, "ui", "accessKey", 388, 37, 18, 18);
     text(`${player.keys}`, 410, 55, 10, "left", "#f09bd6");
     text(roomRuntimeTitle().toUpperCase(), 700, 55, 9, "right", "#c4bd9e");
@@ -2612,11 +2612,11 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx, "ui", "itemSlotFrame", x + 5, 8, 46, 46,
       );
       if (!frameDrawn) {
-        ctx.strokeStyle = index ? "#f02ea5" : "#42efd4";
+        ctx.strokeStyle = index ? "#b96f5d" : "#8fa39a";
         ctx.lineWidth = 2;
         ctx.strokeRect(x + 5, 8, 46, 46);
       }
-      text(button, x + 58, 23, 9, "left", index ? "#f09bd6" : "#42efd4");
+      text(button, x + 58, 23, 9, "left", index ? "#f09bd6" : "#8fa39a");
       text(slotLabel(item), x + 95, 47, 9, "center", "#ecf8f6");
     });
     if (messageTime > 0) {
