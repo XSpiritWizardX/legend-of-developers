@@ -7,6 +7,12 @@ export const WILLOWBROOK_SHOWCASE = Object.freeze({
   height: 20,
 });
 
+const WILLOWBROOK_PITS = new Set([
+  "21,22", "22,22", "24,22",
+  "21,23", "23,23", "24,23",
+  "22,24", "24,24", "25,24",
+]);
+
 function inRange(value, min, max) {
   return value >= min && value <= max;
 }
@@ -36,12 +42,7 @@ function willowbrookTerrain(tx, ty) {
 
   // A compact pit garden makes falling/recovery visible without blocking the
   // main quest road. The gaps deliberately create a readable slalom route.
-  const pitTiles = new Set([
-    "21,22", "22,22", "24,22",
-    "21,23", "23,23", "24,23",
-    "22,24", "24,24", "25,24",
-  ]);
-  if (pitTiles.has(`${tx},${ty}`)) return TERRAIN.PIT;
+  if (WILLOWBROOK_PITS.has(`${tx},${ty}`)) return TERRAIN.PIT;
 
   // Stone approach and landing strip make the showcase read as intentionally
   // authored terrain rather than random hazard tiles.
