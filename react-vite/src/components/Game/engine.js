@@ -12,6 +12,11 @@ import {
 import { activeAttackVisual } from "./attackVisuals";
 import { contextActionLabel, contextActionText } from "./contextAction";
 import {
+  EMBERSTONE_FLAG, emberstoneContextAction, emberstoneGateBlocks,
+  emberstoneWindDiscTarget, nextEmberstoneStoryBeat, resolveEmberstoneAction,
+  resolveEmberstoneWindDiscHit,
+} from "./emberstoneContent";
+import {
   advanceEnemyProjectile, enemyProjectileExpired, enemyProjectileHitsPlayer,
   rootboundBossVolley,
 } from "./enemyAttacks";
@@ -409,6 +414,9 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (rootboundGateBlocks({
       mapId: state.mapId, x, y, flags: state.flags, tileSize: TILE,
     })) return true;
+    if (emberstoneGateBlocks({
+      mapId: state.mapId, x, y, flags: state.flags, tileSize: TILE,
+    })) return true;
     if (roomAssetSolidAt(state.mapId, x, y)) return true;
     if (worldObjectAtPoint(currentWorldObjects(), x, y, 24)) return true;
     const showcaseTile = showcaseTerrainAt(state.mapId, tileX, tileY);
@@ -740,6 +748,30 @@ export function createGame(canvas, { initialSave, onSave }) {
     return false;
   }
 
+  function interactEmberstoneContent() {
+    const action = emberstoneContextAction({
+      mapId: state.mapId, player, flags: state.flags, tileSize: TILE,
+    });
+    if (!action) return false;
+    const result = resolveEmberstoneAction(action.action, state.flags);
+    if (result.patch) Object.assign(state.flags, result.patch);
+    if (result.coins) player.coins += result.coins;
+    if (result.reward) reward(result.reward);
+    if (result.message) announce(result.message, result.event === "secret" ? 4.5 : 3.7);
+    if (result.changed) {
+      spawnParticles(
+        player.x, player.y - 8,
+        result.event === "gate" ? "#d4b76b" : "#b96f5d",
+        result.event === "gate" ? 30 : 18,
+        result.event === "gate" ? 205 : 145,
+      );
+      screenShake = Math.max(screenShake, result.event === "gate" ? 11 : 5);
+      playGameSfx(result.event === "secret" ? GAME_SFX.CHEST : GAME_SFX.ROOM);
+      save();
+    }
+    return true;
+  }
+
   function interactRootboundContent() {
     const action = rootboundContextAction({
       mapId: state.mapId, player, flags: state.flags, tileSize: TILE,
@@ -766,6 +798,10 @@ export function createGame(canvas, { initialSave, onSave }) {
 
   function currentContextAction() {
     if (carriedObject) return contextActionLabel({ carried: true });
+    const emberstoneAction = emberstoneContextAction({
+      mapId: state.mapId, player, flags: state.flags, tileSize: TILE,
+    });
+    if (emberstoneAction) return emberstoneAction;
     const rootboundAction = rootboundContextAction({
       mapId: state.mapId, player, flags: state.flags, tileSize: TILE,
     });
@@ -826,6 +862,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function interact() {
+    if (interactEmberstoneContent()) return;
     if (interactRootboundContent()) return;
     if (interactWorldObject()) return;
     const currentMap = map();
@@ -1268,18 +1305,36 @@ export function createGame(canvas, { initialSave, onSave }) {
         boomerang.x += boomerang.vx * dt;
         boomerang.y += boomerang.vy * dt;
         boomerang.distance += 380 * dt;
+        const emberstoneTarget = emberstoneWindDiscTarget({
+          mapId: state.mapId, x: boomerang.x, y: boomerang.y,
+          flags: state.flags, tileSize: TILE,
+        });
+        if (emberstoneTarget) {
+          const result = resolveEmberstoneWindDiscHit(emberstoneTarget, state.flags);
+          if (result.patch) Object.assign(state.flags, result.patch);
+          if (result.message) announce(result.message, 4);
+          if (result.changed) {
+            const targetX = emberstoneTarget.tx * TILE + TILE / 2;
+            const targetY = emberstoneTarget.ty * TILE + TILE / 2;
+            spawnParticles(targetX, targetY, "#d4b76b", 22, 170);
+            screenShake = Math.max(screenShake, 6);
+            playGameSfx(GAME_SFX.ROOM);
+            save();
+          }
+          boomerang.returning = true;
+        }
         const callbackTile = tileAt(
           state.mapId,
           Math.floor(boomerang.x / TILE),
           Math.floor(boomerang.y / TILE),
           state.flags,
         );
-        if (callbackTile === "callbackNode") {
+        if (!boomerang.returning && callbackTile === "callbackNode") {
           state.flags.callback_firewall_1 = true;
           boomerang.returning = true;
           announce("ANCIENT SEAL BROKEN · EASTERN PATH OPEN", 5);
           save();
-        } else if (callbackTile === "callbackNode2") {
+        } else if (!boomerang.returning && callbackTile === "callbackNode2") {
           boomerang.returning = true;
           if (state.flags.complete_d02) {
             state.flags.callback_firewall_2 = true;
@@ -1288,7 +1343,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           } else {
             announce("THE SEAL ENDURES · RESTORE THE EMBER SIGIL", 4);
           }
-        } else if (boomerang.distance > 230 || solidAt(boomerang.x, boomerang.y)) {
+        } else if (!boomerang.returning && (boomerang.distance > 230 || solidAt(boomerang.x, boomerang.y))) {
           boomerang.returning = true;
         }
       } else {
@@ -1489,6 +1544,15 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (storyBeat) {
       state.flags[storyBeat.flag] = true;
       announce(storyBeat.message, 4.6);
+      playGameSfx(GAME_SFX.ROOM);
+      save();
+    }
+    const emberstoneStoryBeat = nextEmberstoneStoryBeat({
+      mapId: state.mapId, player, flags: state.flags, tileSize: TILE,
+    });
+    if (emberstoneStoryBeat) {
+      state.flags[emberstoneStoryBeat.flag] = true;
+      announce(emberstoneStoryBeat.message, 4.6);
       playGameSfx(GAME_SFX.ROOM);
       save();
     }
@@ -2020,6 +2084,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       .filter((asset) => {
         if (asset.type !== "dungeonBarrier") return true;
         if (state.mapId === "d01" && state.flags[ROOTBOUND_FLAG.GATE_OPEN]) return false;
+        if (state.mapId === "d02" && state.flags[EMBERSTONE_FLAG.GATE_OPEN]) return false;
         return !state.flags[`switch_${state.mapId}`];
       })
       .map((asset) => ({
