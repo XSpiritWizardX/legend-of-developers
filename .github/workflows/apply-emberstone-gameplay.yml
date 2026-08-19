@@ -1,0 +1,55 @@
+name: Apply Emberstone gameplay
+
+on:
+  push:
+    branches:
+      - feature/emberstone-wind-disc-puzzle
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-emberstone-gameplay
+  cancel-in-progress: true
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/emberstone-wind-disc-puzzle
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: react-vite/package-lock.json
+      - name: Apply guarded engine patch
+        run: python scripts/patch_emberstone_gameplay.py
+      - name: Install frontend dependencies
+        working-directory: react-vite
+        run: npm ci --no-audit --no-fund
+      - name: Run Jest
+        working-directory: react-vite
+        run: npm test -- --runInBand
+      - name: Lint
+        working-directory: react-vite
+        run: npm run lint
+      - name: Production build
+        working-directory: react-vite
+        run: npm run build
+      - name: Remove one-shot integration files
+        run: |
+          rm scripts/patch_emberstone_gameplay.py
+          rm .github/workflows/apply-emberstone-gameplay.yml
+      - name: Commit validated Emberstone integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add react-vite/src/components/Game/engine.js scripts/patch_emberstone_gameplay.py .github/workflows/apply-emberstone-gameplay.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Integrate Emberstone Wind Disc puzzle"
+          git push origin HEAD:feature/emberstone-wind-disc-puzzle
