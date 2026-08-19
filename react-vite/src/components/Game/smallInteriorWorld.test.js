@@ -1,5 +1,17 @@
+import { jest } from "@jest/globals";
 import { interiorByMapId, interiorPixelPosition } from "./interiors";
-import { DUNGEONS, MAPS, TILE, isSolid, tileAt } from "./world";
+
+jest.unstable_mockModule("./rooms/roomRegistry", () => ({
+  editableRoomAt: () => undefined,
+}));
+
+const {
+  DUNGEONS,
+  MAPS,
+  TILE,
+  isSolid,
+  tileAt,
+} = await import("./world");
 
 describe("Willowbrook Hollow world", () => {
   test("map dimensions match the authored 12x8 logical room", () => {
