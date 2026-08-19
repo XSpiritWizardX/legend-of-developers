@@ -6,6 +6,9 @@ import {
 } from "./roomAssets";
 import { drawCatalogArt } from "./art/artLoader";
 import { indexedRoomTileAt } from "./art/tileIndex";
+import {
+  resolveRoomRuntime, roomChanged, settleCamera, smoothCamera,
+} from "./roomRuntime";
 
 const VIEW_W = 1024;
 const VIEW_H = 640;
@@ -70,6 +73,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   let screenShake = 0;
   let roomTitle = "";
   let roomTitleTime = 0;
+  let activeRoomId = null;
   let debugReturnPosition = { ...MAPS.overworld.spawn };
 
   const saved = initialSave || {};
@@ -145,10 +149,45 @@ export function createGame(canvas, { initialSave, onSave }) {
     walkTime: 0,
   };
   const enemiesByMap = {};
-  function markCurrentScreenDiscovered() {
+  const viewport = { width: VIEW_W, height: VIEW_H };
+  function currentRoomRuntime(previousCamera = camera) {
+    return resolveRoomRuntime({
+      mapId: state.mapId,
+      player,
+      viewport,
+      tileSize: TILE,
+      previousCamera,
+    });
+  }
+  function legacyCameraForPlayer(mapId = state.mapId) {
+    const targetMap = MAPS[mapId];
+    return {
+      x: Math.min(
+        Math.floor(player.x / VIEW_W) * VIEW_W,
+        Math.max(0, targetMap.width * TILE - VIEW_W),
+      ),
+      y: Math.min(
+        Math.floor(player.y / VIEW_H) * VIEW_H,
+        Math.max(0, targetMap.height * TILE - VIEW_H),
+      ),
+    };
+  }
+  function legacyDiscoveryKey() {
     const screenXIndex = Math.floor(player.x / VIEW_W);
     const screenYIndex = Math.floor(player.y / VIEW_H);
-    state.discovered[`${state.mapId}:${screenXIndex},${screenYIndex}`] = true;
+    return `${state.mapId}:${screenXIndex},${screenYIndex}`;
+  }
+  function markCurrentRoomDiscovered(runtime = currentRoomRuntime()) {
+    state.discovered[runtime.discoveryKey] = true;
+    // Keep the old screen key populated while the map overlay migrates to
+    // logical-room geometry. Existing saves therefore remain compatible.
+    state.discovered[legacyDiscoveryKey()] = true;
+    return runtime;
+  }
+  function roomRuntimeTitle(runtime = currentRoomRuntime()) {
+    return runtime.usesLegacyTransitions
+      ? roomNameAt(state.mapId, player.x, player.y)
+      : runtime.title;
   }
   function findOpenPosition(mapId, tx, ty, collisionRadius) {
     const targetMap = MAPS[mapId];
@@ -202,15 +241,12 @@ export function createGame(canvas, { initialSave, onSave }) {
     player.x = map().spawn.x;
     player.y = map().spawn.y;
   }
-  camera.x = Math.min(
-    Math.floor(player.x / VIEW_W) * VIEW_W,
-    Math.max(0, map().width * TILE - VIEW_W),
-  );
-  camera.y = Math.min(
-    Math.floor(player.y / VIEW_H) * VIEW_H,
-    Math.max(0, map().height * TILE - VIEW_H),
-  );
-  markCurrentScreenDiscovered();
+  const initialRuntime = currentRoomRuntime(camera);
+  camera = initialRuntime.usesLegacyTransitions
+    ? legacyCameraForPlayer()
+    : settleCamera(initialRuntime.targetCamera);
+  activeRoomId = initialRuntime.room.id;
+  markCurrentRoomDiscovered(initialRuntime);
 
   function map() { return MAPS[state.mapId]; }
   function createEnemy(mapId, [id, type, tx, ty]) {
@@ -269,11 +305,11 @@ export function createGame(canvas, { initialSave, onSave }) {
   function announce(value, seconds = 2.2) { message = value; messageTime = seconds; }
   announce(
     player.inventory.htmlSword
-      ? roomNameAt(state.mapId, player.x, player.y).toUpperCase()
+      ? roomRuntimeTitle(initialRuntime).toUpperCase()
       : "OBJECTIVE: FIND THE HTML SWORD IN HERO'S GROVE",
     4,
   );
-  showRoomTitle();
+  showRoomTitle(initialRuntime);
 
   function rect(x, y, w, h, color) {
     ctx.fillStyle = color;
@@ -304,8 +340,8 @@ export function createGame(canvas, { initialSave, onSave }) {
       });
     }
   }
-  function showRoomTitle() {
-    roomTitle = roomNameAt(state.mapId, player.x, player.y).toUpperCase();
+  function showRoomTitle(runtime = currentRoomRuntime()) {
+    roomTitle = roomRuntimeTitle(runtime).toUpperCase();
     roomTitleTime = 2.6;
   }
 
@@ -371,18 +407,15 @@ export function createGame(canvas, { initialSave, onSave }) {
     bombs = [];
     cssPulses = [];
     weaponEffects = [];
-    camera.x = Math.min(
-      Math.floor(player.x / VIEW_W) * VIEW_W,
-      Math.max(0, MAPS[mapId].width * TILE - VIEW_W),
-    );
-    camera.y = Math.min(
-      Math.floor(player.y / VIEW_H) * VIEW_H,
-      Math.max(0, MAPS[mapId].height * TILE - VIEW_H),
-    );
+    const runtime = currentRoomRuntime(camera);
+    camera = runtime.usesLegacyTransitions
+      ? legacyCameraForPlayer(mapId)
+      : settleCamera(runtime.targetCamera);
+    activeRoomId = runtime.room.id;
     respawnRoomEnemies(mapId, camera.x, camera.y);
     screenTransition = null;
-    markCurrentScreenDiscovered();
-    showRoomTitle();
+    markCurrentRoomDiscovered(runtime);
+    showRoomTitle(runtime);
     announce(MAPS[mapId].name.toUpperCase(), 2.6);
     save();
   }
@@ -888,9 +921,10 @@ export function createGame(canvas, { initialSave, onSave }) {
         camera.y = screenTransition.toY;
         screenTransition = null;
         respawnRoomEnemies(state.mapId, camera.x, camera.y);
-        markCurrentScreenDiscovered();
-        showRoomTitle();
-        announce(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), 1.4);
+        const runtime = markCurrentRoomDiscovered();
+        activeRoomId = runtime.room.id;
+        showRoomTitle(runtime);
+        announce(roomRuntimeTitle(runtime).toUpperCase(), 1.4);
       }
       return;
     }
@@ -932,7 +966,33 @@ export function createGame(canvas, { initialSave, onSave }) {
       loadoutCursor = 0;
     }
 
-    beginScreenTransitionIfNeeded();
+    const runtime = currentRoomRuntime(camera);
+    const changedRoom = roomChanged(activeRoomId, runtime);
+    if (runtime.usesLegacyTransitions) {
+      if (changedRoom) {
+        activeRoomId = runtime.room.id;
+        camera = legacyCameraForPlayer();
+        screenTransition = null;
+        respawnRoomEnemies(state.mapId, camera.x, camera.y);
+        markCurrentRoomDiscovered(runtime);
+        showRoomTitle(runtime);
+        announce(roomRuntimeTitle(runtime).toUpperCase(), 1.4);
+        save();
+      } else {
+        markCurrentRoomDiscovered(runtime);
+      }
+      beginScreenTransitionIfNeeded();
+    } else {
+      camera = smoothCamera(camera, runtime.targetCamera, dt);
+      markCurrentRoomDiscovered(runtime);
+      if (changedRoom) {
+        activeRoomId = runtime.room.id;
+        respawnRoomEnemies(state.mapId, camera.x, camera.y);
+        showRoomTitle(runtime);
+        announce(roomRuntimeTitle(runtime).toUpperCase(), 1.4);
+        save();
+      }
+    }
 
     // A small key opens the central dungeon door when approached.
     const tx = Math.floor(player.x / TILE);
@@ -1822,7 +1882,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
 
     if (!revealAll) text(state.mapId === "overworld" ? "EXPLORE TO REVEAL EACH REGION" : "UNKNOWN ROOMS HIDDEN · FIND THE DUNGEON MAP", VIEW_W / 2, 500, 10, "center", "#8c8c8c");
-    text(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), VIEW_W / 2, 530, 12, "center", "#d5c89c");
+    text(roomRuntimeTitle().toUpperCase(), VIEW_W / 2, 530, 12, "center", "#d5c89c");
     text("■ TEMPLE   ■ TRADER   ■ TREASURE   ● YOU", VIEW_W / 2, 553, 9, "center", "#85867f");
     text(paused ? "PAUSE MAP SCREEN" : "M  CLOSE MAP", VIEW_W / 2, 574, 10, "center", "#aaa99f");
     ctx.restore();
@@ -2125,7 +2185,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     text(`${player.coins}`, 320, 55, 11, "left", "#42efd4");
     drawCatalogArt(ctx, "ui", "accessKey", 388, 37, 18, 18);
     text(`${player.keys}`, 410, 55, 10, "left", "#f09bd6");
-    text(roomNameAt(state.mapId, player.x, player.y).toUpperCase(), 700, 55, 9, "right", "#c4bd9e");
+    text(roomRuntimeTitle().toUpperCase(), 700, 55, 9, "right", "#c4bd9e");
     const slotLabel = (item) => {
       if (!item || (item !== "bombs" && !player.inventory[item])) return "EMPTY";
       if (item === "bombs" && player.inventory.bombs <= 0) return "EMPTY";
