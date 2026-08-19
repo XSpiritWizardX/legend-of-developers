@@ -10,6 +10,7 @@ import {
   decayKnockback, hitStopFor, knockbackVector, movementScale, nearestFacingTarget, targetInFront,
 } from "./actionFeel";
 import { activeAttackVisual } from "./attackVisuals";
+import { contextActionLabel, contextActionText } from "./contextAction";
 import { enemyMotion } from "./enemyBehaviors";
 import {
   resolveRoomRuntime, roomChanged, settleCamera, smoothCamera,
@@ -700,6 +701,63 @@ export function createGame(canvas, { initialSave, onSave }) {
       return true;
     }
     return false;
+  }
+
+  function currentContextAction() {
+    if (carriedObject) return contextActionLabel({ carried: true });
+    const direction = interactionDirection();
+    const worldObject = facingWorldObject({
+      objects: currentWorldObjects(),
+      player,
+      direction,
+      distance: 44,
+      radius: 34,
+    });
+    if (worldObject) {
+      return contextActionLabel({
+        worldObject,
+        canLift: canLiftWorldObject(worldObject, player.inventory),
+      });
+    }
+
+    const currentMap = map();
+    if (state.mapId === "overworld") {
+      const dungeon = nearestFacingTarget({
+        player,
+        targets: DUNGEONS.map((entry) => ({ ...entry, x: entry.entrance.x, y: entry.entrance.y })),
+        reach: 96,
+        halfAngle: 1.08,
+      });
+      if (dungeon) return contextActionLabel({ dungeon: true });
+      const merchant = nearestFacingTarget({
+        player,
+        targets: MERCHANTS.map((entry) => ({
+          ...entry,
+          x: entry.x * TILE + TILE / 2,
+          y: entry.y * TILE + TILE / 2,
+        })),
+        reach: 86,
+        halfAngle: 1.02,
+      });
+      if (merchant) return contextActionLabel({ merchant: true });
+    } else if (targetInFront({ player, target: currentMap.exit, reach: 86, halfAngle: 1.08 })) {
+      return contextActionLabel({ exit: true });
+    }
+
+    const chest = nearestFacingTarget({
+      player,
+      targets: currentMap.chests
+        .filter(([id]) => !state.openedChests[id])
+        .filter(([id]) => !(id.endsWith("-reward")
+          && enemiesByMap[state.mapId].some((enemy) => isPermanentEnemy(enemy.type))))
+        .map((entry) => ({
+          x: entry[1] * TILE + TILE / 2,
+          y: entry[2] * TILE + TILE / 2,
+        })),
+      reach: 80,
+      halfAngle: 1.04,
+    });
+    return chest ? contextActionLabel({ chest: true }) : null;
   }
 
   function interact() {
@@ -2536,6 +2594,21 @@ export function createGame(canvas, { initialSave, onSave }) {
     text("P  RESUME", 844, 689, 9, "center", "#82909b");
   }
 
+  function drawContextActionPrompt() {
+    if (paused || mapOpen || inventoryOpen || merchantOpen || messageTime > 0) return;
+    const action = currentContextAction();
+    if (!action) return;
+    const label = contextActionText(action);
+    const width = Math.max(118, label.length * 9 + 34);
+    const x = Math.round((VIEW_W - width) / 2);
+    const y = HUD_H + VIEW_H - 46;
+    rect(x, y, width, 30, "#11171fee");
+    ctx.strokeStyle = "#b38b52";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, y + 1, width - 2, 28);
+    text(label, VIEW_W / 2, y + 20, 10, "center", "#e9dfbf");
+  }
+
   function buyMerchantItem(index) {
     const offer = merchantOpen?.stock[index];
     if (!offer) return;
@@ -2683,6 +2756,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       text(button, x + 58, 23, 9, "left", index ? "#f09bd6" : "#8fa39a");
       text(slotLabel(item), x + 95, 47, 9, "center", "#ecf8f6");
     });
+    drawContextActionPrompt();
     if (messageTime > 0) {
       rect(240, 494 + HUD_H, 480, 60, "#11131ef0");
       drawCatalogArt(ctx, "ui", "dialogueFrame", 240, 494 + HUD_H, 480, 60);
