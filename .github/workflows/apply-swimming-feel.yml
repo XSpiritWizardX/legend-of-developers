@@ -1,0 +1,55 @@
+name: Apply swimming feel
+
+on:
+  push:
+    branches:
+      - feature/swimming-and-water-feel
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-swimming-feel
+  cancel-in-progress: true
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/swimming-and-water-feel
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: react-vite/package-lock.json
+      - name: Apply guarded engine patch
+        run: python scripts/patch_swimming_feel.py
+      - name: Install frontend dependencies
+        working-directory: react-vite
+        run: npm ci --no-audit --no-fund
+      - name: Run Jest
+        working-directory: react-vite
+        run: npm test -- --runInBand
+      - name: Lint
+        working-directory: react-vite
+        run: npm run lint
+      - name: Production build
+        working-directory: react-vite
+        run: npm run build
+      - name: Remove one-shot integration files
+        run: |
+          rm scripts/patch_swimming_feel.py
+          rm .github/workflows/apply-swimming-feel.yml
+      - name: Commit validated swimming integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add react-vite/src/components/Game/engine.js scripts/patch_swimming_feel.py .github/workflows/apply-swimming-feel.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Add true swimming movement and ripple feedback"
+          git push origin HEAD:feature/swimming-and-water-feel
