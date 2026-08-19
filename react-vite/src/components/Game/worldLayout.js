@@ -9,6 +9,9 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 0, width: 64, height: 40 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "outdoorRegion",
+        // Region-scale scrolling is intentionally staged until the internal
+        // fixed-screen walls have been re-authored into a continuous zone.
+        useLegacyTransitions: true,
       },
       {
         id: "silverwater-reach",
@@ -16,6 +19,7 @@ const WORLD_LAYOUTS = {
         bounds: { x: 64, y: 20, width: 64, height: 60 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "outdoorRegion",
+        useLegacyTransitions: true,
       },
     ],
     rooms: [
@@ -49,6 +53,8 @@ const WORLD_LAYOUTS = {
     regions: [],
     // This partition deliberately mixes room sizes. It occupies the same
     // existing 48x30-tile dungeon map, so saves/world coordinates remain valid.
+    // Runtime camera activation stays staged until the dungeon tile boundaries
+    // and doorway spans are re-authored for these logical chambers.
     rooms: [
       {
         id: "d01-west-gallery",
@@ -56,6 +62,7 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 0, width: 16, height: 10 },
         camera: CAMERA_MODE.SNAP,
         kind: "smallChamber",
+        useLegacyTransitions: true,
       },
       {
         id: "d01-grand-nave",
@@ -63,6 +70,7 @@ const WORLD_LAYOUTS = {
         bounds: { x: 16, y: 0, width: 32, height: 10 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "wideHall",
+        useLegacyTransitions: true,
       },
       {
         id: "d01-lower-crypt",
@@ -70,6 +78,7 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 10, width: 24, height: 20 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "mediumChamber",
+        useLegacyTransitions: true,
       },
       {
         id: "d01-root-sanctum",
@@ -77,6 +86,7 @@ const WORLD_LAYOUTS = {
         bounds: { x: 24, y: 10, width: 24, height: 20 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "bossChamber",
+        useLegacyTransitions: true,
       },
     ],
   },
