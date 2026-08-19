@@ -16,6 +16,9 @@ import {
 } from "./roomRuntime";
 import { showcaseTerrainAt } from "./showcaseTerrain";
 import {
+  canDashWhileSwimming, isSwimming, swimMovementScale, swimVisual,
+} from "./swimmingFeel";
+import {
   TERRAIN, TRAVERSAL_STATE, canHopLedge, isDirectionalLedge,
   ledgeLandingPoint, recoveryPoint, rememberSafeGround, terrainTraversalFor,
 } from "./terrainInteractions";
@@ -398,6 +401,12 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function terrainAtPoint(x, y) {
     return tileAt(state.mapId, Math.floor(x / TILE), Math.floor(y / TILE), state.flags);
+  }
+  function playerIsSwimming() {
+    return isSwimming({
+      tile: terrainAtPoint(player.x, player.y + 10),
+      hasFlippers: player.inventory.flippers,
+    });
   }
   function terrainBlocksAt(x, y, direction) {
     if (!direction) return false;
@@ -1237,7 +1246,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         carrying: Boolean(carriedObject),
         attacking: player.attackTime > 0,
         charging: player.swordCharging,
-      });
+      }) * swimMovementScale(playerIsSwimming());
       const nextX = player.x + dx * moveSpeed * dt;
       const nextY = player.y + dy * moveSpeed * dt;
       if (canMove(nextX, player.y, dx, 0)) player.x = nextX;
@@ -1250,7 +1259,10 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
     if (!traversing && !traversal && pressed.j) activateItem(player.equippedSlots[0]);
     if (!traversing && !traversal && pressed.k) activateItem(player.equippedSlots[1]);
-    if (!traversing && !traversal && pressed.shift) dash();
+    if (
+      !traversing && !traversal && pressed.shift
+      && canDashWhileSwimming(playerIsSwimming())
+    ) dash();
     if (!traversing && !traversal && pressed.l) interact();
     if (pressed.p) {
       paused = true;
@@ -1599,12 +1611,27 @@ export function createGame(canvas, { initialSave, onSave }) {
     const traversalOffset = traversal?.state === TRAVERSAL_STATE.HOP
       ? -Math.sin(traversalProgress * Math.PI) * 28
       : (traversal?.state === TRAVERSAL_STATE.FALL ? traversalProgress * 10 : 0);
-    const y = screenY(player.y) + bob + traversalOffset;
+    const swim = swimVisual({
+      swimming: playerIsSwimming(),
+      moving: player.moving,
+      time: performance.now() / 1000,
+    });
+    const y = screenY(player.y) + bob + traversalOffset + (swim?.bobY || 0);
     if (player.invincible > 0 && Math.floor(player.invincible * 12) % 2) return;
     ctx.fillStyle = "#02060a66";
     ctx.beginPath();
     ctx.ellipse(x, y + 13, 16, 5, 0, 0, Math.PI * 2);
     ctx.fill();
+    if (swim) {
+      ctx.save();
+      ctx.globalAlpha = swim.alpha;
+      ctx.strokeStyle = "#d7dfd3";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(x, y + 10, swim.rippleX, swim.rippleY, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     if (player.swordCharging && player.swordCharge > 0.08) {
       const chargeProgress = Math.min(1, player.swordCharge / 0.62);
       const pulse = Math.sin(performance.now() / 55) * 3;
@@ -1667,6 +1694,21 @@ export function createGame(canvas, { initialSave, onSave }) {
         ctx.stroke();
         ctx.strokeStyle = upgraded ? "#bf7d4b" : "#8e9b96";
         ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (swim) {
+        ctx.save();
+        ctx.globalAlpha = 0.58;
+        ctx.fillStyle = "#4e7880";
+        ctx.beginPath();
+        ctx.ellipse(x, y + 13, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.78;
+        ctx.strokeStyle = "#d7dfd3";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(x, y + 10, swim.rippleX, swim.rippleY, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
