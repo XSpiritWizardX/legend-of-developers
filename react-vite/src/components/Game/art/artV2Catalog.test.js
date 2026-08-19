@@ -59,6 +59,12 @@ describe("v2 game art overrides", () => {
     expect(catalogArtV2("props", "dungeonCrate").source).toContain("dungeon-crate.svg");
   });
 
+  test("liftable and breakable field objects use matching v2 art", () => {
+    expect(catalogArtV2("props", "worldPot").source).toContain("world-pot.svg");
+    expect(catalogArtV2("props", "worldRock").source).toContain("world-rock.svg");
+    expect(catalogArtV2("props", "worldBrush").source).toContain("world-brush.svg");
+  });
+
   test("player walk art is an original four-direction v2 sprite sheet", () => {
     const playerWalk = catalogArtV2("characters", "playerWalk");
     expect(playerWalk.source).toBe("/art/v2/characters/player-walk-sheet.svg");
