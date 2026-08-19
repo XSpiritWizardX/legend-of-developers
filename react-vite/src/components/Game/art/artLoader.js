@@ -5,6 +5,7 @@ import { catalogEffectsArtV2 } from "./effectsV2Catalog";
 import { catalogEquipmentArtV2 } from "./equipmentV2Catalog";
 import { catalogNpcArtV2 } from "./npcV2Catalog";
 import { catalogPlayerCombatArtV2 } from "./playerCombatV2Catalog";
+import { catalogSceneryArtV2 } from "./sceneryV2Catalog";
 import { catalogUiArtV2 } from "./uiV2Catalog";
 
 const imageCache = new Map();
@@ -112,6 +113,7 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
     || catalogEquipmentArtV2(category, id)
     || catalogNpcArtV2(category, id)
     || catalogPlayerCombatArtV2(category, id)
+    || catalogSceneryArtV2(category, id)
     || catalogUiArtV2(category, id)
     || catalogArt(category, id);
   const sources = entry?.frames || (entry?.source ? [entry.source] : []);
