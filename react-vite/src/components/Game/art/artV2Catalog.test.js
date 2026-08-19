@@ -16,6 +16,15 @@ describe("v2 game art overrides", () => {
     expect(catalogArtV2("tiles", "pit").source).toBe("/art/v2/tiles/pit.svg");
   });
 
+  test("player walk art is an original four-direction v2 sprite sheet", () => {
+    const playerWalk = catalogArtV2("characters", "playerWalk");
+    expect(playerWalk.source).toBe("/art/v2/characters/player-walk-sheet.svg");
+    expect(playerWalk.sheet.framesPerDirection).toBe(4);
+    expect(playerWalk.sheet.directions).toEqual(["down", "left", "right", "up"]);
+    expect(playerWalk.sheet.frameWidth).toBe(64);
+    expect(playerWalk.sheet.frameHeight).toBe(64);
+  });
+
   test("vegetation overrides remain explicit and fallbacks stay possible", () => {
     expect(ART_V2_CATALOG.props.forestTree.source).toContain("/art/v2/props/");
     expect(catalogArtV2("props", "forestBush").source).toContain("forest-bush.svg");
