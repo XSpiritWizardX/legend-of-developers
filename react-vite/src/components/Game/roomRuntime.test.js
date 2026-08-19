@@ -1,6 +1,9 @@
 import {
+  legacyCameraTarget,
+  legacyScreenForPlayer,
   resolveRoomRuntime,
   roomChanged,
+  roomRuntimeIdentity,
   settleCamera,
   smoothCamera,
 } from "./roomRuntime";
@@ -60,6 +63,32 @@ describe("logical room runtime adapter", () => {
     expect(runtime.usesLegacyTransitions).toBe(true);
   });
 
+  test("legacy region identity includes the actual screen so adjacent screens are distinct", () => {
+    const firstPlayer = { x: 8 * TILE, y: 5 * TILE };
+    const secondPlayer = { x: 24 * TILE, y: 5 * TILE };
+    const firstRuntime = resolveRoomRuntime({
+      mapId: "overworld", player: firstPlayer, viewport: VIEWPORT, tileSize: TILE,
+    });
+    const secondRuntime = resolveRoomRuntime({
+      mapId: "overworld", player: secondPlayer, viewport: VIEWPORT, tileSize: TILE,
+    });
+
+    expect(firstRuntime.room.id).toBe("greenwood-vale");
+    expect(secondRuntime.room.id).toBe("greenwood-vale");
+    expect(roomRuntimeIdentity("overworld", firstPlayer, firstRuntime, VIEWPORT))
+      .toBe("overworld:greenwood-vale:screen:0,0");
+    expect(roomRuntimeIdentity("overworld", secondPlayer, secondRuntime, VIEWPORT))
+      .toBe("overworld:greenwood-vale:screen:1,0");
+  });
+
+  test("legacy camera target follows the destination screen without bouncing back", () => {
+    const player = { x: 48 * TILE + 8, y: 15 * TILE + 32 };
+    const mapPixels = { width: 256 * TILE, height: 160 * TILE };
+
+    expect(legacyScreenForPlayer(player, VIEWPORT)).toEqual({ x: 3, y: 1 });
+    expect(legacyCameraTarget(player, mapPixels, VIEWPORT)).toEqual({ x: 3072, y: 640 });
+  });
+
   test("authored dungeon partitions can be staged without losing room metadata", () => {
     const runtime = runtimeAt("d01", 8, 5);
 
@@ -83,7 +112,7 @@ describe("logical room runtime adapter", () => {
     expect(roomChanged("greenwood-vale", runtime)).toBe(true);
   });
 
-  test("smoothCamera approaches the target without overshooting", () => {
+  test("smoothCamera approaches the target quickly without overshooting", () => {
     const current = { x: 0, y: 0 };
     const target = { x: 1000, y: 500 };
     const next = smoothCamera(current, target, 1 / 60);
