@@ -17,6 +17,10 @@ module.exports = {
         "react-refresh/only-export-components": "off",
       },
     },
+    {
+      files: ["**/*.test.js", "**/*.test.jsx"],
+      env: { jest: true },
+    },
   ],
   ignorePatterns: ["dist", "node_modules"],
   rules: {

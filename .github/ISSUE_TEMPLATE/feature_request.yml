@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a scoped gameplay, platform, quality, or developer-experience improvement
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the player or engineering problem this should solve.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: Describe the smallest useful implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable conditions for completion, including tests/docs where relevant.
+    validations:
+      required: true
+  - type: dropdown
+    id: release
+    attributes:
+      label: Expected release impact
+      options:
+        - Patch
+        - Minor feature
+        - Breaking / major
+        - No release impact

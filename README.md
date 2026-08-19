@@ -1,5 +1,9 @@
 # The Legend of Developer: The Blight of AI
-https://legend-of-developers.onrender.com/
+
+[![CI](https://github.com/XSpiritWizardX/legend-of-developers/actions/workflows/ci.yml/badge.svg)](https://github.com/XSpiritWizardX/legend-of-developers/actions/workflows/ci.yml)
+
+**Live demo:** https://legend-of-developers.onrender.com/
+
 The Legend of Developer is a full-stack, top-down action adventure set in a
 fantasy world shaped by software development. Explore a 16×16 overworld,
 recover three sigils from themed dungeons, collect developer-inspired gear,
@@ -8,6 +12,11 @@ and carry progress between sessions with local or account-backed save files.
 The game is rendered on an HTML canvas with 64×64 tiles, room-by-room
 transitions, animated sprites, keyboard and touch controls, combat, merchants,
 equipment, quests, and a dedicated training hall.
+
+This public repository is maintained as a recruiter-facing engineering sample as
+well as a game: changes are tracked with issues, implemented on focused
+branches, validated by automated CI, reviewed through pull requests, and
+published through semantic-version GitHub Releases.
 
 ## Highlights
 
@@ -37,6 +46,25 @@ equipment, quests, and a dedicated training hall.
 The React application owns the game engine, world content, art loading, UI,
 and local saves. Flask owns authentication, users, and persisted game saves;
 in production it also serves the built frontend.
+
+## Engineering workflow
+
+Pull requests are gated by GitHub Actions that run backend pytest, frontend Jest,
+ESLint, the Vite production build, and a production Docker image build. Weekly
+Dependabot checks keep Python and npm dependencies visible, while GitHub Actions
+dependencies are reviewed monthly. Structured issue forms and the PR checklist
+make scope, acceptance criteria, validation, migration impact, documentation,
+and release impact explicit.
+
+Tags matching `vMAJOR.MINOR.PATCH` trigger a release workflow that reruns the
+core quality gates before GitHub publishes generated release notes. See
+[CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
+[CHANGELOG.md](CHANGELOG.md), [architecture documentation](docs/ARCHITECTURE.md),
+and the [release process](docs/RELEASES.md).
+
+The current Dockerfile still performs database migration and demo seeding during
+image creation. That deployment concern is intentionally tracked separately in
+issue #2 rather than being hidden inside this workflow-focused change.
 
 ## Getting started
 
@@ -158,6 +186,7 @@ react-vite/
   src/router/          Landing, game, login, and signup routes
 tests/                 Flask API tests
 docs/                  Test report and supporting documentation
+.github/               CI, releases, issue forms, PR template, Dependabot
 Dockerfile             Production image and frontend build
 Makefile               Combined test and coverage commands
 ```
