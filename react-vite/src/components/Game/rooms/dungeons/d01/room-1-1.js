@@ -15,7 +15,9 @@ export default {
   ],
   assets: [
     { type: "dungeonStatue", x: 3, y: 4 },
-    { type: "dungeonSwitch", x: 12, y: 4 },
+    { type: "dungeonTerminal", x: 12, y: 4 },
     { type: "dungeonBarrier", x: 7, y: 6, solid: false },
+    { type: "crystalSmall", x: 6, y: 6, solid: false },
+    { type: "crystalSmall", x: 9, y: 6, solid: false },
   ],
 };
