@@ -15,6 +15,7 @@ describe("enemy movement archetypes", () => {
     expect(enemyBehaviorFor("waterCurrentBlob")).toBe(ENEMY_BEHAVIOR.LUNGER);
     expect(enemyBehaviorFor("dungeonFirewallDrone")).toBe(ENEMY_BEHAVIOR.KEEPAWAY);
     expect(enemyBehaviorFor("bossCacheColossus")).toBe(ENEMY_BEHAVIOR.BOSS);
+    expect(enemyBehaviorFor("unknownEnemy")).toBe(ENEMY_BEHAVIOR.CHASER);
   });
 
   test("beetles telegraph and then charge faster than their base speed", () => {
@@ -50,5 +51,13 @@ describe("enemy movement archetypes", () => {
     expect(["pressure", "circle"]).toContain(boss.state);
     expect(boss.speed).toBeGreaterThan(0);
     expect(Math.hypot(boss.vector.x, boss.vector.y)).toBeCloseTo(1);
+  });
+
+  test("unknown enemies retain the original direct chase fallback", () => {
+    const chase = motion("unknownEnemy", 0.8, 120, 58);
+    expect(chase.state).toBe("chase");
+    expect(chase.speed).toBe(58);
+    expect(chase.vector.x).toBeCloseTo(1);
+    expect(chase.vector.y).toBeCloseTo(0);
   });
 });
