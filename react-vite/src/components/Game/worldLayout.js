@@ -49,6 +49,19 @@ const WORLD_LAYOUTS = {
       },
     ],
   },
+  willowCave: {
+    regions: [],
+    rooms: [
+      {
+        id: "willowbrook-hollow",
+        name: "Willowbrook Hollow",
+        bounds: { x: 0, y: 0, width: 12, height: 8 },
+        camera: CAMERA_MODE.SNAP,
+        priority: 50,
+        kind: "smallInterior",
+      },
+    ],
+  },
   d01: {
     regions: [],
     // This partition deliberately mixes room sizes. It occupies the same

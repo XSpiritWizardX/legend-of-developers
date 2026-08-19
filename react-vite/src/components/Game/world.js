@@ -109,6 +109,10 @@ export const DUNGEONS = [
     id: "d03", name: "Crystalwater Vault", number: 3, theme: "water",
     reward: "backendApi", entrance: { x: 136 * TILE + 32, y: 64 * TILE + 32 },
   },
+  {
+    id: "willowCave", name: "Willowbrook Hollow", number: "H", theme: "cave",
+    reward: null, entrance: { x: 37 * TILE + 32, y: 16 * TILE + 32 },
+  },
 ];
 
 export const MERCHANTS = [
@@ -199,6 +203,17 @@ export const MAPS = {
       ["ow-gloves", 136, 74, "glove"],
       ["ow-boots", 151, 85, "boots"],
     ],
+  },
+  willowCave: {
+    id: "willowCave", name: "Willowbrook Hollow", theme: "cave",
+    width: 12, height: 8,
+    spawn: { x: 6 * TILE + 32, y: 6 * TILE + 32 },
+    exit: { x: 6 * TILE + 32, y: 7 * TILE + 32 },
+    enemies: [
+      ["willow-cave-bat", "caveEchoBat", 3, 3],
+      ["willow-cave-beetle", "forestByteBeetle", 9, 4],
+    ],
+    chests: [["willow-cave-cache", 6, 2, "magicPatch"]],
   },
   d01: {
     id: "d01", name: "Temple I · Rootbound Temple", number: 1, theme: "forest",
@@ -334,6 +349,17 @@ function dungeonTile(mapId, tx, ty, flags) {
   return (lx + ly) % 2 ? "dungeonFloor" : "dungeonFloorAlt";
 }
 
+function willowCaveTile(tx, ty) {
+  const atEdge = tx === 0 || ty === 0 || tx === 11 || ty === 7;
+  if (atEdge) {
+    if (ty === 7 && (tx === 5 || tx === 6)) return "dungeonFloor";
+    return "wall";
+  }
+  if ((tx === 3 || tx === 8) && ty === 4) return "wall";
+  if (ty === 2 && (tx === 2 || tx === 9)) return "stone";
+  return (tx + ty) % 2 ? "dungeonFloor" : "dungeonFloorAlt";
+}
+
 function debugLabTile(tx, ty) {
   if (tx === 0 || ty === 0 || tx === SCREEN_COLS - 1 || ty === SCREEN_ROWS - 1) {
     if (ty === SCREEN_ROWS - 1 && (tx === 7 || tx === 8)) return "dungeonFloor";
@@ -351,6 +377,7 @@ export function tileAt(mapId, tx, ty, flags = {}) {
   const indexedTile = indexedRoomTileAt(mapId, tx, ty);
   if (indexedTile) return indexedTile.tile;
   if (mapId === "overworld") return overworldTile(tx, ty, flags);
+  if (mapId === "willowCave") return willowCaveTile(tx, ty);
   if (mapId === "debugLab") return debugLabTile(tx, ty);
   return dungeonTile(mapId, tx, ty, flags);
 }
@@ -369,7 +396,7 @@ export function roomNameAt(mapId, x, y) {
 
 export function roomExitsAt(mapId, roomX, roomY) {
   if (mapId === "overworld") return OW_ROOMS[`${roomX},${roomY}`]?.exits || [];
-  if (mapId === "debugLab") return [];
+  if (mapId === "debugLab" || mapId === "willowCave") return [];
   const base = DUNGEON_ROOMS[`${roomX},${roomY}`];
   const editable = editableRoomAt(mapId, roomX, roomY);
   return (editable?.exits || base?.exits || []);
