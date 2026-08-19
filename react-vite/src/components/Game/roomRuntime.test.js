@@ -63,14 +63,46 @@ describe("logical room runtime adapter", () => {
     expect(runtime.usesLegacyTransitions).toBe(true);
   });
 
+  test("entering a legacy screen from an authored room uses a smooth handoff instead of bouncing back", () => {
+    const player = { x: 15 * TILE + 62, y: 15 * TILE + 32 };
+    const runtime = resolveRoomRuntime({
+      mapId: "overworld",
+      player,
+      viewport: VIEWPORT,
+      tileSize: TILE,
+      previousCamera: { x: 1024, y: 640 },
+    });
+
+    expect(runtime.room.id).toBe("greenwood-vale");
+    expect(runtime.legacyHandoff).toBe(true);
+    expect(runtime.usesLegacyTransitions).toBe(false);
+    expect(runtime.targetCamera).toEqual({ x: 0, y: 640 });
+  });
+
+  test("legacy transitions reactivate after the camera is aligned in the destination screen", () => {
+    const player = { x: 15 * TILE + 32, y: 15 * TILE + 32 };
+    const runtime = resolveRoomRuntime({
+      mapId: "overworld",
+      player,
+      viewport: VIEWPORT,
+      tileSize: TILE,
+      previousCamera: { x: 0, y: 640 },
+    });
+
+    expect(runtime.legacyHandoff).toBe(false);
+    expect(runtime.usesLegacyTransitions).toBe(true);
+  });
+
   test("legacy region identity includes the actual screen so adjacent screens are distinct", () => {
     const firstPlayer = { x: 8 * TILE, y: 5 * TILE };
-    const secondPlayer = { x: 24 * TILE, y: 5 * TILE };
+    const secondPlayer = { x: 40 * TILE, y: 35 * TILE };
     const firstRuntime = resolveRoomRuntime({
       mapId: "overworld", player: firstPlayer, viewport: VIEWPORT, tileSize: TILE,
+      previousCamera: { x: 0, y: 0 },
     });
     const secondRuntime = resolveRoomRuntime({
       mapId: "overworld", player: secondPlayer, viewport: VIEWPORT, tileSize: TILE,
+      previousCamera: { x: 2048, y: 1920 },
     });
 
     expect(firstRuntime.room.id).toBe("greenwood-vale");
@@ -78,10 +110,10 @@ describe("logical room runtime adapter", () => {
     expect(roomRuntimeIdentity("overworld", firstPlayer, firstRuntime, VIEWPORT))
       .toBe("overworld:greenwood-vale:screen:0,0");
     expect(roomRuntimeIdentity("overworld", secondPlayer, secondRuntime, VIEWPORT))
-      .toBe("overworld:greenwood-vale:screen:1,0");
+      .toBe("overworld:greenwood-vale:screen:2,3");
   });
 
-  test("legacy camera target follows the destination screen without bouncing back", () => {
+  test("legacy camera target follows the destination screen without overshooting map bounds", () => {
     const player = { x: 48 * TILE + 8, y: 15 * TILE + 32 };
     const mapPixels = { width: 256 * TILE, height: 160 * TILE };
 
@@ -98,7 +130,7 @@ describe("logical room runtime adapter", () => {
   });
 
   test("unmigrated maps keep the legacy transition contract", () => {
-    const runtime = runtimeAt("d02", 24, 28);
+    const runtime = runtimeAt("d02", 24, 28, { x: 1024, y: 1280 });
 
     expect(runtime.room.legacy).toBe(true);
     expect(runtime.usesLegacyTransitions).toBe(true);
