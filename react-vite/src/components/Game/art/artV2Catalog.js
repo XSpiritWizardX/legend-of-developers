@@ -41,6 +41,21 @@ export const ART_V2_CATALOG = {
     },
     forestTallGrass: { source: "/art/v2/props/tall-grass.svg" },
   },
+  characters: {
+    playerWalk: {
+      source: "/art/v2/characters/player-walk-sheet.svg",
+      sheet: {
+        columns: 4,
+        rows: 4,
+        frameWidth: 64,
+        frameHeight: 64,
+        framesPerDirection: 4,
+        directions: ["down", "left", "right", "up"],
+      },
+      frameDuration: 105,
+      loop: true,
+    },
+  },
 };
 
 export function catalogArtV2(category, id) {
