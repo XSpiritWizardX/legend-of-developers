@@ -1,5 +1,6 @@
 export default {
-  id: "d02:1,2", variant: 0, wallRects: [[2, 2, 3, 5], [11, 2, 3, 5]],
+  id: "d02:1,2", name: "Ashen Vestibule", variant: 0,
+  wallRects: [[2, 2, 3, 5], [11, 2, 3, 5]],
   floor: [
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
     ".. rf rf rf rf rf rf rf rf rf rf rf rf rf rf ..",
@@ -13,7 +14,9 @@ export default {
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
   ],
   assets: [
-    { type: "neonSign", x: 6, y: 6, text: "MOUNT", solid: false },
+    { type: "dungeonTerminal", x: 8, y: 4, solid: false },
+    { type: "caveTorch", x: 6, y: 6, solid: false },
+    { type: "caveTorch", x: 9, y: 6, solid: false },
     { type: "dungeonPillar", x: 5, y: 7 },
     { type: "dungeonDoor", x: 7, y: 1, solid: false },
   ],
