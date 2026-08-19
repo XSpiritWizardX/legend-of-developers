@@ -9,6 +9,7 @@ import { indexedRoomTileAt } from "./art/tileIndex";
 import {
   decayKnockback, hitStopFor, knockbackVector, movementScale, nearestFacingTarget, targetInFront,
 } from "./actionFeel";
+import { activeAttackVisual } from "./attackVisuals";
 import {
   resolveRoomRuntime, roomChanged, settleCamera, smoothCamera,
 } from "./roomRuntime";
@@ -902,7 +903,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     weaponEffects.push({
       type: "sword", x: player.x, y: player.y, dir: { ...dir },
       upgraded: Boolean(player.inventory.masterSword),
-      time: 0, duration: 0.13,
+      time: 0, duration: 0.18,
     });
     let clearedBrush = false;
     const swordReach = 56 + player.equipmentLevels.sword * 4;
@@ -1401,7 +1402,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         toX,
         toY,
         elapsed: 0,
-        duration: 0.62,
+        duration: 0.42,
       };
       save();
     }
@@ -1617,20 +1618,23 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.restore();
     }
     const renderDirection = spriteDirection(player.dir);
+    const attackVisual = activeAttackVisual(weaponEffects);
+    const playerArtId = attackVisual ? "playerAttack" : "playerWalk";
+    const playerFrame = attackVisual?.frame ?? walkFrame;
     if (drawCatalogArt(
       ctx,
       "characters",
-      "playerWalk",
+      playerArtId,
       x - 32,
       y - 53,
       64,
       64,
       {
         direction: renderDirection,
-        frame: walkFrame,
+        frame: playerFrame,
       },
     )) {
-      if (player.attackTime <= 0) {
+      if (!attackVisual && player.attackTime <= 0) {
         const facing = directionVector();
         const upgraded = player.equipmentLevels.sword > 1;
         const perpendicular = { x: -facing.y, y: facing.x };
