@@ -29,7 +29,7 @@ export const ROOTBOUND_POINT = Object.freeze({
 
 export const ROOTBOUND_GATE = Object.freeze({
   centerTx: 23.5,
-  centerTy: 16,
+  centerTy: 16.5,
   halfWidthTiles: 1.55,
   halfHeightTiles: 0.52,
 });
