@@ -24,7 +24,8 @@ RUN cd react-vite && npm ci --no-audit --no-fund && npm run build
 # Keep database setup inside the Docker build. Render exposes service env vars
 # as Docker build args, but its internal Postgres hostname is not resolvable in
 # the image builder. Point BUILD_DATABASE_URL at the database's External URL.
-# DATABASE_URL remains the normal internal/runtime connection string.
-RUN DATABASE_URL="${BUILD_DATABASE_URL:-$DATABASE_URL}" flask db upgrade
-RUN DATABASE_URL="${BUILD_DATABASE_URL:-$DATABASE_URL}" flask seed all
+# DATABASE_URL remains the normal internal/runtime connection string. Plain CI
+# builds fall back to local SQLite so the image remains buildable without Render.
+RUN DATABASE_URL="${BUILD_DATABASE_URL:-${DATABASE_URL:-sqlite:///dev.db}}" flask db upgrade
+RUN DATABASE_URL="${BUILD_DATABASE_URL:-${DATABASE_URL:-sqlite:///dev.db}}" flask seed all
 CMD gunicorn app:app
