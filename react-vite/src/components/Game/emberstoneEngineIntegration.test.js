@@ -18,8 +18,9 @@ describe("Emberstone engine integration", () => {
     expect(engineSource).toContain("state.mapId === \"d02\" && state.flags[EMBERSTONE_FLAG.GATE_OPEN]");
   });
 
-  test("remote regulator hits force the Wind Disc to return after feedback", () => {
+  test("remote regulator hits return the Wind Disc after applying feedback", () => {
+    expect(engineSource).toContain("const result = resolveEmberstoneWindDiscHit");
+    expect(engineSource).toContain("if (result.message) announce(result.message, 4)");
     expect(engineSource).toContain("boomerang.returning = true");
-    expect(engineSource).toContain("FURNACE REGULATOR");
   });
 });
