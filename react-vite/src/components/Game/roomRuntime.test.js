@@ -43,6 +43,15 @@ describe("logical room runtime adapter", () => {
     expect(runtime.targetCamera.y).toBeLessThanOrEqual(20 * TILE);
   });
 
+  test("a 12x8 interior is centered inside the larger viewport", () => {
+    const runtime = runtimeAt("willowCave", 6, 6);
+
+    expect(runtime.room.id).toBe("willowbrook-hollow");
+    expect(runtime.title).toBe("Willowbrook Hollow");
+    expect(runtime.usesLegacyTransitions).toBe(false);
+    expect(runtime.targetCamera).toEqual({ x: -128, y: -64 });
+  });
+
   test("broad outdoor regions can remain on legacy transitions while tiles are re-authored", () => {
     const runtime = runtimeAt("overworld", 4, 4);
 
