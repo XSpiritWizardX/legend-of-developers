@@ -1,4 +1,4 @@
-import { TILE } from "./world";
+export const DEFAULT_TILE_SIZE = 64;
 
 export const TERRAIN = Object.freeze({
   LEDGE_DOWN: "ledgeDown",
@@ -74,7 +74,12 @@ export function terrainTraversalFor({ tile, direction, hasFlippers = false }) {
   return { state: TRAVERSAL_STATE.WALK, blocksMovement: false };
 }
 
-export function ledgeLandingPoint({ x, y, direction, tileSize = TILE }) {
+export function ledgeLandingPoint({
+  x,
+  y,
+  direction,
+  tileSize = DEFAULT_TILE_SIZE,
+}) {
   const vector = directionVector(direction);
   // Move far enough to clear the source ledge tile and land safely on the
   // next walkable tile. The runtime can animate the player along this arc.
@@ -85,7 +90,12 @@ export function ledgeLandingPoint({ x, y, direction, tileSize = TILE }) {
   };
 }
 
-export function interactionProbe({ x, y, direction, distance = TILE * 0.62 }) {
+export function interactionProbe({
+  x,
+  y,
+  direction,
+  distance = DEFAULT_TILE_SIZE * 0.62,
+}) {
   const vector = directionVector(direction);
   return {
     x: x + vector.x * distance,
