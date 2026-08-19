@@ -10,6 +10,8 @@ describe("player attack visuals", () => {
     expect(attackVisualFrame(effect)).toBe(2);
     effect.time = 0.16;
     expect(attackVisualFrame(effect)).toBe(3);
+    effect.time = 0.179;
+    expect(attackVisualFrame(effect)).toBe(3);
   });
 
   test("spin attacks cycle the body poses twice", () => {
