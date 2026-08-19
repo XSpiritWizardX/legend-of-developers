@@ -10,6 +10,7 @@ import {
   decayKnockback, hitStopFor, knockbackVector, movementScale, nearestFacingTarget, targetInFront,
 } from "./actionFeel";
 import { activeAttackVisual } from "./attackVisuals";
+import { enemyMotion } from "./enemyBehaviors";
 import {
   resolveRoomRuntime, roomChanged, settleCamera, smoothCamera,
 } from "./roomRuntime";
@@ -1328,11 +1329,17 @@ export function createGame(canvas, { initialSave, onSave }) {
       }
       const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
       if (!enemy.stunned && knockbackSpeed < 18 && distance < 310 && distance > 0) {
-        const speed = enemy.type === "bat" ? 100 : isPermanentEnemy(enemy.type) ? 80 : 58;
-        const nx = enemy.x + (player.x - enemy.x) / distance * speed * dt;
-        const ny = enemy.y + (player.y - enemy.y) / distance * speed * dt;
+        const baseSpeed = enemy.type === "bat" || enemy.type === "caveEchoBat"
+          ? 100
+          : (isPermanentEnemy(enemy.type) ? 80 : 58);
+        const motion = enemyMotion({ enemy, player, distance, baseSpeed });
+        enemy.aiState = motion.state;
+        const nx = enemy.x + motion.vector.x * motion.speed * dt;
+        const ny = enemy.y + motion.vector.y * motion.speed * dt;
         if (enemyCanMove(enemy, nx, enemy.y)) enemy.x = nx;
         if (enemyCanMove(enemy, enemy.x, ny)) enemy.y = ny;
+      } else if (enemy.stunned) {
+        enemy.aiState = "stunned";
       }
       const boss = isPermanentEnemy(enemy.type);
       if (distance < (boss ? 43 : 29) && player.invincible <= 0) {
@@ -1828,6 +1835,21 @@ export function createGame(canvas, { initialSave, onSave }) {
     ctx.beginPath();
     ctx.ellipse(x, y + (boss ? 24 : 14), boss ? 34 : 18, boss ? 11 : 6, 0, 0, Math.PI * 2);
     ctx.fill();
+    if (["windup", "squash"].includes(enemy.aiState)) {
+      const pulse = 3 + Math.sin(enemy.phase * 18) * 2;
+      ctx.strokeStyle = enemy.aiState === "windup" ? "#d4b76b" : "#8fa39a";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(x, y + 13, 22 + pulse, 9 + pulse * 0.35, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (["charge", "lunge", "swoop", "pressure"].includes(enemy.aiState)) {
+      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = enemy.aiState === "pressure" ? "#b96f5d" : "#d4b76b";
+      ctx.beginPath();
+      ctx.ellipse(x, y + 10, boss ? 39 : 25, boss ? 15 : 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
     if (drawCatalogArt(ctx, "enemies", enemy.type, x - 32, y - 44, 64, 64)) {
       if (boss) {
         const maxHp = 14 + (map().number || 0);
