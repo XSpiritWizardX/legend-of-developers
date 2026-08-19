@@ -27,7 +27,7 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: react-vite/package-lock.json
-      - name: Apply guarded world and engine patch
+      - name: Apply guarded world patch
         run: python scripts/patch_willowbrook_small_interior.py
       - name: Install frontend dependencies
         working-directory: react-vite
@@ -45,7 +45,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add react-vite/src/components/Game/world.js react-vite/src/components/Game/engine.js
+          git add react-vite/src/components/Game/world.js
           git rm scripts/patch_willowbrook_small_interior.py .github/workflows/apply-willowbrook-small-interior.yml
           git diff --cached --check
           git commit -m "Add centered Willowbrook Hollow small interior"
