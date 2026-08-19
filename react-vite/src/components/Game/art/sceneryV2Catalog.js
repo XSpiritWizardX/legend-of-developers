@@ -1,3 +1,5 @@
+import { catalogCompletionArtV2 } from "./completionV2Catalog";
+
 const TILE_SCENERY = Object.freeze({
   sh: Object.freeze({ source: "/art/v2/tiles/coast-shore.svg" }),
   fm: Object.freeze({ source: "/art/v2/props/coast-foam.svg", width: 96, height: 48, offsetX: -16, offsetY: 8 }),
@@ -44,8 +46,8 @@ const PROP_SCENERY = Object.freeze({
 });
 
 export function catalogSceneryArtV2(category, id) {
-  if (category === "tiles") return TILE_SCENERY[id] || null;
-  if (category === "props") return PROP_SCENERY[id] || null;
+  if (category === "tiles") return TILE_SCENERY[id] || catalogCompletionArtV2(category, id);
+  if (category === "props") return PROP_SCENERY[id] || catalogCompletionArtV2(category, id);
   return null;
 }
 
