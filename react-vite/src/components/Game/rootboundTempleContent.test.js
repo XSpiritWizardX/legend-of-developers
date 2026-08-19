@@ -82,7 +82,7 @@ describe("Rootbound Temple content", () => {
 
   test("the central Heart Gate blocks movement only until both seals resolve", () => {
     const x = 23.5 * TILE;
-    const y = 16 * TILE;
+    const y = 16.5 * TILE;
     expect(rootboundGateBlocks({ mapId: "d01", x, y, flags: {}, tileSize: TILE })).toBe(true);
     expect(rootboundGateBlocks({
       mapId: "d01",
