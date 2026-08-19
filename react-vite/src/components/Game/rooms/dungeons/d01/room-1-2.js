@@ -14,6 +14,7 @@ export default {
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
   ],
   assets: [
+    { type: "dungeonTerminal", x: 8, y: 4, solid: false },
     { type: "caveTorch", x: 7, y: 6, solid: false },
     { type: "dungeonPillar", x: 5, y: 7 },
     { type: "dungeonPillar", x: 10, y: 7 },
