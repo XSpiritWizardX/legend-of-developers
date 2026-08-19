@@ -43,6 +43,22 @@ describe("logical room runtime adapter", () => {
     expect(runtime.targetCamera.y).toBeLessThanOrEqual(20 * TILE);
   });
 
+  test("broad outdoor regions can remain on legacy transitions while tiles are re-authored", () => {
+    const runtime = runtimeAt("overworld", 4, 4);
+
+    expect(runtime.room.id).toBe("greenwood-vale");
+    expect(runtime.room.legacy).not.toBe(true);
+    expect(runtime.usesLegacyTransitions).toBe(true);
+  });
+
+  test("authored dungeon partitions can be staged without losing room metadata", () => {
+    const runtime = runtimeAt("d01", 8, 5);
+
+    expect(runtime.room.id).toBe("d01-west-gallery");
+    expect(runtime.title).toBe("Rootbound West Gallery");
+    expect(runtime.usesLegacyTransitions).toBe(true);
+  });
+
   test("unmigrated maps keep the legacy transition contract", () => {
     const runtime = runtimeAt("d02", 24, 28);
 
