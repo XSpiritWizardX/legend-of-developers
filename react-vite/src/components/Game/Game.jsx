@@ -148,8 +148,11 @@ function MobileControls({ disabled, onPress, onRelease }) {
       <div className="touch-actions">
         <TouchButton {...buttonProps} input="p" label="Pause" className="touch-menu" />
         <TouchButton {...buttonProps} input="l" label="Talk" className="touch-talk" />
+        <TouchButton {...buttonProps} input="shift" label="Dash" className="touch-dash" />
         <TouchButton {...buttonProps} input="h" label="Sword" className="touch-sword" />
         <TouchButton {...buttonProps} input="j" label="A" className="touch-a" />
+        <TouchButton {...buttonProps} input="q" label="Prev tab" className="touch-tab-prev" />
+        <TouchButton {...buttonProps} input="e" label="Next tab" className="touch-tab-next" />
         <TouchButton {...buttonProps} input="k" label="B" className="touch-b" />
       </div>
     </div>
