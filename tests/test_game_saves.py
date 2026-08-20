@@ -24,6 +24,20 @@ def test_create_and_read_save(client):
     assert fetched.get_json()["save"]["data"] == payload
 
 
+def test_three_sigil_save_is_promoted_to_completed_game(client):
+    payload = {
+        "mapId": "d03",
+        "flags": {"firstWebpage": True, "reactApp": True, "backendApi": True},
+        "player": {"hp": 8, "hasEmber": False},
+    }
+    response = client.put("/api/game/saves/1", json={"data": payload})
+    data = response.get_json()["save"]["data"]
+    assert response.status_code == 200
+    assert data["flags"]["questComplete"] is True
+    assert data["player"]["hasEmber"] is True
+    assert payload["flags"].get("questComplete") is None
+
+
 def test_put_existing_slot_updates_in_place(client):
     # Saving twice to one slot should update the existing record, not duplicate it.
     first = client.put("/api/game/saves/2", json={"data": {"coins": 1}}).get_json()["save"]
