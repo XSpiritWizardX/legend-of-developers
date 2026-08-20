@@ -1,26 +1,19 @@
 FROM python:3.9.18-alpine3.18
 
-RUN apk add --quiet build-base
-
-RUN apk add --quiet postgresql-dev gcc python3-dev musl-dev npm
-
-ARG FLASK_APP
-ARG FLASK_ENV
-ARG DATABASE_URL
-ARG SCHEMA
-ARG SECRET_KEY
+RUN apk add --quiet build-base postgresql-dev gcc python3-dev musl-dev npm
 
 WORKDIR /var/www
 
 COPY requirements.txt .
-
-RUN pip install -r requirements.txt
-RUN pip install psycopg2
+RUN pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir psycopg2
 
 COPY . .
+RUN cd react-vite \
+    && npm ci --no-audit --no-fund \
+    && npm run build \
+    && rm -rf node_modules
 
-RUN cd react-vite && npm ci --no-audit --no-fund && npm run build
-
-RUN flask db upgrade
-RUN flask seed all
-CMD gunicorn app:app
+# Image creation must never mutate a live database. Apply schema migrations
+# only when the service starts with its real runtime environment, and never
+# seed shared demo credentials in production.
+CMD ["sh", "-c", "python -m flask --app app db upgrade && exec gunicorn --bind 0.0.0.0:${PORT:-8000} app:app"]
