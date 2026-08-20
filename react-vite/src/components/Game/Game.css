@@ -7,6 +7,12 @@
 .game-header-actions { display:flex; align-items:center; gap:12px; }
 .game-header-actions>button { padding:9px 12px; border:1px solid #555748; background:linear-gradient(#2b2e3c,#1b1d28); color:#ddd8c8; cursor:pointer; transition:border-color .15s,color .15s,transform .15s; }
 .game-header-actions>button:hover,.game-header-actions>button:focus-visible { border-color:#d9b85b; color:#f2d684; transform:translateY(-1px); outline:none; }
+.audio-controls { display:flex; align-items:center; justify-content:center; gap:10px; margin:12px auto 0; padding:8px 10px; border:1px solid #4e513f; background:#11150fdd; color:#b9b7ad; font:800 9px sans-serif; letter-spacing:.04em; }
+.audio-controls label { display:grid; grid-template-columns:auto minmax(70px,92px); align-items:center; gap:7px; white-space:nowrap; }
+.audio-controls input[type="range"] { width:92px; accent-color:#d5b75d; cursor:pointer; }
+.audio-controls input[type="range"]:focus-visible { outline:2px solid #f0d17b; outline-offset:2px; }
+.game-header .audio-controls { margin:0; }
+.save-status-copy { margin:12px 0 0; color:#96998d; font:10px sans-serif; letter-spacing:.05em; }
 .game-frame { position:relative; isolation:isolate; overflow:hidden; border:3px solid #8a6a34; border-radius:4px; background:#10140d; box-shadow:0 0 0 4px #2b2517,0 0 0 7px #c9a65155,0 28px 80px #000,0 0 34px #6d873c33; }
 .game-frame::after { content:""; position:absolute; z-index:3; inset:0; pointer-events:none; background:linear-gradient(90deg,#ffd97308,transparent 12%,transparent 88%,#ffd97308); }
 .game-frame canvas { display:block; width:100%; aspect-ratio:256/177; image-rendering:pixelated; image-rendering:crisp-edges; }
@@ -26,6 +32,7 @@
   .game-header h1 { font-size:24px; }
   .game-header-actions { flex-direction:row; align-items:center; }
   .game-header-actions .controls { display:none; }
+  .game-header .audio-controls { display:none; }
   .game-header-actions>button { padding:8px; font-size:10px; }
   .game-frame { width:100%; }
   .game-frame::after { opacity:.65; }
@@ -87,6 +94,7 @@
 @media(max-width:520px) and (orientation:portrait) {
   .game-header small { display:none; }
   .game-header-actions>button:first-of-type { display:none; }
+  .audio-controls { flex-direction:column; align-items:stretch; }
 }
 
 @media(max-height:620px) and (orientation:landscape) and (pointer:coarse) {
