@@ -443,14 +443,17 @@ export default function Game() {
     );
   }
 
+  const currentSave = files[activeFile.slot] || activeFile.data;
+  const restored = Boolean(currentSave?.flags?.questComplete);
+
   return (
     <main className="game-page">
       <header className="game-header">
-        <div><small>FILE {activeFile.slot} · RESTORE THE THREE SIGILS</small><h1>The Legend of Developer: The Blight of AI</h1></div>
+        <div><small>FILE {activeFile.slot} · {restored ? "EVERDAWN RESTORED" : "RESTORE THE THREE SIGILS"}</small><h1>The Legend of Developer: The Blight of AI</h1></div>
         <div className="game-header-actions">
           <div className="controls"><span>WASD Move</span><span>Shift Dash</span><span>H Tap / Hold Blade</span><span>J Item A</span><span>K Item B</span><span>L Enter / Talk</span><span>P Map & Gear</span><span>Q/E Change Tab</span></div>
           <AudioControls preferences={audioPreferences} onChange={updateAudioPreference} />
-          <button onClick={enterDebugLab}>Training Hall</button>
+          {(debugRequested || playtestRequested) && <button onClick={enterDebugLab}>Training Hall</button>}
           <button onClick={returnToFiles}>Save Files</button>
         </div>
       </header>
@@ -458,9 +461,14 @@ export default function Game() {
         <canvas ref={canvasRef} width="1024" height="708" aria-label="The Legend of Developer: The Blight of AI game" />
         {!started && (
           <div className="game-overlay">
-            <p>CHAPTER I · THE SLEEPING GROVE</p>
-            <h2>{activeFile.data ? "Continue the Quest" : "The HTML Sword"}</h2>
-            <span>Dark roots have sealed the roads beyond Willowbrook.<br />Upgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil.</span>
+            <p>{restored ? "EPILOGUE · EVERDAWN RESTORED" : "CHAPTER I · THE SLEEPING GROVE"}</p>
+            <h2>{restored ? "Continue Exploring" : (activeFile.data ? "Continue the Quest" : "The HTML Sword")}</h2>
+            <span>
+              {restored
+                ? "The three sigils shine again. Revisit Everdawn, uncover secrets, and finish anything you left behind."
+                : "Dark roots have sealed the roads beyond Willowbrook.\nUpgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil."}
+            </span>
+            {!activeFile.data && !restored && <small>Move with WASD or the arrow keys · H attacks · L interacts · P opens your map and gear.</small>}
             <button onClick={begin}>{activeFile.data ? "CONTINUE" : "BEGIN ADVENTURE"}</button>
           </div>
         )}
