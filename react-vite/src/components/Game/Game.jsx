@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { csrfFetch } from "../../redux/csrf";
 import { createGame } from "./engine";
+import { GAME_SFX, playGameSfx } from "./gameAudio";
 import "./Game.css";
 
 const SLOTS = [1, 2, 3];
@@ -188,16 +189,19 @@ export default function Game() {
       });
     }
     setFiles((current) => ({ ...current, [slot]: data }));
+    playGameSfx(GAME_SFX.SAVE);
   }
 
   async function deleteFile(slot) {
     localStorage.removeItem(localKey(slot));
     if (user) await csrfFetch(`/api/game/saves/${slot}`, { method: "DELETE" });
     setFiles((current) => ({ ...current, [slot]: null }));
+    playGameSfx(GAME_SFX.UI_CANCEL);
   }
 
   function chooseFile(slot) {
     const data = files[slot];
+    playGameSfx(GAME_SFX.UI_CONFIRM);
     if (mode === "delete") {
       if (data && window.confirm(`Delete File ${slot}? This cannot be undone.`)) {
         deleteFile(slot);
@@ -222,20 +226,29 @@ export default function Game() {
   }
 
   function begin() {
+    playGameSfx(GAME_SFX.UI_CONFIRM);
     gameRef.current?.start();
     setStarted(true);
   }
 
   function returnToFiles() {
+    playGameSfx(GAME_SFX.UI_CANCEL);
     setActiveFile(null);
     setStarted(false);
     setMode("select");
   }
 
   function enterDebugLab() {
+    playGameSfx(GAME_SFX.UI_CONFIRM);
     gameRef.current?.start();
     gameRef.current?.enterDebugLab();
     setStarted(true);
+  }
+
+  function setFileMode(nextMode) {
+    playGameSfx(nextMode === "select" ? GAME_SFX.UI_CANCEL : GAME_SFX.UI_MOVE);
+    setMode(nextMode);
+    setCopySource(null);
   }
 
   function pressGameKey(key) {
@@ -298,9 +311,9 @@ export default function Game() {
             })}
           </div>
           <div className="file-tools">
-            <button onClick={() => { setMode(mode === "copy" ? "select" : "copy"); setCopySource(null); }}>Copy File</button>
-            <button onClick={() => { setMode(mode === "delete" ? "select" : "delete"); setCopySource(null); }}>Delete File</button>
-            {mode !== "select" && <button onClick={() => { setMode("select"); setCopySource(null); }}>Cancel</button>}
+            <button onClick={() => setFileMode(mode === "copy" ? "select" : "copy")}>Copy File</button>
+            <button onClick={() => setFileMode(mode === "delete" ? "select" : "delete")}>Delete File</button>
+            {mode !== "select" && <button onClick={() => setFileMode("select")}>Cancel</button>}
           </div>
           {!user && <p className="signin-hint">Log in or sign up to access these files from another device.</p>}
         </div>
