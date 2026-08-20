@@ -15,6 +15,30 @@ def _invalid_slot_response(slot):
     return jsonify({"error": "Save slot must be between 1 and 3."}), 400
 
 
+def _normalize_completion(data):
+    """Promote three-sigil saves into the canonical completed-game state.
+
+    Crystal Sigil ownership is the durable progression fact used by existing
+    saves. Normalizing on write keeps old clients and interrupted sessions from
+    leaving a player permanently one flag short of the real ending.
+    """
+    flags = data.get("flags")
+    if not isinstance(flags, dict) or not flags.get("backendApi") or flags.get("questComplete"):
+        return data
+
+    normalized = dict(data)
+    normalized_flags = dict(flags)
+    normalized_flags["questComplete"] = True
+    normalized["flags"] = normalized_flags
+
+    player = normalized.get("player")
+    if isinstance(player, dict):
+        normalized_player = dict(player)
+        normalized_player["hasEmber"] = True
+        normalized["player"] = normalized_player
+    return normalized
+
+
 @game_routes.get("/saves/<int:slot>")
 @login_required
 def get_save(slot):
@@ -42,6 +66,7 @@ def put_save(slot):
     data = payload.get("data")
     if not isinstance(data, dict):
         return jsonify({"error": "Save data must be an object."}), 400
+    data = _normalize_completion(data)
 
     save = GameSave.query.filter_by(user_id=current_user.id, slot=slot).first()
     if save is None:
