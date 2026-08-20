@@ -14,6 +14,17 @@ describe("gameplay sound effects", () => {
     });
   });
 
+  test("release-critical player feedback cues remain available", () => {
+    const required = [
+      "DASH", "CHARGE", "PLAYER_HURT", "ENEMY_DEFEAT", "BOSS_PHASE", "BOSS_DEFEAT",
+      "SECRET", "SWITCH", "DOOR", "ERROR", "GRAPPLE", "FIRE", "ICE", "BOMB", "HEART", "KEY",
+    ];
+    required.forEach((name) => {
+      expect(GAME_SFX[name]).toBeTruthy();
+      expect(sfxPatternFor(GAME_SFX[name]).length).toBeGreaterThan(0);
+    });
+  });
+
   test("pickup and chest cues rise into a reward cadence", () => {
     const pickup = sfxPatternFor(GAME_SFX.PICKUP);
     const chest = sfxPatternFor(GAME_SFX.CHEST);
