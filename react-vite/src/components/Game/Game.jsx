@@ -11,6 +11,7 @@ const SLOTS = [1, 2, 3];
 const legacyLocalKey = (slot) => `legend-of-devs-save-${slot}`;
 const localIdentity = (user) => (user?.id ? `user-${user.id}` : "guest");
 const localKey = (slot, user) => `legend-of-devs-save-${localIdentity(user)}-${slot}`;
+const localUpdatedKey = (slot, user) => `${localKey(slot, user)}-updated`;
 const AUDIO_PREFERENCES_KEY = "legend-of-devs-audio";
 const DEFAULT_AUDIO_PREFERENCES = Object.freeze({ music: 68, sfx: 88 });
 
@@ -41,6 +42,30 @@ export function normalizeCompletedSave(data) {
   };
 }
 
+function saveProgressScore(data) {
+  if (!data) return -1;
+  const flags = data.flags || {};
+  const inventory = data.player?.inventory || {};
+  let score = 0;
+  if (flags.questComplete) score += 1_000_000;
+  if (flags.backendApi) score += 300_000;
+  if (flags.reactApp) score += 200_000;
+  if (flags.firstWebpage) score += 100_000;
+  if (inventory.htmlSword) score += 50_000;
+  score += Object.keys(data.openedChests || {}).length * 120;
+  score += Object.keys(data.discovered || {}).length * 10;
+  score += Object.values(inventory).filter((value) => value === true).length * 50;
+  score += Math.max(0, Number(data.player?.maxHp) || 0) * 5;
+  score += Math.min(9999, Math.max(0, Number(data.player?.coins) || 0));
+  return score;
+}
+
+function readLocalUpdatedAt(slot, user) {
+  if (typeof localStorage === "undefined") return 0;
+  const timestamp = Number(localStorage.getItem(localUpdatedKey(slot, user)));
+  return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : 0;
+}
+
 function readLocal(slot, user) {
   if (typeof localStorage === "undefined") return null;
   try {
@@ -53,7 +78,7 @@ function readLocal(slot, user) {
       const legacy = localStorage.getItem(legacyLocalKey(slot));
       if (legacy) {
         const migrated = normalizeCompletedSave(JSON.parse(legacy));
-        localStorage.setItem(localKey(slot, user), JSON.stringify(migrated));
+        writeLocal(slot, migrated, user);
         return migrated;
       }
     }
@@ -63,15 +88,37 @@ function readLocal(slot, user) {
   return null;
 }
 
-function writeLocal(slot, data, user) {
+function writeLocal(slot, data, user, updatedAt = Date.now()) {
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(localKey(slot, user), JSON.stringify(data));
+  localStorage.setItem(localUpdatedKey(slot, user), String(updatedAt));
 }
 
 function removeLocal(slot, user) {
   if (typeof localStorage === "undefined") return;
   localStorage.removeItem(localKey(slot, user));
+  localStorage.removeItem(localUpdatedKey(slot, user));
   if (!user) localStorage.removeItem(legacyLocalKey(slot));
+}
+
+function preferredSave(localRecord, cloudSave) {
+  const localData = normalizeCompletedSave(localRecord?.data);
+  const cloudData = normalizeCompletedSave(cloudSave?.data);
+  if (!cloudData) return { data: localData, source: localData ? "local" : "none" };
+  if (!localData) return { data: cloudData, source: "cloud" };
+
+  const cloudUpdatedAt = Date.parse(cloudSave.updated_at || "") || 0;
+  if (localRecord.updatedAt > 0 && cloudUpdatedAt > 0 && localRecord.updatedAt !== cloudUpdatedAt) {
+    return localRecord.updatedAt > cloudUpdatedAt
+      ? { data: localData, source: "local" }
+      : { data: cloudData, source: "cloud" };
+  }
+
+  // Older local backups did not record timestamps. In that case prefer the
+  // copy with demonstrably greater durable progression and let cloud win ties.
+  return saveProgressScore(localData) > saveProgressScore(cloudData)
+    ? { data: localData, source: "local" }
+    : { data: cloudData, source: "cloud" };
 }
 
 function AudioControls({ preferences, onChange }) {
@@ -190,20 +237,43 @@ export default function Game() {
     let active = true;
     async function loadFiles() {
       setLoading(true);
-      const localFiles = Object.fromEntries(SLOTS.map((slot) => [slot, readLocal(slot, user)]));
-      let loaded = { ...localFiles };
+      const localRecords = Object.fromEntries(SLOTS.map((slot) => [slot, {
+        data: readLocal(slot, user),
+        updatedAt: readLocalUpdatedAt(slot, user),
+      }]));
+      let loaded = Object.fromEntries(SLOTS.map((slot) => [slot, localRecords[slot].data]));
       let status = user ? "" : "Guest saves ready";
       if (user) {
         try {
           const response = await csrfFetch("/api/game/saves");
           const payload = await response.json();
+          const cloudBySlot = Object.fromEntries(payload.saves.map((save) => [save.slot, save]));
+          const recoveries = [];
           loaded = { 1: null, 2: null, 3: null };
-          payload.saves.forEach((save) => {
-            const normalized = normalizeCompletedSave(save.data);
-            loaded[save.slot] = normalized;
-            writeLocal(save.slot, normalized, user);
+
+          SLOTS.forEach((slot) => {
+            const cloudSave = cloudBySlot[slot];
+            const preferred = preferredSave(localRecords[slot], cloudSave);
+            loaded[slot] = preferred.data;
+            if (!preferred.data) return;
+
+            if (preferred.source === "cloud") {
+              writeLocal(slot, preferred.data, user, Date.parse(cloudSave.updated_at || "") || Date.now());
+            } else {
+              recoveries.push({ slot, data: preferred.data });
+            }
           });
-          status = "Cloud saves synchronized";
+
+          for (const recovery of recoveries) {
+            await csrfFetch(`/api/game/saves/${recovery.slot}`, {
+              method: "PUT",
+              body: JSON.stringify({ data: recovery.data }),
+            });
+            writeLocal(recovery.slot, recovery.data, user);
+          }
+          status = recoveries.length
+            ? `Recovered ${recoveries.length} local ${recoveries.length === 1 ? "backup" : "backups"} to cloud`
+            : "Cloud saves synchronized";
         } catch {
           status = "Cloud unavailable · private local backups ready";
         }
@@ -265,10 +335,13 @@ export default function Game() {
         setSaveStatus("Saving…");
         saveTimer.current = setTimeout(async () => {
           try {
-            await csrfFetch(`/api/game/saves/${slot}`, {
+            const response = await csrfFetch(`/api/game/saves/${slot}`, {
               method: "PUT",
               body: JSON.stringify({ data: normalized }),
             });
+            const payload = await response.json();
+            writeLocal(slot, normalizeCompletedSave(payload.save?.data || normalized), user,
+              Date.parse(payload.save?.updated_at || "") || Date.now());
             setSaveStatus(completedNow ? "Realm restored · cloud save complete" : "Cloud save complete");
           } catch {
             setSaveStatus("Saved privately on this device · cloud unavailable");
@@ -311,10 +384,13 @@ export default function Game() {
     if (user) {
       setSaveStatus("Syncing copied save…");
       try {
-        await csrfFetch(`/api/game/saves/${slot}`, {
+        const response = await csrfFetch(`/api/game/saves/${slot}`, {
           method: "PUT",
           body: JSON.stringify({ data: normalized }),
         });
+        const payload = await response.json();
+        writeLocal(slot, normalizeCompletedSave(payload.save?.data || normalized), user,
+          Date.parse(payload.save?.updated_at || "") || Date.now());
         setSaveStatus("Cloud copy complete");
       } catch {
         setSaveStatus("Copied privately on this device · cloud unavailable");
