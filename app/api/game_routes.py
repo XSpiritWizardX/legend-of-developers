@@ -6,11 +6,21 @@ from flask_login import current_user, login_required
 from app.models import GameSave, db
 
 game_routes = Blueprint("game", __name__)
+VALID_SAVE_SLOTS = frozenset({1, 2, 3})
+
+
+def _invalid_slot_response(slot):
+    if slot in VALID_SAVE_SLOTS:
+        return None
+    return jsonify({"error": "Save slot must be between 1 and 3."}), 400
 
 
 @game_routes.get("/saves/<int:slot>")
 @login_required
 def get_save(slot):
+    invalid = _invalid_slot_response(slot)
+    if invalid:
+        return invalid
     save = GameSave.query.filter_by(user_id=current_user.id, slot=slot).first()
     return jsonify({"save": save.to_dict() if save else None})
 
@@ -25,6 +35,9 @@ def get_saves():
 @game_routes.put("/saves/<int:slot>")
 @login_required
 def put_save(slot):
+    invalid = _invalid_slot_response(slot)
+    if invalid:
+        return invalid
     payload = request.get_json(silent=True) or {}
     data = payload.get("data")
     if not isinstance(data, dict):
@@ -43,6 +56,9 @@ def put_save(slot):
 @game_routes.delete("/saves/<int:slot>")
 @login_required
 def delete_save(slot):
+    invalid = _invalid_slot_response(slot)
+    if invalid:
+        return invalid
     save = GameSave.query.filter_by(user_id=current_user.id, slot=slot).first()
     if save:
         db.session.delete(save)
