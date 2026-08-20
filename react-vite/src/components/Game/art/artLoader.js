@@ -106,6 +106,31 @@ function cachedImage(source) {
   return imageCache.get(source);
 }
 
+function drawPixelShadow(ctx, category, entry, x, y, width, height, options) {
+  const isActor = category === "characters" || category === "enemies";
+  const enabled = options.shadow ?? entry?.shadow ?? isActor;
+  if (!enabled) return;
+
+  const scale = Math.max(0.25, Math.min(1.5, options.shadowScale ?? entry?.shadowScale ?? 0.62));
+  const shadowWidth = Math.max(12, Math.round(width * scale));
+  const shadowHeight = Math.max(3, Math.round(Math.min(7, height * 0.08)));
+  const centerX = Math.round(x + width / 2 + (options.shadowOffsetX || 0));
+  const baseY = Math.round(y + height - Math.max(2, height * 0.05) + (options.shadowOffsetY || 0));
+  const coreWidth = Math.max(8, Math.round(shadowWidth * 0.72));
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(0.6, options.shadowAlpha ?? entry?.shadowAlpha ?? 0.28));
+  ctx.fillStyle = options.shadowColor || entry?.shadowColor || "#080b12";
+  ctx.fillRect(centerX - Math.round(shadowWidth / 2), baseY, shadowWidth, shadowHeight);
+  ctx.fillRect(
+    centerX - Math.round(coreWidth / 2),
+    baseY - Math.max(1, Math.round(shadowHeight * 0.45)),
+    coreWidth,
+    Math.max(1, Math.round(shadowHeight * 0.45)),
+  );
+  ctx.restore();
+}
+
 export function drawCatalogArt(ctx, category, id, x, y, width, height, options = {}) {
   const entry = catalogArtV2(category, id)
     || catalogBossArtV2(category, id)
@@ -133,6 +158,7 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
+  drawPixelShadow(ctx, category, entry, drawX, drawY, drawWidth, drawHeight, options);
   const sheet = entry.sheet;
   if (sheet) {
     const directionIndex = Math.max(
