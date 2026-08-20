@@ -41,15 +41,19 @@ def test_list_saves_orders_slots_numerically(client):
 
 
 def test_delete_missing_slot_is_idempotent(client):
-    # Deleting an empty slot is an edge case that should still report success.
-    response = client.delete("/api/game/saves/99")
+    # Deleting an empty valid slot should still report success.
+    response = client.delete("/api/game/saves/3")
     assert response.status_code == 200
     assert response.get_json() == {"message": "Save file deleted."}
 
 
-@pytest.mark.skip(reason="Future feature: limit players to three game-save slots")
-def test_save_slot_above_limit_is_rejected(client):
-    # Once the three-slot limit is implemented, a fourth slot should be rejected.
-    response = client.put("/api/game/saves/4", json={"data": {}})
+@pytest.mark.parametrize("slot", [0, 4, 99])
+def test_save_slot_outside_limit_is_rejected(client, slot):
+    response = client.put(f"/api/game/saves/{slot}", json={"data": {}})
     assert response.status_code == 400
     assert response.get_json() == {"error": "Save slot must be between 1 and 3."}
+
+
+def test_read_and_delete_outside_limit_are_rejected(client):
+    assert client.get("/api/game/saves/4").status_code == 400
+    assert client.delete("/api/game/saves/4").status_code == 400
