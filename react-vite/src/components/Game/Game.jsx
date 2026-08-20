@@ -8,7 +8,9 @@ import { setGameMusicVolume } from "./gameMusic";
 import "./Game.css";
 
 const SLOTS = [1, 2, 3];
-const localKey = (slot) => `legend-of-devs-save-${slot}`;
+const legacyLocalKey = (slot) => `legend-of-devs-save-${slot}`;
+const localIdentity = (user) => (user?.id ? `user-${user.id}` : "guest");
+const localKey = (slot, user) => `legend-of-devs-save-${localIdentity(user)}-${slot}`;
 const AUDIO_PREFERENCES_KEY = "legend-of-devs-audio";
 const DEFAULT_AUDIO_PREFERENCES = Object.freeze({ music: 68, sfx: 88 });
 
@@ -28,6 +30,38 @@ function readAudioPreferences() {
   } catch {
     return { ...DEFAULT_AUDIO_PREFERENCES };
   }
+}
+
+function readLocal(slot, user) {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const scoped = localStorage.getItem(localKey(slot, user));
+    if (scoped) return JSON.parse(scoped);
+
+    // Preserve pre-release guest saves without ever importing an unscoped
+    // browser save into a signed-in player's private fallback namespace.
+    if (!user) {
+      const legacy = localStorage.getItem(legacyLocalKey(slot));
+      if (legacy) {
+        localStorage.setItem(localKey(slot, user), legacy);
+        return JSON.parse(legacy);
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function writeLocal(slot, data, user) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(localKey(slot, user), JSON.stringify(data));
+}
+
+function removeLocal(slot, user) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(localKey(slot, user));
+  if (!user) localStorage.removeItem(legacyLocalKey(slot));
 }
 
 function AudioControls({ preferences, onChange }) {
@@ -112,11 +146,6 @@ function MobileControls({ disabled, onPress, onRelease }) {
   );
 }
 
-function readLocal(slot) {
-  try { return JSON.parse(localStorage.getItem(localKey(slot))); }
-  catch { return null; }
-}
-
 export default function Game() {
   const user = useSelector((state) => state.session.user);
   const location = useLocation();
@@ -147,22 +176,26 @@ export default function Game() {
     let active = true;
     async function loadFiles() {
       setLoading(true);
-      const localFiles = Object.fromEntries(SLOTS.map((slot) => [slot, readLocal(slot)]));
+      const localFiles = Object.fromEntries(SLOTS.map((slot) => [slot, readLocal(slot, user)]));
       let loaded = { ...localFiles };
-      let status = "";
+      let status = user ? "" : "Guest saves ready";
       if (user) {
         try {
           const response = await csrfFetch("/api/game/saves");
           const payload = await response.json();
-          payload.saves.forEach((save) => { loaded[save.slot] = save.data; });
+          loaded = { 1: null, 2: null, 3: null };
+          payload.saves.forEach((save) => {
+            loaded[save.slot] = save.data;
+            writeLocal(save.slot, save.data, user);
+          });
           status = "Cloud saves synchronized";
         } catch {
-          status = "Cloud unavailable · local saves ready";
+          status = "Cloud unavailable · private local backups ready";
         }
       }
       if (active) {
         setFiles(loaded);
-        if (status) setSaveStatus(status);
+        setSaveStatus(status);
         setLoading(false);
       }
     }
@@ -201,7 +234,7 @@ export default function Game() {
     gameRef.current = createGame(canvasRef.current, {
       initialSave: data,
       onSave(saveData) {
-        localStorage.setItem(localKey(slot), JSON.stringify(saveData));
+        writeLocal(slot, saveData, user);
         setFiles((current) => ({ ...current, [slot]: saveData }));
         clearTimeout(saveTimer.current);
         if (!user) {
@@ -217,7 +250,7 @@ export default function Game() {
             });
             setSaveStatus("Cloud save complete");
           } catch {
-            setSaveStatus("Saved locally · cloud unavailable");
+            setSaveStatus("Saved privately on this device · cloud unavailable");
           }
         }, 350);
       },
@@ -251,7 +284,7 @@ export default function Game() {
   }
 
   async function persistFile(slot, data) {
-    localStorage.setItem(localKey(slot), JSON.stringify(data));
+    writeLocal(slot, data, user);
     setFiles((current) => ({ ...current, [slot]: data }));
     if (user) {
       setSaveStatus("Syncing copied save…");
@@ -262,7 +295,7 @@ export default function Game() {
         });
         setSaveStatus("Cloud copy complete");
       } catch {
-        setSaveStatus("Copied locally · cloud unavailable");
+        setSaveStatus("Copied privately on this device · cloud unavailable");
       }
     } else {
       setSaveStatus("Copied locally");
@@ -271,14 +304,14 @@ export default function Game() {
   }
 
   async function deleteFile(slot) {
-    localStorage.removeItem(localKey(slot));
+    removeLocal(slot, user);
     setFiles((current) => ({ ...current, [slot]: null }));
     if (user) {
       try {
         await csrfFetch(`/api/game/saves/${slot}`, { method: "DELETE" });
         setSaveStatus("Cloud save deleted");
       } catch {
-        setSaveStatus("Removed locally · cloud delete unavailable");
+        setSaveStatus("Removed from this device · cloud delete unavailable");
       }
     } else {
       setSaveStatus("Local save deleted");
@@ -355,7 +388,7 @@ export default function Game() {
           <p className="file-instruction">
             {mode === "copy" && (copySource ? `Choose a destination for File ${copySource}` : "Choose a file to copy")}
             {mode === "delete" && "Choose a file to delete"}
-            {mode === "select" && (user ? "Your adventure is saved to your account" : "Guest files are saved on this device")}
+            {mode === "select" && (user ? "Your adventure uses cloud saves with a private local backup" : "Guest files are saved on this device")}
           </p>
           <div className="save-files">
             {SLOTS.map((slot) => {
