@@ -3,11 +3,63 @@ import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { csrfFetch } from "../../redux/csrf";
 import { createGame } from "./engine";
-import { GAME_SFX, playGameSfx } from "./gameAudio";
+import { GAME_SFX, playGameSfx, setGameSfxVolume } from "./gameAudio";
+import { setGameMusicVolume } from "./gameMusic";
 import "./Game.css";
 
 const SLOTS = [1, 2, 3];
 const localKey = (slot) => `legend-of-devs-save-${slot}`;
+const AUDIO_PREFERENCES_KEY = "legend-of-devs-audio";
+const DEFAULT_AUDIO_PREFERENCES = Object.freeze({ music: 68, sfx: 88 });
+
+function clampPercent(value, fallback) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.max(0, Math.min(100, numeric)) : fallback;
+}
+
+function readAudioPreferences() {
+  if (typeof localStorage === "undefined") return { ...DEFAULT_AUDIO_PREFERENCES };
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUDIO_PREFERENCES_KEY));
+    return {
+      music: clampPercent(saved?.music, DEFAULT_AUDIO_PREFERENCES.music),
+      sfx: clampPercent(saved?.sfx, DEFAULT_AUDIO_PREFERENCES.sfx),
+    };
+  } catch {
+    return { ...DEFAULT_AUDIO_PREFERENCES };
+  }
+}
+
+function AudioControls({ preferences, onChange }) {
+  return (
+    <div className="audio-controls" aria-label="Audio settings">
+      <label>
+        <span>Music {preferences.music}%</span>
+        <input
+          aria-label="Music volume"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value={preferences.music}
+          onChange={(event) => onChange("music", event.target.value)}
+        />
+      </label>
+      <label>
+        <span>SFX {preferences.sfx}%</span>
+        <input
+          aria-label="Sound effects volume"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value={preferences.sfx}
+          onChange={(event) => onChange("sfx", event.target.value)}
+        />
+      </label>
+    </div>
+  );
+}
 
 function TouchButton({ input, label, className = "", disabled, onPress, onRelease }) {
   function press(event) {
@@ -81,24 +133,36 @@ export default function Game() {
   const [mode, setMode] = useState("select");
   const [copySource, setCopySource] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
+  const [audioPreferences, setAudioPreferences] = useState(readAudioPreferences);
+
+  useEffect(() => {
+    setGameMusicVolume(audioPreferences.music / 100);
+    setGameSfxVolume(audioPreferences.sfx / 100);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(AUDIO_PREFERENCES_KEY, JSON.stringify(audioPreferences));
+    }
+  }, [audioPreferences]);
 
   useEffect(() => {
     let active = true;
     async function loadFiles() {
       setLoading(true);
-      let loaded = Object.fromEntries(SLOTS.map((slot) => [slot, readLocal(slot)]));
+      const localFiles = Object.fromEntries(SLOTS.map((slot) => [slot, readLocal(slot)]));
+      let loaded = { ...localFiles };
+      let status = "";
       if (user) {
         try {
           const response = await csrfFetch("/api/game/saves");
           const payload = await response.json();
-          loaded = { 1: null, 2: null, 3: null };
           payload.saves.forEach((save) => { loaded[save.slot] = save.data; });
+          status = "Cloud saves synchronized";
         } catch {
-          // Local copies remain available if the API is temporarily offline.
+          status = "Cloud unavailable · local saves ready";
         }
       }
       if (active) {
         setFiles(loaded);
+        if (status) setSaveStatus(status);
         setLoading(false);
       }
     }
@@ -153,7 +217,7 @@ export default function Game() {
             });
             setSaveStatus("Cloud save complete");
           } catch {
-            setSaveStatus("Saved locally");
+            setSaveStatus("Saved locally · cloud unavailable");
           }
         }, 350);
       },
@@ -180,22 +244,45 @@ export default function Game() {
     };
   }, [activeFile, user, debugRequested, playtestRequested, location.search]);
 
+  function updateAudioPreference(channel, value) {
+    const fallback = DEFAULT_AUDIO_PREFERENCES[channel];
+    const nextValue = clampPercent(value, fallback);
+    setAudioPreferences((current) => ({ ...current, [channel]: nextValue }));
+  }
+
   async function persistFile(slot, data) {
     localStorage.setItem(localKey(slot), JSON.stringify(data));
-    if (user) {
-      await csrfFetch(`/api/game/saves/${slot}`, {
-        method: "PUT",
-        body: JSON.stringify({ data }),
-      });
-    }
     setFiles((current) => ({ ...current, [slot]: data }));
+    if (user) {
+      setSaveStatus("Syncing copied save…");
+      try {
+        await csrfFetch(`/api/game/saves/${slot}`, {
+          method: "PUT",
+          body: JSON.stringify({ data }),
+        });
+        setSaveStatus("Cloud copy complete");
+      } catch {
+        setSaveStatus("Copied locally · cloud unavailable");
+      }
+    } else {
+      setSaveStatus("Copied locally");
+    }
     playGameSfx(GAME_SFX.SAVE);
   }
 
   async function deleteFile(slot) {
     localStorage.removeItem(localKey(slot));
-    if (user) await csrfFetch(`/api/game/saves/${slot}`, { method: "DELETE" });
     setFiles((current) => ({ ...current, [slot]: null }));
+    if (user) {
+      try {
+        await csrfFetch(`/api/game/saves/${slot}`, { method: "DELETE" });
+        setSaveStatus("Cloud save deleted");
+      } catch {
+        setSaveStatus("Removed locally · cloud delete unavailable");
+      }
+    } else {
+      setSaveStatus("Local save deleted");
+    }
     playGameSfx(GAME_SFX.UI_CANCEL);
   }
 
@@ -315,6 +402,8 @@ export default function Game() {
             <button onClick={() => setFileMode(mode === "delete" ? "select" : "delete")}>Delete File</button>
             {mode !== "select" && <button onClick={() => setFileMode("select")}>Cancel</button>}
           </div>
+          <AudioControls preferences={audioPreferences} onChange={updateAudioPreference} />
+          {saveStatus && <p className="save-status-copy">{saveStatus}</p>}
           {!user && <p className="signin-hint">Log in or sign up to access these files from another device.</p>}
         </div>
       </main>
@@ -327,6 +416,7 @@ export default function Game() {
         <div><small>FILE {activeFile.slot} · RESTORE THE THREE SIGILS</small><h1>The Legend of Developer: The Blight of AI</h1></div>
         <div className="game-header-actions">
           <div className="controls"><span>WASD Move</span><span>Shift Dash</span><span>H Tap / Hold Blade</span><span>J Item A</span><span>K Item B</span><span>L Enter / Talk</span><span>P Map & Gear</span><span>Q/E Change Tab</span></div>
+          <AudioControls preferences={audioPreferences} onChange={updateAudioPreference} />
           <button onClick={enterDebugLab}>Training Hall</button>
           <button onClick={returnToFiles}>Save Files</button>
         </div>
