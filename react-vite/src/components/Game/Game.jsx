@@ -32,19 +32,29 @@ function readAudioPreferences() {
   }
 }
 
+export function normalizeCompletedSave(data) {
+  if (!data?.flags?.backendApi || data.flags.questComplete) return data;
+  return {
+    ...data,
+    flags: { ...data.flags, questComplete: true },
+    player: { ...data.player, hasEmber: true },
+  };
+}
+
 function readLocal(slot, user) {
   if (typeof localStorage === "undefined") return null;
   try {
     const scoped = localStorage.getItem(localKey(slot, user));
-    if (scoped) return JSON.parse(scoped);
+    if (scoped) return normalizeCompletedSave(JSON.parse(scoped));
 
     // Preserve pre-release guest saves without ever importing an unscoped
     // browser save into a signed-in player's private fallback namespace.
     if (!user) {
       const legacy = localStorage.getItem(legacyLocalKey(slot));
       if (legacy) {
-        localStorage.setItem(localKey(slot, user), legacy);
-        return JSON.parse(legacy);
+        const migrated = normalizeCompletedSave(JSON.parse(legacy));
+        localStorage.setItem(localKey(slot, user), JSON.stringify(migrated));
+        return migrated;
       }
     }
   } catch {
@@ -163,6 +173,7 @@ export default function Game() {
   const [copySource, setCopySource] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [audioPreferences, setAudioPreferences] = useState(readAudioPreferences);
+  const [completionCelebration, setCompletionCelebration] = useState(false);
 
   useEffect(() => {
     setGameMusicVolume(audioPreferences.music / 100);
@@ -185,8 +196,9 @@ export default function Game() {
           const payload = await response.json();
           loaded = { 1: null, 2: null, 3: null };
           payload.saves.forEach((save) => {
-            loaded[save.slot] = save.data;
-            writeLocal(save.slot, save.data, user);
+            const normalized = normalizeCompletedSave(save.data);
+            loaded[save.slot] = normalized;
+            writeLocal(save.slot, normalized, user);
           });
           status = "Cloud saves synchronized";
         } catch {
@@ -232,13 +244,19 @@ export default function Game() {
     let playtestTimer;
     const { slot, data } = activeFile;
     gameRef.current = createGame(canvasRef.current, {
-      initialSave: data,
+      initialSave: normalizeCompletedSave(data),
       onSave(saveData) {
-        writeLocal(slot, saveData, user);
-        setFiles((current) => ({ ...current, [slot]: saveData }));
+        const completedNow = Boolean(saveData?.flags?.backendApi && !saveData?.flags?.questComplete);
+        const normalized = normalizeCompletedSave(saveData);
+        writeLocal(slot, normalized, user);
+        setFiles((current) => ({ ...current, [slot]: normalized }));
+        if (completedNow) {
+          setCompletionCelebration(true);
+          playGameSfx(GAME_SFX.BOSS_DEFEAT);
+        }
         clearTimeout(saveTimer.current);
         if (!user) {
-          setSaveStatus("Saved locally");
+          setSaveStatus(completedNow ? "Realm restored · saved locally" : "Saved locally");
           return;
         }
         setSaveStatus("Saving…");
@@ -246,9 +264,9 @@ export default function Game() {
           try {
             await csrfFetch(`/api/game/saves/${slot}`, {
               method: "PUT",
-              body: JSON.stringify({ data: saveData }),
+              body: JSON.stringify({ data: normalized }),
             });
-            setSaveStatus("Cloud save complete");
+            setSaveStatus(completedNow ? "Realm restored · cloud save complete" : "Cloud save complete");
           } catch {
             setSaveStatus("Saved privately on this device · cloud unavailable");
           }
@@ -284,14 +302,15 @@ export default function Game() {
   }
 
   async function persistFile(slot, data) {
-    writeLocal(slot, data, user);
-    setFiles((current) => ({ ...current, [slot]: data }));
+    const normalized = normalizeCompletedSave(data);
+    writeLocal(slot, normalized, user);
+    setFiles((current) => ({ ...current, [slot]: normalized }));
     if (user) {
       setSaveStatus("Syncing copied save…");
       try {
         await csrfFetch(`/api/game/saves/${slot}`, {
           method: "PUT",
-          body: JSON.stringify({ data }),
+          body: JSON.stringify({ data: normalized }),
         });
         setSaveStatus("Cloud copy complete");
       } catch {
@@ -340,6 +359,7 @@ export default function Game() {
       setMode("select");
       return;
     }
+    setCompletionCelebration(false);
     setActiveFile({ slot, data });
     setStarted(false);
     setSaveStatus(user ? "Cloud save ready" : "Local save ready");
@@ -353,6 +373,7 @@ export default function Game() {
 
   function returnToFiles() {
     playGameSfx(GAME_SFX.UI_CANCEL);
+    setCompletionCelebration(false);
     setActiveFile(null);
     setStarted(false);
     setMode("select");
@@ -443,7 +464,7 @@ export default function Game() {
     );
   }
 
-  const currentSave = files[activeFile.slot] || activeFile.data;
+  const currentSave = files[activeFile.slot] || normalizeCompletedSave(activeFile.data);
   const restored = Boolean(currentSave?.flags?.questComplete);
 
   return (
@@ -466,15 +487,24 @@ export default function Game() {
             <span>
               {restored
                 ? "The three sigils shine again. Revisit Everdawn, uncover secrets, and finish anything you left behind."
-                : "Dark roots have sealed the roads beyond Willowbrook.\nUpgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil."}
+                : "Dark roots have sealed the roads beyond Willowbrook. Upgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil."}
             </span>
             {!activeFile.data && !restored && <small>Move with WASD or the arrow keys · H attacks · L interacts · P opens your map and gear.</small>}
             <button onClick={begin}>{activeFile.data ? "CONTINUE" : "BEGIN ADVENTURE"}</button>
           </div>
         )}
+        {started && completionCelebration && (
+          <div className="game-overlay game-completion-overlay" role="dialog" aria-live="polite" aria-label="Everdawn restored">
+            <p>THE THREE SIGILS ARE RESTORED</p>
+            <h2>Everdawn Lives</h2>
+            <span>The Blight has broken. Your completed adventure is saved, and the full realm remains open for exploration.</span>
+            <small>Rootbound Temple · Emberstone Ruins · Crystalwater Vault</small>
+            <button onClick={() => setCompletionCelebration(false)}>CONTINUE EXPLORING</button>
+          </div>
+        )}
       </section>
       <MobileControls
-        disabled={!started}
+        disabled={!started || completionCelebration}
         onPress={pressGameKey}
         onRelease={releaseGameKey}
       />
