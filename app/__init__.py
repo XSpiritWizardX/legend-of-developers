@@ -1,8 +1,9 @@
 import os
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, jsonify
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_login import LoginManager
+from sqlalchemy import text
 from .models import db, User
 from .api.user_routes import user_routes
 from .api.auth_routes import auth_routes
@@ -60,6 +61,23 @@ def inject_csrf_token(response):
     return response
 
 
+@app.route('/api/health')
+def health_check():
+    """Report whether the web process and save database are ready for players."""
+    try:
+        db.session.execute(text('SELECT 1'))
+    except Exception:
+        db.session.rollback()
+        return jsonify({
+            'status': 'degraded',
+            'database': 'unavailable',
+        }), 503
+    return jsonify({
+        'status': 'ok',
+        'database': 'ok',
+    }), 200
+
+
 @app.route("/api/docs")
 def api_help():
     """
@@ -83,7 +101,6 @@ def react_root(path):
     if path == 'favicon.ico' or path == 'favicon.png':
         return app.send_from_directory('public', path)
     return app.send_static_file('index.html')
-
 
 
 @app.errorhandler(404)
