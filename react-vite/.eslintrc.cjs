@@ -12,8 +12,10 @@ module.exports = {
   plugins: ["react-refresh"],
   overrides: [
     {
-      files: ["src/context/*.jsx"],
+      files: ["src/context/*.jsx", "src/components/Game/Game.jsx"],
       rules: {
+        // Game.jsx intentionally shares save-normalization logic alongside the
+        // component so old/local/cloud saves all use one canonical path.
         "react-refresh/only-export-components": "off",
       },
     },
