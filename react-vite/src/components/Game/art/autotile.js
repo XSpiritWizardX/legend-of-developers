@@ -54,6 +54,7 @@ export const AUTOTILE_FAMILIES = Object.freeze({
   shallowWater: family(["sw"], "shallowWater", "sw"),
   caveFloor: family(["stone", "dungeonFloor", "dungeonFloorAlt", "cv"], "caveFloor", "cv"),
   caveWall: family(["wall", "crackedWall", "cw"], "caveWall", "cw"),
+  cavePit: family(["cp"], "cavePit", "cp"),
   crystalFloor: family(["xf", "sf"], "crystalFloor", "xf"),
   crystalWall: family(["xw", "sv"], "crystalWall", "xw"),
 });
