@@ -1,4 +1,7 @@
 import { editableRoomAt } from "../rooms/roomRegistry";
+import {
+  AUTOTILE_FAMILIES, connectedNeighborMask, familyForCode, resolveAutotileVariant,
+} from "./autotile";
 
 export const TILE_INDEX = {
   g: { tile: "grass", solid: false },
@@ -108,17 +111,38 @@ function rowCodes(row) {
   return trimmed.match(/.{1,2}/g) || [];
 }
 
-export function indexedRoomTileAt(mapId, tx, ty) {
+function roomCodeAt(mapId, tx, ty) {
   const roomX = Math.floor(tx / 16);
   const roomY = Math.floor(ty / 10);
   const localX = tx - roomX * 16;
   const localY = ty - roomY * 10;
   const room = editableRoomAt(mapId, roomX, roomY);
   if (!room) return null;
-
   const wallCode = rowCodes(room.walls?.[localY])[localX];
   const floorCode = rowCodes(room.floor?.[localY])[localX];
-  const code = wallCode && wallCode !== ".." ? wallCode : floorCode;
-  const definition = TILE_INDEX[code];
-  return definition ? { code, ...definition } : null;
+  return wallCode && wallCode !== ".." ? wallCode : floorCode;
+}
+
+export function indexedRoomTileAt(mapId, tx, ty) {
+  const sourceCode = roomCodeAt(mapId, tx, ty);
+  const definition = TILE_INDEX[sourceCode];
+  if (!definition) return null;
+
+  const familyId = familyForCode(sourceCode);
+  if (!familyId) return { code: sourceCode, sourceCode, ...definition };
+  const family = AUTOTILE_FAMILIES[familyId];
+  const mask = connectedNeighborMask({
+    tx,
+    ty,
+    codeAt: (nextX, nextY) => roomCodeAt(mapId, nextX, nextY),
+    belongsToFamily: (code) => family.codes.includes(code),
+  });
+  const artCode = resolveAutotileVariant(family, mask) || sourceCode;
+  return {
+    code: artCode,
+    sourceCode,
+    family: familyId,
+    neighborMask: mask,
+    ...definition,
+  };
 }
