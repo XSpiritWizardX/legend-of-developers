@@ -51,6 +51,7 @@ export const AUTOTILE_FAMILIES = Object.freeze({
   desertDune: family(["du"], "desertDune", "du"),
   coastShore: family(["sh"], "coastShore", "sh"),
   openWater: family(["water", "dw", "ow"], "openWater", "ow"),
+  shallowWater: family(["sw"], "shallowWater", "sw"),
   caveFloor: family(["stone", "dungeonFloor", "dungeonFloorAlt", "cv"], "caveFloor", "cv"),
   caveWall: family(["wall", "crackedWall", "cw"], "caveWall", "cw"),
   crystalFloor: family(["xf", "sf"], "crystalFloor", "xf"),
