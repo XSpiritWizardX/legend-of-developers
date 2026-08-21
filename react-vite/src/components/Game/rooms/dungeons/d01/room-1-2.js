@@ -28,5 +28,8 @@ export default {
     { type: "crystalSmall", x: 9, y: 6, solid: false },
     { type: "dungeonPot", x: 3, y: 7, solid: false },
     { type: "dungeonPot", x: 12, y: 7, solid: false },
+    { type: "rootboundArchForeground", x: 7, y: 7, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 3, y: 8, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 12, y: 8, solid: false },
   ],
 };
