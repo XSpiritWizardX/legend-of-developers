@@ -30,5 +30,8 @@ export default {
     { type: "crystalSmall", x: 9, y: 6, solid: false },
     { type: "caveTorch", x: 3, y: 3, solid: false },
     { type: "caveTorch", x: 12, y: 3, solid: false },
+    { type: "rootboundArchForeground", x: 7, y: 9, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 4, y: 8, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 11, y: 8, solid: false },
   ],
 };
