@@ -3,7 +3,6 @@
 This file is the production definition of done for the game's visual pass. Work proceeds top-to-bottom; a section is only marked complete when its assets are integrated into playable rooms rather than merely generated.
 
 ## 1. Rendering foundation
-
 - [x] 64x64 reusable tile convention
 - [x] Catalog-driven reusable art loader
 - [x] Cardinal N/E/S/W neighbor-mask autotile resolver
@@ -16,7 +15,6 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Deterministic decorative tile variants to break repetition
 
 ## 2. Forest and Willowbrook
-
 - [x] Forest ground 16-state autotile family
 - [x] Dirt path 16-state autotile family
 - [x] Forest cliff 16-state autotile family
@@ -26,13 +24,11 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Eastwind Meadow room composition
 - [x] Applewood Orchard room composition
 - [x] Millpond Crossing room composition
-- [ ] Shoreline transitions around forest water
 - [ ] Dedicated bridge approach/end-cap tiles
 - [ ] Additional grass/path decorative variants
 - [ ] Remaining Greenwood Vale / Hero's Grove / Oldgrowth room-by-room pass
 
 ## 3. Rootbound Temple
-
 - [x] Rootbound floor 16-state autotile family
 - [x] Rootbound wall 16-state autotile family
 - [x] Rootbound arch foreground art
@@ -48,9 +44,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Door/arch transition set
 
 ## 4. Desert
-
-- [ ] Sand autotile family
-- [ ] Cracked ground autotile family
+- [x] Sand autotile family
+- [x] Cracked ground autotile family
 - [ ] Sandstone cliff autotile family
 - [ ] Dune edge family
 - [ ] Ruin foreground/arch pieces
@@ -58,9 +53,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Desert room-by-room production pass
 
 ## 5. Coast and water
-
-- [ ] Shoreline autotile family
-- [ ] Open/deep water autotile family
+- [x] Shoreline autotile family
+- [x] Open/deep water autotile family
 - [ ] Shallow-water transition family
 - [ ] Animated water variants
 - [ ] Foam overlays
@@ -69,18 +63,16 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Coast room-by-room production pass
 
 ## 6. Cave and crystal
-
-- [ ] Cave floor autotile family
-- [ ] Cave wall autotile family
+- [x] Cave floor autotile family
+- [x] Cave wall autotile family
 - [ ] Pit edge/corner family
-- [ ] Crystal floor autotile family
-- [ ] Crystal wall autotile family
+- [x] Crystal floor autotile family
+- [x] Crystal wall autotile family
 - [ ] Stalactite / ceiling foreground pieces
 - [ ] Crystal glow overlays
 - [ ] Cave/crystal room-by-room production pass
 
 ## 7. Remaining dungeon themes
-
 - [ ] Reactor tiles and structural variants
 - [ ] Server-core tiles and structural variants
 - [ ] Fire theme
@@ -92,7 +84,6 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Theme-specific doors, pillars, floors, walls, corners, hazards, and foreground pieces
 
 ## 8. Structures and props
-
 - [ ] Village building architecture consistency pass
 - [ ] Fences, gates, signs, lamps, wells
 - [ ] Dungeon doors, locked doors, barriers, switches
@@ -102,7 +93,6 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Prop shadow and collision-readability pass
 
 ## 9. Characters and enemies
-
 - [ ] Player animation visual consistency audit
 - [ ] NPC visual consistency audit
 - [ ] Merchant and quest-character pass
@@ -115,7 +105,6 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Boss silhouette / animation / hit-state pass
 
 ## 10. Items, combat art, and VFX
-
 - [ ] Equipment icon consistency audit
 - [ ] Pickup art pass
 - [ ] Sword trails and impacts
@@ -127,7 +116,6 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Boss phase effects
 
 ## 11. UI and presentation
-
 - [ ] HUD consistency audit
 - [ ] Inventory/equipment presentation
 - [ ] Dialogue and interaction prompts
@@ -138,7 +126,6 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Accessibility/readability pass
 
 ## 12. Final world audit
-
 - [ ] Remove remaining placeholder/procedural visuals where production assets exist
 - [ ] Room-by-room composition audit
 - [ ] Collision readability audit
