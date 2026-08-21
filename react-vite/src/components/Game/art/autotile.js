@@ -1,17 +1,9 @@
 import { autotileArtId } from "./autotileCatalog";
 
-export const EDGE = Object.freeze({
-  N: 1,
-  E: 2,
-  S: 4,
-  W: 8,
-});
+export const EDGE = Object.freeze({ N: 1, E: 2, S: 4, W: 8 });
 
 export function neighborMask({ north = false, east = false, south = false, west = false } = {}) {
-  return (north ? EDGE.N : 0)
-    | (east ? EDGE.E : 0)
-    | (south ? EDGE.S : 0)
-    | (west ? EDGE.W : 0);
+  return (north ? EDGE.N : 0) | (east ? EDGE.E : 0) | (south ? EDGE.S : 0) | (west ? EDGE.W : 0);
 }
 
 export function maskName(mask) {
@@ -26,65 +18,43 @@ export function maskName(mask) {
 export function resolveAutotileVariant(family, mask) {
   if (!family) return null;
   const variants = family.variants || {};
-  return variants[mask]
-    || variants[maskName(mask)]
-    || family.fallback
-    || family.center
-    || null;
+  return variants[mask] || variants[maskName(mask)] || family.fallback || family.center || null;
 }
 
 export function connectedNeighborMask({ tx, ty, codeAt, belongsToFamily }) {
   if (typeof codeAt !== "function" || typeof belongsToFamily !== "function") return 0;
   return neighborMask({
-    north: belongsToFamily(codeAt(tx, ty - 1)),
-    east: belongsToFamily(codeAt(tx + 1, ty)),
-    south: belongsToFamily(codeAt(tx, ty + 1)),
-    west: belongsToFamily(codeAt(tx - 1, ty)),
+    north: belongsToFamily(codeAt(tx, ty - 1)), east: belongsToFamily(codeAt(tx + 1, ty)),
+    south: belongsToFamily(codeAt(tx, ty + 1)), west: belongsToFamily(codeAt(tx - 1, ty)),
   });
 }
 
 function variantsFor(family) {
-  return Object.freeze(Object.fromEntries(
-    Array.from({ length: 16 }, (_, mask) => [mask, autotileArtId(family, mask)]),
-  ));
+  return Object.freeze(Object.fromEntries(Array.from({ length: 16 }, (_, mask) => [mask, autotileArtId(family, mask)])));
 }
 
-// A family contains only tiles with the same gameplay meaning. Decorative
-// flowers, trees, ledges, crystal floors, etc. stay distinct even when they
-// share a biome. Every family below has sixteen cardinal adjacency variants.
+function family(codes, id, fallback) {
+  return Object.freeze({ codes: Object.freeze(codes), variants: variantsFor(id), center: autotileArtId(id, 15), fallback });
+}
+
+// Families group only tiles with equivalent terrain meaning. Props and special
+// traversal tiles stay outside this resolver even when they share a biome.
 export const AUTOTILE_FAMILIES = Object.freeze({
-  forestGround: Object.freeze({
-    codes: Object.freeze(["g", "gr"]),
-    variants: variantsFor("forestGround"),
-    center: autotileArtId("forestGround", 15),
-    fallback: "gr",
-  }),
-  forestPath: Object.freeze({
-    codes: Object.freeze(["p", "pt"]),
-    variants: variantsFor("forestPath"),
-    center: autotileArtId("forestPath", 15),
-    fallback: "pt",
-  }),
-  forestCliff: Object.freeze({
-    codes: Object.freeze(["cf"]),
-    variants: variantsFor("forestCliff"),
-    center: autotileArtId("forestCliff", 15),
-    fallback: "cf",
-  }),
-  rootboundFloor: Object.freeze({
-    codes: Object.freeze(["f", "mf"]),
-    variants: variantsFor("rootboundFloor"),
-    center: autotileArtId("rootboundFloor", 15),
-    fallback: "mf",
-  }),
-  rootboundWall: Object.freeze({
-    codes: Object.freeze(["#", "##", "mw"]),
-    variants: variantsFor("rootboundWall"),
-    center: autotileArtId("rootboundWall", 15),
-    fallback: "mw",
-  }),
+  forestGround: family(["g", "gr"], "forestGround", "gr"),
+  forestPath: family(["p", "pt"], "forestPath", "pt"),
+  forestCliff: family(["cf"], "forestCliff", "cf"),
+  rootboundFloor: family(["f", "mf"], "rootboundFloor", "mf"),
+  rootboundWall: family(["#", "##", "mw"], "rootboundWall", "mw"),
+  desertSand: family(["desert", "dt", "ds"], "desertSand", "ds"),
+  desertCracked: family(["desertAlt", "sa", "ck", "rf"], "desertCracked", "ck"),
+  coastShore: family(["sh"], "coastShore", "sh"),
+  openWater: family(["water", "dw", "ow", "sw"], "openWater", "ow"),
+  caveFloor: family(["stone", "dungeonFloor", "dungeonFloorAlt", "cv"], "caveFloor", "cv"),
+  caveWall: family(["wall", "crackedWall", "cw"], "caveWall", "cw"),
+  crystalFloor: family(["xf", "sf"], "crystalFloor", "xf"),
+  crystalWall: family(["xw", "sv"], "crystalWall", "xw"),
 });
 
 export function familyForCode(code) {
-  return Object.entries(AUTOTILE_FAMILIES).find(([, family]) => family.codes.includes(code))?.[0] || null;
+  return Object.entries(AUTOTILE_FAMILIES).find(([, entry]) => entry.codes.includes(code))?.[0] || null;
 }
