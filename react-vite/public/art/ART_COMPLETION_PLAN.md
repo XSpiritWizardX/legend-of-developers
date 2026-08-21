@@ -85,9 +85,10 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Representative production slice: Lumen Fault
 
 ## 7. Remaining dungeon themes
-- [ ] Reactor tiles and structural variants
+- [x] Reactor floor/wall 16-state terrain families integrated into Emberstone Ruins
+- [ ] Reactor structural props / foreground variants
 - [ ] Server-core tiles and structural variants
-- [ ] Fire theme
+- [ ] Fire hazard / molten transition set
 - [ ] Water theme
 - [ ] Shadow / void theme
 - [ ] Ice theme
