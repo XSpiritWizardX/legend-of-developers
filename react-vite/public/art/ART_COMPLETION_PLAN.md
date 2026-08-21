@@ -46,11 +46,15 @@ This file is the production definition of done for the game's visual pass. Work 
 ## 4. Desert
 - [x] Sand autotile family
 - [x] Cracked ground autotile family
-- [ ] Sandstone cliff autotile family
-- [ ] Dune edge family
+- [x] Sandstone cliff autotile family
+- [x] Dune edge family
 - [ ] Ruin foreground/arch pieces
 - [ ] Oasis transition set
 - [ ] Desert room-by-room production pass
+- [x] Representative production slice: Amber Wastes Fallen Gate
+- [x] Representative production slice: Glassspring Oasis
+- [x] Representative production slice: Sunscar Broken Colonnade
+- [x] Representative production slice: Sunscar Caravan Scar
 
 ## 5. Coast and water
 - [x] Shoreline autotile family
