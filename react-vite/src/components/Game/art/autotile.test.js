@@ -21,11 +21,11 @@ describe("autotile terrain families", () => {
     expect(familyForCode("du")).toBe("desertDune");
     expect(familyForCode("sh")).toBe("coastShore");
     expect(familyForCode("ow")).toBe("openWater");
+    expect(familyForCode("sw")).toBe("shallowWater");
     expect(familyForCode("cv")).toBe("caveFloor");
     expect(familyForCode("cw")).toBe("caveWall");
     expect(familyForCode("xf")).toBe("crystalFloor");
     expect(familyForCode("xw")).toBe("crystalWall");
-    expect(familyForCode("sw")).toBeNull();
   });
 
   test("derives connectivity from neighboring authored terrain", () => {
