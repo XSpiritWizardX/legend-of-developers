@@ -14,7 +14,8 @@ describe("autotile terrain families", () => {
     expect(familyForCode("gr")).toBe("forestGround");
     expect(familyForCode("pt")).toBe("forestPath");
     expect(familyForCode("mw")).toBe("rootboundWall");
-    expect(familyForCode("xf")).toBe("rootboundFloor");
+    expect(familyForCode("mf")).toBe("rootboundFloor");
+    expect(familyForCode("xf")).toBeNull();
   });
 
   test("resolves numeric and named variants with safe fallback", () => {
