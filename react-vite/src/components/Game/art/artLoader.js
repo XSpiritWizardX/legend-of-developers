@@ -1,5 +1,6 @@
 import { catalogArt } from "./artCatalog";
 import { catalogArtV2 } from "./artV2Catalog";
+import { catalogAutotileArt } from "./autotileCatalog";
 import { catalogBossArtV2 } from "./bossV2Catalog";
 import { catalogEffectsArtV2 } from "./effectsV2Catalog";
 import { catalogEquipmentArtV2 } from "./equipmentV2Catalog";
@@ -42,9 +43,6 @@ function trimmedSheetFrame(record, sheet, column, row) {
       if (pixels[(py * sheet.frameWidth + px) * 4 + 3] > 8) rowCounts[py] += 1;
     }
   }
-  // Generated sheets occasionally contain a detached shadow or stray pixels.
-  // Keep the most substantial contiguous row band instead of expanding the
-  // body bounds to include those disconnected artifacts.
   let bestTop = 0;
   let bestBottom = sheet.frameHeight - 1;
   if (sheet.keepDetached) {
@@ -108,6 +106,7 @@ function cachedImage(source) {
 
 export function drawCatalogArt(ctx, category, id, x, y, width, height, options = {}) {
   const entry = catalogArtV2(category, id)
+    || catalogAutotileArt(category, id)
     || catalogBossArtV2(category, id)
     || catalogEffectsArtV2(category, id)
     || catalogEquipmentArtV2(category, id)
@@ -182,6 +181,40 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
     ctx.restore();
     return true;
   }
+
+  const sourceRect = entry.sourceRect;
+  if (sourceRect) {
+    if (flipX) {
+      ctx.translate(drawX + drawWidth, drawY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        record.image,
+        sourceRect.x,
+        sourceRect.y,
+        sourceRect.width,
+        sourceRect.height,
+        0,
+        0,
+        drawWidth,
+        drawHeight,
+      );
+    } else {
+      ctx.drawImage(
+        record.image,
+        sourceRect.x,
+        sourceRect.y,
+        sourceRect.width,
+        sourceRect.height,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight,
+      );
+    }
+    ctx.restore();
+    return true;
+  }
+
   if (flipX) {
     ctx.translate(drawX + drawWidth, drawY);
     ctx.scale(-1, 1);
