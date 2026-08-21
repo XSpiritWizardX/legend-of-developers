@@ -41,12 +41,13 @@ export function connectedNeighborMask({ tx, ty, codeAt, belongsToFamily }) {
   });
 }
 
-// These families intentionally separate gameplay meaning from artwork choice.
-// Rooms still author compact tile codes; the resolver chooses the visual edge,
-// corner, or center variant from neighboring terrain.
+// A family contains only tiles with the same gameplay meaning. Decorative
+// flowers, trees, ledges, crystal floors, etc. stay distinct even when they
+// share a biome. New edge/corner art can be added through `variants` without
+// touching room layouts or collision rules.
 export const AUTOTILE_FAMILIES = Object.freeze({
   forestGround: Object.freeze({
-    codes: Object.freeze(["g", "gr", "fl", "ms", "tg"]),
+    codes: Object.freeze(["g", "gr"]),
     center: "gr",
     fallback: "gr",
   }),
@@ -56,17 +57,17 @@ export const AUTOTILE_FAMILIES = Object.freeze({
     fallback: "pt",
   }),
   forestCliff: Object.freeze({
-    codes: Object.freeze(["T", "R", "tr", "rk", "cf", "le"]),
+    codes: Object.freeze(["cf"]),
     center: "cf",
     fallback: "cf",
   }),
   rootboundFloor: Object.freeze({
-    codes: Object.freeze(["f", "m", "mf", "xf"]),
+    codes: Object.freeze(["f", "mf"]),
     center: "mf",
     fallback: "mf",
   }),
   rootboundWall: Object.freeze({
-    codes: Object.freeze(["#", "##", "mw", "xw"]),
+    codes: Object.freeze(["#", "##", "mw"]),
     center: "mw",
     fallback: "mw",
   }),
