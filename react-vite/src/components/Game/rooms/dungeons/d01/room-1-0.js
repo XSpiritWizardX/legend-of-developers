@@ -32,5 +32,9 @@ export default {
     { type: "dungeonPot", x: 3, y: 7, solid: false },
     { type: "dungeonPot", x: 12, y: 7, solid: false },
     { type: "dungeonBarrier", x: 7, y: 1, solid: false },
+    { type: "rootboundArchForeground", x: 7, y: 9, solid: false },
+    { type: "rootboundArchForeground", x: 9, y: 9, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 4, y: 8, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 11, y: 8, solid: false },
   ],
 };
