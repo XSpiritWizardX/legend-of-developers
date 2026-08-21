@@ -6,6 +6,8 @@ const SHEETS = Object.freeze({
   rootboundWall: "/art/tiles/rootbound-wall-autotiles.png",
   desertSand: "/art/tiles/desert-sand-autotiles.svg",
   desertCracked: "/art/tiles/desert-cracked-autotiles.svg",
+  desertCliff: "/art/tiles/desert-cliff-autotiles.svg",
+  desertDune: "/art/tiles/desert-dune-autotiles.svg",
   coastShore: "/art/tiles/coast-shore-autotiles.svg",
   openWater: "/art/tiles/open-water-autotiles.svg",
   caveFloor: "/art/tiles/cave-floor-autotiles.svg",
