@@ -29,5 +29,8 @@ export default {
     { type: "forestStump", x: 5, y: 7, solid: false },
     { type: "forestTallGrass", x: 4, y: 6, solid: false },
     { type: "forestTallGrass", x: 5, y: 6, solid: false },
+    { type: "rootboundArchForeground", x: 8, y: 9, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 4, y: 8, solid: false },
+    { type: "rootboundHangingRootsForeground", x: 11, y: 8, solid: false },
   ],
 };
