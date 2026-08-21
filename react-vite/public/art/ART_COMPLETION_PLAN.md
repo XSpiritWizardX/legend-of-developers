@@ -59,12 +59,16 @@ This file is the production definition of done for the game's visual pass. Work 
 ## 5. Coast and water
 - [x] Shoreline autotile family
 - [x] Open/deep water autotile family
-- [ ] Shallow-water transition family
+- [x] Shallow-water transition family
 - [ ] Animated water variants
-- [ ] Foam overlays
+- [x] Foam overlays integrated into production rooms
 - [ ] Dock/bridge approach pieces
 - [ ] Waterfall foreground/background layering
 - [ ] Coast room-by-room production pass
+- [x] Representative production slice: Gullhook Cove
+- [x] Representative production slice: Tideglass Channel
+- [x] Representative production slice: Breaker Pier
+- [x] Representative production slice: Rainfall Shelf
 
 ## 6. Cave and crystal
 - [x] Cave floor autotile family
