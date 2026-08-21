@@ -29,6 +29,8 @@ describe("autotile terrain families", () => {
     expect(familyForCode("xw")).toBe("crystalWall");
     expect(familyForCode("rf")).toBe("reactorFloor");
     expect(familyForCode("rw")).toBe("reactorWall");
+    expect(familyForCode("sf")).toBe("serverCoreFloor");
+    expect(familyForCode("sv")).toBe("serverCoreWall");
   });
 
   test("derives connectivity from neighboring authored terrain", () => {
