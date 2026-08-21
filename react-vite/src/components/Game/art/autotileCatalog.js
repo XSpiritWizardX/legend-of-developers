@@ -4,6 +4,14 @@ const SHEETS = Object.freeze({
   forestCliff: "/art/tiles/forest-cliff-autotiles.png",
   rootboundFloor: "/art/tiles/rootbound-floor-autotiles.png",
   rootboundWall: "/art/tiles/rootbound-wall-autotiles.png",
+  desertSand: "/art/tiles/desert-sand-autotiles.svg",
+  desertCracked: "/art/tiles/desert-cracked-autotiles.svg",
+  coastShore: "/art/tiles/coast-shore-autotiles.svg",
+  openWater: "/art/tiles/open-water-autotiles.svg",
+  caveFloor: "/art/tiles/cave-floor-autotiles.svg",
+  caveWall: "/art/tiles/cave-wall-autotiles.svg",
+  crystalFloor: "/art/tiles/crystal-floor-autotiles.svg",
+  crystalWall: "/art/tiles/crystal-wall-autotiles.svg",
 });
 
 export function autotileArtId(family, mask) {
