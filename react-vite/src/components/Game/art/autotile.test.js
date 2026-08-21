@@ -1,5 +1,5 @@
 import {
-  EDGE, familyForCode, maskName, neighborMask, resolveAutotileVariant,
+  EDGE, connectedNeighborMask, familyForCode, maskName, neighborMask, resolveAutotileVariant,
 } from "./autotile";
 
 describe("autotile terrain families", () => {
@@ -16,6 +16,20 @@ describe("autotile terrain families", () => {
     expect(familyForCode("mw")).toBe("rootboundWall");
     expect(familyForCode("mf")).toBe("rootboundFloor");
     expect(familyForCode("xf")).toBeNull();
+  });
+
+  test("derives connectivity from neighboring authored terrain", () => {
+    const codes = new Map([
+      ["1,1", "gr"], ["1,0", "gr"], ["2,1", "pt"],
+      ["1,2", "gr"], ["0,1", "gr"],
+    ]);
+    const mask = connectedNeighborMask({
+      tx: 1,
+      ty: 1,
+      codeAt: (x, y) => codes.get(`${x},${y}`),
+      belongsToFamily: (code) => code === "gr",
+    });
+    expect(mask).toBe(EDGE.N | EDGE.S | EDGE.W);
   });
 
   test("resolves numeric and named variants with safe fallback", () => {
