@@ -37,8 +37,6 @@ function family(codes, id, fallback) {
   return Object.freeze({ codes: Object.freeze(codes), variants: variantsFor(id), center: autotileArtId(id, 15), fallback });
 }
 
-// Families group only tiles with equivalent terrain meaning. Props and special
-// traversal tiles stay outside this resolver even when they share a biome.
 export const AUTOTILE_FAMILIES = Object.freeze({
   forestGround: family(["g", "gr"], "forestGround", "gr"),
   forestPath: family(["p", "pt"], "forestPath", "pt"),
@@ -46,7 +44,7 @@ export const AUTOTILE_FAMILIES = Object.freeze({
   rootboundFloor: family(["f", "mf"], "rootboundFloor", "mf"),
   rootboundWall: family(["#", "##", "mw"], "rootboundWall", "mw"),
   desertSand: family(["desert", "dt", "ds"], "desertSand", "ds"),
-  desertCracked: family(["desertAlt", "sa", "ck", "rf"], "desertCracked", "ck"),
+  desertCracked: family(["desertAlt", "sa", "ck"], "desertCracked", "ck"),
   desertCliff: family(["dc"], "desertCliff", "dc"),
   desertDune: family(["du"], "desertDune", "du"),
   coastShore: family(["sh"], "coastShore", "sh"),
@@ -57,6 +55,8 @@ export const AUTOTILE_FAMILIES = Object.freeze({
   cavePit: family(["cp"], "cavePit", "cp"),
   crystalFloor: family(["xf", "sf"], "crystalFloor", "xf"),
   crystalWall: family(["xw", "sv"], "crystalWall", "xw"),
+  reactorFloor: family(["rf"], "reactorFloor", "rf"),
+  reactorWall: family(["rw"], "reactorWall", "rw"),
 });
 
 export function familyForCode(code) {
