@@ -24,6 +24,7 @@ describe("autotile terrain families", () => {
     expect(familyForCode("sw")).toBe("shallowWater");
     expect(familyForCode("cv")).toBe("caveFloor");
     expect(familyForCode("cw")).toBe("caveWall");
+    expect(familyForCode("cp")).toBe("cavePit");
     expect(familyForCode("xf")).toBe("crystalFloor");
     expect(familyForCode("xw")).toBe("crystalWall");
   });
