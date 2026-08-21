@@ -43,6 +43,33 @@ const PROP_SCENERY = Object.freeze({
   dungeonSpikeTrap: TILE_SCENERY.tp,
   dungeonStairs: TILE_SCENERY.dn,
   dungeonPortal: TILE_SCENERY.pg,
+  forestCanopyForeground: Object.freeze({
+    source: "/art/props/forest-canopy.png",
+    width: 128,
+    height: 96,
+    offsetX: -32,
+    offsetY: -448,
+  }),
+  forestCliffLipForeground: Object.freeze({
+    source: "/art/props/forest-cliff-lip.png",
+    width: 64,
+    height: 32,
+    offsetY: -416,
+  }),
+  rootboundArchForeground: Object.freeze({
+    source: "/art/props/rootbound-arch-foreground.png",
+    width: 128,
+    height: 128,
+    offsetX: -32,
+    offsetY: -448,
+  }),
+  rootboundHangingRootsForeground: Object.freeze({
+    source: "/art/props/rootbound-hanging-roots.png",
+    width: 96,
+    height: 96,
+    offsetX: -16,
+    offsetY: -448,
+  }),
 });
 
 export function catalogSceneryArtV2(category, id) {
