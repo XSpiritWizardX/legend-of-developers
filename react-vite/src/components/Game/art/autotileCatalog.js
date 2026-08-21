@@ -16,6 +16,8 @@ const SHEETS = Object.freeze({
   cavePit: "/art/tiles/cave-pit-autotiles.svg",
   crystalFloor: "/art/tiles/crystal-floor-autotiles.svg",
   crystalWall: "/art/tiles/crystal-wall-autotiles.svg",
+  reactorFloor: "/art/tiles/reactor-floor-autotiles.svg",
+  reactorWall: "/art/tiles/reactor-wall-autotiles.svg",
 });
 
 export function autotileArtId(family, mask) {
