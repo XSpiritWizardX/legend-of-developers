@@ -13,6 +13,7 @@ const SHEETS = Object.freeze({
   shallowWater: "/art/tiles/shallow-water-autotiles.svg",
   caveFloor: "/art/tiles/cave-floor-autotiles.svg",
   caveWall: "/art/tiles/cave-wall-autotiles.svg",
+  cavePit: "/art/tiles/cave-pit-autotiles.svg",
   crystalFloor: "/art/tiles/crystal-floor-autotiles.svg",
   crystalWall: "/art/tiles/crystal-wall-autotiles.svg",
 });
