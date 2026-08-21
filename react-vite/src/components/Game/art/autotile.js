@@ -53,10 +53,12 @@ export const AUTOTILE_FAMILIES = Object.freeze({
   caveFloor: family(["stone", "dungeonFloor", "dungeonFloorAlt", "cv"], "caveFloor", "cv"),
   caveWall: family(["wall", "crackedWall", "cw"], "caveWall", "cw"),
   cavePit: family(["cp"], "cavePit", "cp"),
-  crystalFloor: family(["xf", "sf"], "crystalFloor", "xf"),
-  crystalWall: family(["xw", "sv"], "crystalWall", "xw"),
+  crystalFloor: family(["xf"], "crystalFloor", "xf"),
+  crystalWall: family(["xw"], "crystalWall", "xw"),
   reactorFloor: family(["rf"], "reactorFloor", "rf"),
   reactorWall: family(["rw"], "reactorWall", "rw"),
+  serverCoreFloor: family(["sf"], "serverCoreFloor", "sf"),
+  serverCoreWall: family(["sv"], "serverCoreWall", "sv"),
 });
 
 export function familyForCode(code) {
