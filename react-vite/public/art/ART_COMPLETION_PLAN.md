@@ -73,12 +73,16 @@ This file is the production definition of done for the game's visual pass. Work 
 ## 6. Cave and crystal
 - [x] Cave floor autotile family
 - [x] Cave wall autotile family
-- [ ] Pit edge/corner family
+- [x] Pit edge/corner family
 - [x] Crystal floor autotile family
 - [x] Crystal wall autotile family
 - [ ] Stalactite / ceiling foreground pieces
 - [ ] Crystal glow overlays
 - [ ] Cave/crystal room-by-room production pass
+- [x] Representative production slice: Shardmouth Ledge
+- [x] Representative production slice: Prism Ascent
+- [x] Representative production slice: Echo Gallery
+- [x] Representative production slice: Lumen Fault
 
 ## 7. Remaining dungeon themes
 - [ ] Reactor tiles and structural variants
