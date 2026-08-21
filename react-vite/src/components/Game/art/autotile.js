@@ -1,3 +1,5 @@
+import { autotileArtId } from "./autotileCatalog";
+
 export const EDGE = Object.freeze({
   N: 1,
   E: 2,
@@ -41,34 +43,44 @@ export function connectedNeighborMask({ tx, ty, codeAt, belongsToFamily }) {
   });
 }
 
+function variantsFor(family) {
+  return Object.freeze(Object.fromEntries(
+    Array.from({ length: 16 }, (_, mask) => [mask, autotileArtId(family, mask)]),
+  ));
+}
+
 // A family contains only tiles with the same gameplay meaning. Decorative
 // flowers, trees, ledges, crystal floors, etc. stay distinct even when they
-// share a biome. New edge/corner art can be added through `variants` without
-// touching room layouts or collision rules.
+// share a biome. Every family below has sixteen cardinal adjacency variants.
 export const AUTOTILE_FAMILIES = Object.freeze({
   forestGround: Object.freeze({
     codes: Object.freeze(["g", "gr"]),
-    center: "gr",
+    variants: variantsFor("forestGround"),
+    center: autotileArtId("forestGround", 15),
     fallback: "gr",
   }),
   forestPath: Object.freeze({
     codes: Object.freeze(["p", "pt"]),
-    center: "pt",
+    variants: variantsFor("forestPath"),
+    center: autotileArtId("forestPath", 15),
     fallback: "pt",
   }),
   forestCliff: Object.freeze({
     codes: Object.freeze(["cf"]),
-    center: "cf",
+    variants: variantsFor("forestCliff"),
+    center: autotileArtId("forestCliff", 15),
     fallback: "cf",
   }),
   rootboundFloor: Object.freeze({
     codes: Object.freeze(["f", "mf"]),
-    center: "mf",
+    variants: variantsFor("rootboundFloor"),
+    center: autotileArtId("rootboundFloor", 15),
     fallback: "mf",
   }),
   rootboundWall: Object.freeze({
     codes: Object.freeze(["#", "##", "mw"]),
-    center: "mw",
+    variants: variantsFor("rootboundWall"),
+    center: autotileArtId("rootboundWall", 15),
     fallback: "mw",
   }),
 });
