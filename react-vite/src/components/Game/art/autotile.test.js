@@ -15,7 +15,17 @@ describe("autotile terrain families", () => {
     expect(familyForCode("pt")).toBe("forestPath");
     expect(familyForCode("mw")).toBe("rootboundWall");
     expect(familyForCode("mf")).toBe("rootboundFloor");
-    expect(familyForCode("xf")).toBeNull();
+    expect(familyForCode("dt")).toBe("desertSand");
+    expect(familyForCode("ck")).toBe("desertCracked");
+    expect(familyForCode("dc")).toBe("desertCliff");
+    expect(familyForCode("du")).toBe("desertDune");
+    expect(familyForCode("sh")).toBe("coastShore");
+    expect(familyForCode("ow")).toBe("openWater");
+    expect(familyForCode("cv")).toBe("caveFloor");
+    expect(familyForCode("cw")).toBe("caveWall");
+    expect(familyForCode("xf")).toBe("crystalFloor");
+    expect(familyForCode("xw")).toBe("crystalWall");
+    expect(familyForCode("sw")).toBeNull();
   });
 
   test("derives connectivity from neighboring authored terrain", () => {
