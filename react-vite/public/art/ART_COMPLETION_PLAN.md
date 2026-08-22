@@ -86,9 +86,9 @@ This file is the production definition of done for the game's visual pass. Work 
 
 ## 7. Remaining dungeon themes
 - [x] Reactor floor/wall 16-state terrain families integrated into Emberstone Ruins
-- [ ] Reactor structural props / foreground variants
+- [x] Reactor structural props / foreground variants integrated into four key rooms
 - [x] Server-core floor/wall 16-state terrain families integrated into Crystalwater Vault
-- [ ] Server-core structural props / foreground variants
+- [x] Server-core structural props / foreground variants integrated into four key rooms
 - [ ] Fire hazard / molten transition set
 - [ ] Water theme transitions / hydraulic hazards
 - [ ] Shadow / void theme
