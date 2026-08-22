@@ -48,6 +48,11 @@ const PROP_SCENERY = Object.freeze({
   reactorConduit: Object.freeze({ source: "/art/v2/props/reactor-conduit.svg", width: 96, height: 64, offsetX: -16 }),
   reactorLavaGrate: Object.freeze({ source: "/art/v2/props/reactor-lava-grate.svg" }),
   reactorGantryForeground: Object.freeze({ source: "/art/v2/props/reactor-gantry-foreground.svg", width: 160, height: 112, offsetX: -48, offsetY: -448 }),
+  serverHydraulicPump: Object.freeze({ source: "/art/v2/props/server-hydraulic-pump.svg", width: 96, height: 112, offsetX: -16, offsetY: -48 }),
+  serverCoolantPipe: Object.freeze({ source: "/art/v2/props/server-coolant-pipe.svg", width: 96, height: 64, offsetX: -16 }),
+  serverColumn: Object.freeze({ source: "/art/v2/props/server-column.svg", width: 80, height: 128, offsetX: -8, offsetY: -64 }),
+  serverTurbineGrate: Object.freeze({ source: "/art/v2/props/server-turbine-grate.svg" }),
+  serverAqueductForeground: Object.freeze({ source: "/art/v2/props/server-aqueduct-foreground.svg", width: 160, height: 112, offsetX: -48, offsetY: -448 }),
   forestCanopyForeground: Object.freeze({
     source: "/art/props/forest-canopy.png",
     width: 128,
