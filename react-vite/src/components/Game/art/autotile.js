@@ -57,8 +57,10 @@ export const AUTOTILE_FAMILIES = Object.freeze({
   crystalWall: family(["xw"], "crystalWall", "xw"),
   reactorFloor: family(["rf"], "reactorFloor", "rf"),
   reactorWall: family(["rw"], "reactorWall", "rw"),
+  reactorMolten: family(["rm"], "reactorMolten", "rm"),
   serverCoreFloor: family(["sf"], "serverCoreFloor", "sf"),
   serverCoreWall: family(["sv"], "serverCoreWall", "sv"),
+  serverCoolant: family(["sc"], "serverCoolant", "sc"),
 });
 
 export function familyForCode(code) {
