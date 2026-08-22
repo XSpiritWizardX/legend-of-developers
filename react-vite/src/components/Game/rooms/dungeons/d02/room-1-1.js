@@ -20,5 +20,11 @@ export default {
     { type: "dungeonBarrier", x: 7, y: 6, solid: false },
     { type: "caveTorch", x: 6, y: 3, solid: false },
     { type: "caveTorch", x: 9, y: 3, solid: false },
+    { type: "reactorCore", x: 7, y: 4, solid: false },
+    { type: "reactorHeatVent", x: 5, y: 5, solid: false },
+    { type: "reactorHeatVent", x: 10, y: 5, solid: false },
+    { type: "reactorLavaGrate", x: 6, y: 7, solid: false },
+    { type: "reactorLavaGrate", x: 9, y: 7, solid: false },
+    { type: "reactorGantryForeground", x: 7, y: 9, solid: false },
   ],
 };
