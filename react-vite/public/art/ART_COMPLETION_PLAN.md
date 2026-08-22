@@ -89,8 +89,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Reactor structural props / foreground variants integrated into four key rooms
 - [x] Server-core floor/wall 16-state terrain families integrated into Crystalwater Vault
 - [x] Server-core structural props / foreground variants integrated into four key rooms
-- [ ] Fire hazard / molten transition set
-- [ ] Water theme transitions / hydraulic hazards
+- [x] Fire hazard / molten 16-state transition set integrated into Pressure Core
+- [x] Water theme coolant/hydraulic 16-state hazard set integrated into Flow Control
 - [ ] Shadow / void theme
 - [ ] Ice theme
 - [ ] Desert dungeon theme
