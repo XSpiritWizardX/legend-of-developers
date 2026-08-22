@@ -1,1 +1,26 @@
-export default { id: "13,6", assets: [] };
+export default {
+  id: "13,6",
+  name: "Stormbreak Coast · Rainfall Shelf",
+  floor: [
+    "ow ow ow ow ow sw sw sh sh sw sw ow ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow sw sw sw sw sh sh sw sw sw sw ow ow ow",
+    "ow ow ow sw sw sw sw sh sh sw sw sw sw ow ow ow",
+    "ow ow ow sw sw sw sw sh sh sw sw sw sw ow ow ow",
+    "ow ow ow sw sw sw sw sh sh sw sw sw sw ow ow ow",
+    "ow ow ow sw sw sw sw sh sh sw sw sw sw ow ow ow",
+    "ow ow ow sw sw sw sw sh sh sw sw sw sw ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow ow sw sw sh sh sw sw ow ow ow ow ow",
+  ],
+  assets: [
+    { type: "coastWaterfall", x: 5, y: 2, solid: false },
+    { type: "coastWaterfall", x: 10, y: 2, solid: false },
+    { type: "coastFoam", x: 5, y: 4, solid: false },
+    { type: "coastFoam", x: 10, y: 4, solid: false },
+    { type: "coastReeds", x: 6, y: 7, solid: false },
+    { type: "coastReeds", x: 9, y: 7, solid: false },
+    { type: "coastLilyPad", x: 5, y: 7, solid: false },
+    { type: "coastLilyPad", x: 10, y: 7, solid: false },
+  ],
+};

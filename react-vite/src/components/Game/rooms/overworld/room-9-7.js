@@ -1,1 +1,37 @@
-export default { id: "9,7", assets: [] };
+export default {
+  id: "9,7",
+  name: "Amber Wastes · Fallen Gate",
+  floor: [
+    "dt dt dt sa sa dt dt dt dt dt sa sa dt dt dt dt",
+    "dt dt sa sa dt dt dt dt sa sa dt dt dt dt sa dt",
+    "dt dt dt dt dt sa sa dt dt dt dt sa dt dt dt dt",
+    "sa sa dt dt dt dt dt dt dt sa sa dt dt dt dt dt",
+    "dt dt dt sa dt dt dt dt dt dt dt dt sa dt dt dt",
+    "dt dt dt dt dt dt sa sa dt dt dt dt dt dt dt dt",
+    "dt sa sa dt dt dt dt dt dt dt sa dt dt dt dt sa",
+    "dt dt dt dt sa dt dt dt dt dt dt dt sa sa dt dt",
+    "dt dt sa dt dt dt dt dt sa dt dt dt dt dt dt dt",
+    "dt dt dt dt dt dt dt dt dt dt dt dt dt dt dt dt",
+  ],
+  walls: [
+    "dc dc dc dc dc dc dc dc dc dc dc dc dc dc dc dc",
+    "dc .. .. .. .. .. .. .. .. .. .. .. .. .. .. dc",
+    "dc .. .. .. .. .. du du du du .. .. .. .. .. dc",
+    "dc .. .. .. .. .. du du du du .. .. .. .. .. dc",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    "dc .. .. .. du du du .. .. du du du .. .. .. dc",
+    "dc .. .. .. du du du .. .. du du du .. .. .. dc",
+    "dc .. .. .. .. .. .. .. .. .. .. .. .. .. .. dc",
+    "dc dc dc dc dc dc dc .. .. dc dc dc dc dc dc dc",
+  ],
+  assets: [
+    { type: "desertRuins", x: 4, y: 3, solid: false },
+    { type: "desertCactus", x: 2, y: 7, solid: false },
+    { type: "desertCactus", x: 13, y: 2, solid: false },
+    { type: "desertRock", x: 12, y: 7, solid: false },
+    { type: "desertDryBush", x: 3, y: 6, solid: false },
+    { type: "desertDryBush", x: 13, y: 6, solid: false },
+    { type: "desertBones", x: 10, y: 3, solid: false },
+  ],
+};

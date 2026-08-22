@@ -8,5 +8,11 @@ export default {
     { type: "caveTorch", x: 10, y: 2, solid: false },
     { type: "dungeonPillar", x: 7, y: 3 },
     { type: "dungeonPillar", x: 8, y: 3 },
+    { type: "reactorCore", x: 7, y: 6, solid: false },
+    { type: "reactorLavaGrate", x: 5, y: 6, solid: false },
+    { type: "reactorLavaGrate", x: 10, y: 6, solid: false },
+    { type: "reactorConduit", x: 4, y: 2, solid: false },
+    { type: "reactorConduit", x: 10, y: 2, solid: false },
+    { type: "reactorGantryForeground", x: 7, y: 9, solid: false },
   ],
 };
