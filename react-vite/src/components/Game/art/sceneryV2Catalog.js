@@ -43,6 +43,11 @@ const PROP_SCENERY = Object.freeze({
   dungeonSpikeTrap: TILE_SCENERY.tp,
   dungeonStairs: TILE_SCENERY.dn,
   dungeonPortal: TILE_SCENERY.pg,
+  reactorCore: Object.freeze({ source: "/art/v2/props/reactor-core.svg", width: 96, height: 128, offsetX: -16, offsetY: -64 }),
+  reactorHeatVent: Object.freeze({ source: "/art/v2/props/reactor-heat-vent.svg" }),
+  reactorConduit: Object.freeze({ source: "/art/v2/props/reactor-conduit.svg", width: 96, height: 64, offsetX: -16 }),
+  reactorLavaGrate: Object.freeze({ source: "/art/v2/props/reactor-lava-grate.svg" }),
+  reactorGantryForeground: Object.freeze({ source: "/art/v2/props/reactor-gantry-foreground.svg", width: 160, height: 112, offsetX: -48, offsetY: -448 }),
   forestCanopyForeground: Object.freeze({
     source: "/art/props/forest-canopy.png",
     width: 128,
