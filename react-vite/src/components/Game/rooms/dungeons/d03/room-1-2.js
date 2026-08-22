@@ -16,7 +16,7 @@ export default {
   assets: [
     { type: "neonSign", x: 6, y: 6, text: "API", solid: false },
     { type: "dungeonPillar", x: 5, y: 7 },
-    { type: "dungeonDoor", x: 7, y: 1, solid: false },
+    { type: "serverDoor", x: 7, y: 1, solid: false },
     { type: "serverCoolantPipe", x: 5, y: 3, solid: false },
     { type: "serverCoolantPipe", x: 9, y: 3, solid: false },
     { type: "serverHydraulicPump", x: 6, y: 5, solid: false },
