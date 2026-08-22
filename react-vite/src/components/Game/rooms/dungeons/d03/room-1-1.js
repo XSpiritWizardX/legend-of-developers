@@ -1,5 +1,6 @@
 export default {
-  id: "d03:1,1", variant: 0, wallRects: [[2, 2, 4, 1], [10, 2, 4, 1], [3, 7, 2, 1], [11, 7, 2, 1]],
+  id: "d03:1,1", name: "Flow Control", variant: 0,
+  wallRects: [[2, 2, 4, 1], [10, 2, 4, 1], [3, 7, 2, 1], [11, 7, 2, 1]],
   floor: [
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
     ".. sf sf sf sf sf sf sf sf sf sf sf sf sf sf ..",
@@ -16,5 +17,12 @@ export default {
     { type: "dungeonStatue", x: 3, y: 4 },
     { type: "dungeonSwitch", x: 12, y: 4 },
     { type: "dungeonBarrier", x: 7, y: 6, solid: false },
+    { type: "serverHydraulicPump", x: 5, y: 5, solid: false },
+    { type: "serverHydraulicPump", x: 10, y: 5, solid: false },
+    { type: "serverColumn", x: 7, y: 4, solid: false },
+    { type: "serverColumn", x: 8, y: 4, solid: false },
+    { type: "serverTurbineGrate", x: 6, y: 7, solid: false },
+    { type: "serverTurbineGrate", x: 9, y: 7, solid: false },
+    { type: "serverAqueductForeground", x: 7, y: 9, solid: false },
   ],
 };
