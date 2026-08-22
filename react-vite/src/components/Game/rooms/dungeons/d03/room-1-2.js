@@ -1,5 +1,6 @@
 export default {
-  id: "d03:1,2", variant: 0, wallRects: [[2, 2, 3, 5], [11, 2, 3, 5]],
+  id: "d03:1,2", name: "API Sluice", variant: 0,
+  wallRects: [[2, 2, 3, 5], [11, 2, 3, 5]],
   floor: [
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
     ".. sf sf sf sf sf sf sf sf sf sf sf sf sf sf ..",
@@ -16,5 +17,11 @@ export default {
     { type: "neonSign", x: 6, y: 6, text: "API", solid: false },
     { type: "dungeonPillar", x: 5, y: 7 },
     { type: "dungeonDoor", x: 7, y: 1, solid: false },
+    { type: "serverCoolantPipe", x: 5, y: 3, solid: false },
+    { type: "serverCoolantPipe", x: 9, y: 3, solid: false },
+    { type: "serverHydraulicPump", x: 6, y: 5, solid: false },
+    { type: "serverHydraulicPump", x: 9, y: 5, solid: false },
+    { type: "serverTurbineGrate", x: 7, y: 7, solid: false },
+    { type: "serverAqueductForeground", x: 7, y: 9, solid: false },
   ],
 };
