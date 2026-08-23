@@ -22,5 +22,7 @@ export default {
     { type: "coastReeds", x: 9, y: 7, solid: false },
     { type: "coastLilyPad", x: 5, y: 7, solid: false },
     { type: "coastLilyPad", x: 10, y: 7, solid: false },
+    { type: "coastWaterfallMistForeground", x: 5, y: 8, solid: false },
+    { type: "coastWaterfallMistForeground", x: 10, y: 8, solid: false },
   ],
 };
