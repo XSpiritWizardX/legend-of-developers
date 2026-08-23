@@ -1,8 +1,26 @@
 export default {
   id: "d01:2,0", name: "Twisted Archive", variant: 0,
   wallRects: [[3, 2, 9, 1], [3, 3, 2, 3], [10, 5, 2, 3]],
+  floor: [
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mf mw mw mw mw mw mw mw mw mw mw mf mf ..",
+    ".. mf mf mw mw mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mf mw mw mf xf xf mf mf mf mf mf mf mf ..",
+    ".. mf mf mw mw mf xf xf mf mf mw mw mf mf mf ..",
+    ".. mf mf mf mf mf mf mf mf mf mw mw mf mf mf ..",
+    ".. mf mf mf mf mf mf mf mf mf mw mw mf mf mf ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+  ],
   assets: [
-    { type: "dungeonCrate", x: 6, y: 6 }, { type: "dungeonCrate", x: 8, y: 6 },
+    { type: "dungeonCrate", x: 6, y: 6 },
+    { type: "dungeonCrate", x: 8, y: 6 },
     { type: "caveTorch", x: 13, y: 3, solid: false },
+    { type: "rootboundRootGrowth", x: 4, y: 5, solid: false },
+    { type: "rootboundRootGrowth", x: 10, y: 7, solid: false },
+    { type: "rootboundFloorCracks", x: 7, y: 6, solid: false },
+    { type: "rootboundCrystalGrowth", x: 6, y: 4, solid: false },
+    { type: "rootboundArchForeground", x: 12, y: 9, solid: false },
   ],
 };
