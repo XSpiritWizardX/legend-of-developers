@@ -14,7 +14,7 @@ export default {
     ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
   ],
   assets: [
-    { type: "dungeonDoor", x: 7, y: 1, solid: false },
+    { type: "rootboundDoor", x: 7, y: 1, solid: false },
     { type: "dungeonPillar", x: 5, y: 7 },
     { type: "dungeonPillar", x: 10, y: 7 },
     { type: "dungeonStatue", x: 4, y: 5, solid: false },
