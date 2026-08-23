@@ -45,6 +45,7 @@ const PROP_SCENERY = Object.freeze({
   rootboundFloorCracks: Object.freeze({ source: "/art/v2/props/rootbound-floor-cracks.svg" }),
   rootboundRootGrowth: Object.freeze({ source: "/art/v2/props/rootbound-root-growth.svg", width: 96, height: 96, offsetX: -16, offsetY: -32 }),
   rootboundCrystalGrowth: Object.freeze({ source: "/art/v2/props/rootbound-crystal-growth.svg", width: 96, height: 96, offsetX: -16, offsetY: -32 }),
+  rootboundDoor: Object.freeze({ source: "/art/v2/props/rootbound-door.svg", width: 128, height: 112, offsetX: -32, offsetY: -48 }),
   dungeonDoor: Object.freeze({ source: "/art/v2/props/dungeon-door.svg", width: 128, height: 96, offsetY: -64 }),
   dungeonLockedDoor: Object.freeze({ source: "/art/v2/props/dungeon-locked-door.svg", width: 128, height: 96, offsetY: -64 }),
   dungeonBarrier: TILE_SCENERY.eb,
