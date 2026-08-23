@@ -131,10 +131,10 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Boss phase aura gameplay integration
 
 ## 11. UI and presentation
-- [ ] HUD consistency audit
-- [ ] Inventory/equipment presentation
-- [ ] Dialogue and interaction prompts
-- [ ] Map styling and markers
+- [x] HUD frame / heart / magic-meter consistency pass
+- [x] Inventory item-slot presentation pass
+- [x] Shared dialogue / menu / map panel frame polish
+- [ ] Map marker polish
 - [ ] Boss UI
 - [ ] Title/menu art
 - [ ] Game-over / victory presentation
