@@ -27,6 +27,8 @@ export default {
   ],
   assets: [
     { type: "desertRuins", x: 4, y: 3, solid: false },
+    { type: "desertRuinArchForeground", x: 7, y: 9, solid: false },
+    { type: "desertRuinArchForeground", x: 9, y: 9, solid: false },
     { type: "desertCactus", x: 2, y: 7, solid: false },
     { type: "desertCactus", x: 13, y: 2, solid: false },
     { type: "desertRock", x: 12, y: 7, solid: false },
