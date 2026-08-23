@@ -14,8 +14,10 @@ export default {
     "ow ow ow ow ow ow ow ow ow ow ow ow ow ow ow ow",
   ],
   assets: [
+    { type: "coastBridgeApproach", x: 6, y: 5, solid: false },
     { type: "coastDock", x: 7, y: 5, solid: false },
     { type: "coastDock", x: 8, y: 5, solid: false },
+    { type: "coastBridgeApproach", x: 9, y: 5, solid: false },
     { type: "coastBoat", x: 10, y: 6, solid: false },
     { type: "coastFoam", x: 6, y: 3, solid: false },
     { type: "coastFoam", x: 7, y: 7, solid: false },
