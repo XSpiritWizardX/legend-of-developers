@@ -1,8 +1,25 @@
 export default {
   id: "d01:0,0", name: "Buried Reliquary", variant: 0,
   wallRects: [[2, 2, 4, 2], [10, 6, 4, 2]],
+  floor: [
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mw mw mw mw mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mw mw mw mw mf mf xf xf mf mf mf mf mf ..",
+    ".. mf mf mf mf mf mf xf xf xf xf mf mf mf mf ..",
+    ".. mf mf mf mf mf mf xf xf xf xf mf mf mf mf ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mw mw mw mw ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mw mw mw mw ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+  ],
   assets: [
-    { type: "caveStalagmite", x: 2, y: 6 }, { type: "caveTorch", x: 12, y: 2 },
+    { type: "caveStalagmite", x: 2, y: 6 },
+    { type: "caveTorch", x: 12, y: 2, solid: false },
     { type: "caveBones", x: 8, y: 5, solid: false },
+    { type: "rootboundFloorCracks", x: 5, y: 5, solid: false },
+    { type: "rootboundRootGrowth", x: 3, y: 7, solid: false },
+    { type: "rootboundCrystalGrowth", x: 8, y: 4, solid: false },
+    { type: "rootboundArchForeground", x: 7, y: 9, solid: false },
   ],
 };
