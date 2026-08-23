@@ -24,8 +24,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Eastwind Meadow room composition
 - [x] Applewood Orchard room composition
 - [x] Millpond Crossing room composition
-- [ ] Dedicated bridge approach/end-cap tiles
-- [ ] Additional grass/path decorative variants
+- [x] Dedicated forest bridge approach/end-cap art integrated in Millpond Crossing
+- [x] Path stone detail + firefly atmosphere integrated in Willowbrook
 - [ ] Remaining Greenwood Vale / Hero's Grove / Oldgrowth room-by-room pass
 
 ## 3. Rootbound Temple
@@ -37,11 +37,11 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Four-Root Hall production composition
 - [x] Keeper's Key production composition
 - [x] Heartroot Sanctum production composition
-- [ ] Remaining Rootbound rooms production pass
-- [x] Broken masonry / floor crack variants integrated in Heartroot Sanctum
-- [x] Root growth variants integrated in Heartroot Sanctum
-- [x] Crystal growth overlays integrated in Heartroot Sanctum
-- [ ] Door/arch transition set
+- [x] Remaining authored Rootbound rooms production pass
+- [x] Broken masonry / floor crack variants integrated
+- [x] Root growth variants integrated
+- [x] Crystal growth overlays integrated
+- [x] Root-carved door / arch transition set integrated in Temple Threshold
 
 ## 4. Desert
 - [x] Sand autotile family
@@ -121,13 +121,14 @@ This file is the production definition of done for the game's visual pass. Work 
 ## 10. Items, combat art, and VFX
 - [ ] Equipment icon consistency audit
 - [ ] Pickup art pass
-- [ ] Sword trails and impacts
-- [ ] Projectile effects
-- [ ] Bomb/explosion effects
-- [ ] Fire / ice effects
-- [ ] Root / crystal effects
-- [ ] Portal and environmental effects
-- [ ] Boss phase effects
+- [ ] Sword trails and impacts (new sword-arc art authored; renderer hook still pending)
+- [x] Live projectile pulse effect upgraded
+- [x] Live bomb/explosion effect upgraded
+- [x] Live fire / ice effects upgraded
+- [x] Live root surge effect upgraded
+- [ ] Crystal burst gameplay integration
+- [ ] Portal ripple gameplay integration
+- [ ] Boss phase aura gameplay integration
 
 ## 11. UI and presentation
 - [ ] HUD consistency audit
