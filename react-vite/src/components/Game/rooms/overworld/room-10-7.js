@@ -27,6 +27,8 @@ export default {
   ],
   assets: [
     { type: "desertOasis", x: 8, y: 5, solid: false },
+    { type: "desertOasisGlow", x: 8, y: 5, solid: false },
+    { type: "desertOasisGlow", x: 7, y: 5, solid: false },
     { type: "desertCactus", x: 3, y: 3, solid: false },
     { type: "desertCactus", x: 12, y: 7, solid: false },
     { type: "desertRock", x: 2, y: 7, solid: false },
