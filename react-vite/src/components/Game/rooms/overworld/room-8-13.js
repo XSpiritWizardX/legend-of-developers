@@ -27,12 +27,16 @@ export default {
   ],
   assets: [
     { type: "crystalLarge", x: 3, y: 3, solid: false },
+    { type: "crystalGlowOverlay", x: 3, y: 3, solid: false },
     { type: "crystalLarge", x: 12, y: 6, solid: false },
+    { type: "crystalGlowOverlay", x: 12, y: 6, solid: false },
     { type: "crystalSmall", x: 4, y: 7, solid: false },
     { type: "crystalSmall", x: 11, y: 2, solid: false },
     { type: "caveBones", x: 5, y: 7, solid: false },
     { type: "caveStalagmite", x: 13, y: 7, solid: false },
     { type: "caveTorch", x: 6, y: 3, solid: false },
     { type: "caveTorch", x: 9, y: 6, solid: false },
+    { type: "caveCeilingForeground", x: 4, y: 9, solid: false },
+    { type: "caveCeilingForeground", x: 11, y: 9, solid: false },
   ],
 };
