@@ -38,9 +38,9 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Keeper's Key production composition
 - [x] Heartroot Sanctum production composition
 - [ ] Remaining Rootbound rooms production pass
-- [ ] Broken masonry / floor crack variants
-- [ ] Root growth variants
-- [ ] Crystal growth overlays
+- [x] Broken masonry / floor crack variants integrated in Heartroot Sanctum
+- [x] Root growth variants integrated in Heartroot Sanctum
+- [x] Crystal growth overlays integrated in Heartroot Sanctum
 - [ ] Door/arch transition set
 
 ## 4. Desert
@@ -48,8 +48,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Cracked ground autotile family
 - [x] Sandstone cliff autotile family
 - [x] Dune edge family
-- [ ] Ruin foreground/arch pieces
-- [ ] Oasis transition set
+- [x] Ruin foreground/arch pieces integrated in Fallen Gate
+- [x] Oasis shimmer/transition overlay integrated in Glassspring Oasis
 - [ ] Desert room-by-room production pass
 - [x] Representative production slice: Amber Wastes Fallen Gate
 - [x] Representative production slice: Glassspring Oasis
@@ -62,8 +62,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Shallow-water transition family
 - [ ] Animated water variants
 - [x] Foam overlays integrated into production rooms
-- [ ] Dock/bridge approach pieces
-- [ ] Waterfall foreground/background layering
+- [x] Dock/bridge approach pieces integrated in Breaker Pier
+- [x] Waterfall foreground mist layering integrated in Rainfall Shelf
 - [ ] Coast room-by-room production pass
 - [x] Representative production slice: Gullhook Cove
 - [x] Representative production slice: Tideglass Channel
@@ -76,8 +76,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Pit edge/corner family
 - [x] Crystal floor autotile family
 - [x] Crystal wall autotile family
-- [ ] Stalactite / ceiling foreground pieces
-- [ ] Crystal glow overlays
+- [x] Stalactite / ceiling foreground pieces integrated in Crystal Highlands
+- [x] Crystal glow overlays integrated in Crystal Highlands
 - [ ] Cave/crystal room-by-room production pass
 - [x] Representative production slice: Shardmouth Ledge
 - [x] Representative production slice: Prism Ascent
