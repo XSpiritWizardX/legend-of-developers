@@ -62,3 +62,56 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build production image
         run: docker build -t legend-of-developers:ci .
+
+  browser-e2e:
+    name: Browser E2E release flow
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    timeout-minutes: 20
+    env:
+      FLASK_APP: app
+      FLASK_ENV: development
+      SECRET_KEY: e2e-secret-key
+      DATABASE_URL: sqlite:///e2e.db
+      E2E_BASE_URL: http://127.0.0.1:5000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: react-vite/package-lock.json
+      - name: Install application and browser-test dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install selenium==4.35.0
+          cd react-vite
+          npm ci
+      - name: Build production frontend
+        working-directory: react-vite
+        run: npm run build
+      - name: Prepare E2E database
+        run: |
+          flask db upgrade
+          flask seed all
+      - name: Start production-shaped Flask app
+        run: |
+          flask run --host 127.0.0.1 --port 5000 > /tmp/legend-flask.log 2>&1 &
+          echo $! > /tmp/legend-flask.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:5000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/legend-flask.log
+          exit 1
+      - name: Run browser release suite
+        run: python -m unittest -v e2e.test_release_browser
+      - name: Print server log on failure
+        if: failure()
+        run: cat /tmp/legend-flask.log || true
