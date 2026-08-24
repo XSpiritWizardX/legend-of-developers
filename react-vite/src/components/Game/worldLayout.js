@@ -9,8 +9,8 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 0, width: 64, height: 40 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "outdoorRegion",
-        // Region-scale scrolling is intentionally staged until the internal
-        // fixed-screen walls have been re-authored into a continuous zone.
+        // Region-scale scrolling remains staged until the generated wilderness
+        // walls are re-authored into a continuous zone.
         useLegacyTransitions: true,
       },
       {
@@ -64,10 +64,9 @@ const WORLD_LAYOUTS = {
   },
   d01: {
     regions: [],
-    // This partition deliberately mixes room sizes. It occupies the same
-    // existing 48x30-tile dungeon map, so saves/world coordinates remain valid.
-    // Runtime camera activation stays staged until the dungeon tile boundaries
-    // and doorway spans are re-authored for these logical chambers.
+    // Rootbound is the first dungeon fully migrated away from fixed 16x10
+    // screen identity. These chambers deliberately mix dimensions while
+    // preserving the existing 48x30 tile coordinates for save compatibility.
     rooms: [
       {
         id: "d01-west-gallery",
@@ -75,7 +74,10 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 0, width: 16, height: 10 },
         camera: CAMERA_MODE.SNAP,
         kind: "smallChamber",
-        useLegacyTransitions: true,
+        connections: [
+          { edge: "east", to: "d01-grand-nave" },
+          { edge: "south", to: "d01-lower-crypt" },
+        ],
       },
       {
         id: "d01-grand-nave",
@@ -83,7 +85,11 @@ const WORLD_LAYOUTS = {
         bounds: { x: 16, y: 0, width: 32, height: 10 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "wideHall",
-        useLegacyTransitions: true,
+        connections: [
+          { edge: "west", to: "d01-west-gallery" },
+          { edge: "south", to: "d01-lower-crypt", span: { from: 16, to: 23 } },
+          { edge: "south", to: "d01-root-sanctum", span: { from: 24, to: 47 } },
+        ],
       },
       {
         id: "d01-lower-crypt",
@@ -91,7 +97,11 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 10, width: 24, height: 20 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "mediumChamber",
-        useLegacyTransitions: true,
+        connections: [
+          { edge: "north", to: "d01-west-gallery", span: { from: 0, to: 15 } },
+          { edge: "north", to: "d01-grand-nave", span: { from: 16, to: 23 } },
+          { edge: "east", to: "d01-root-sanctum" },
+        ],
       },
       {
         id: "d01-root-sanctum",
@@ -99,7 +109,10 @@ const WORLD_LAYOUTS = {
         bounds: { x: 24, y: 10, width: 24, height: 20 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "bossChamber",
-        useLegacyTransitions: true,
+        connections: [
+          { edge: "north", to: "d01-grand-nave" },
+          { edge: "west", to: "d01-lower-crypt" },
+        ],
       },
     ],
   },
@@ -126,6 +139,11 @@ export function authoredRoomsForMap(mapId) {
 
 export function authoredRegionsForMap(mapId) {
   return [...layoutForMap(mapId).regions];
+}
+
+export function authoredConnectionsForRoom(mapId, roomId) {
+  const room = layoutForMap(mapId).rooms.find((entry) => entry.id === roomId);
+  return room ? [...(room.connections || [])] : [];
 }
 
 export { WORLD_LAYOUTS };
