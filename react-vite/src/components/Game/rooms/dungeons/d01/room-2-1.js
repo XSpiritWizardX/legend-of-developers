@@ -1,11 +1,27 @@
 export default {
   id: "d01:2,1", name: "Cartographer's Tomb", variant: 0,
   wallRects: [[2, 2, 3, 5], [11, 2, 3, 2], [11, 7, 3, 1]],
+  floor: [
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mw mw mw mf ..",
+    ".. mf mw mw mw mf xf xf mf mf mf mw mw mw mf ..",
+    ".. mf mw mw mw mf xf xf mf mf mf mf mf mf mf ..",
+    ".. mf mw mw mw mf mf mf mf mf mf mf mf mf mf ..",
+    ".. mf mw mw mw mf mf mf mf xf xf mf mf mf mf ..",
+    ".. mf mf mf mf mf mf mf mf xf xf mf mw mw mw ..",
+    ".. mf mf mf mf mf mf mf mf mf mf mf mf mf mf ..",
+    ".. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..",
+  ],
   assets: [
-    { type: "crystalLarge", x: 12, y: 5 },
+    { type: "crystalLarge", x: 12, y: 5, solid: false },
+    { type: "rootboundCrystalGrowth", x: 12, y: 5, solid: false },
     { type: "dungeonSwitch", x: 9, y: 5 },
     { type: "dungeonPillar", x: 6, y: 2 },
     { type: "caveBones", x: 8, y: 6, solid: false },
     { type: "crystalSmall", x: 10, y: 6, solid: false },
+    { type: "rootboundFloorCracks", x: 7, y: 5, solid: false },
+    { type: "rootboundRootGrowth", x: 3, y: 6, solid: false },
+    { type: "rootboundArchForeground", x: 11, y: 9, solid: false },
   ],
 };

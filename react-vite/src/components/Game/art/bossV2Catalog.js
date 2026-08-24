@@ -7,7 +7,11 @@ export const BOSS_V2_CATALOG = Object.freeze({
     offsetY: -24,
   }),
   bossCacheColossus: Object.freeze({
-    source: "/art/v2/enemies/boss-cache-colossus.svg",
+    frames: [
+      "/art/v2/enemies/boss-cache-colossus.svg",
+      "/art/v2/enemies/boss-cache-colossus-b.svg",
+    ],
+    frameDuration: 340,
     width: 128,
     height: 128,
     offsetX: -32,
@@ -21,7 +25,11 @@ export const BOSS_V2_CATALOG = Object.freeze({
     offsetY: -48,
   }),
   bossRootWarden: Object.freeze({
-    source: "/art/v2/enemies/boss-root-warden.svg",
+    frames: [
+      "/art/v2/enemies/boss-root-warden.svg",
+      "/art/v2/enemies/boss-root-warden-b.svg",
+    ],
+    frameDuration: 300,
     width: 128,
     height: 128,
     offsetX: -32,
@@ -35,7 +43,11 @@ export const BOSS_V2_CATALOG = Object.freeze({
     offsetY: -24,
   }),
   boss: Object.freeze({
-    source: "/art/v2/enemies/boss-cache-colossus.svg",
+    frames: [
+      "/art/v2/enemies/boss-cache-colossus.svg",
+      "/art/v2/enemies/boss-cache-colossus-b.svg",
+    ],
+    frameDuration: 340,
     width: 128,
     height: 128,
     offsetX: -32,

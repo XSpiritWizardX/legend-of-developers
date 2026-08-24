@@ -1,1 +1,26 @@
-export default { id: "13,2", assets: [] };
+export default {
+  id: "13,2",
+  name: "Stormbreak Coast · Tideglass Channel",
+  floor: [
+    "ow ow ow ow ow sw sw sh sh sw sw ow ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow sw sw sw sh sh sw sw sw ow ow ow ow",
+    "ow ow ow ow ow sw sw sh sh sw sw ow ow ow ow ow",
+  ],
+  assets: [
+    { type: "coastReeds", x: 6, y: 2, solid: false },
+    { type: "coastReeds", x: 9, y: 7, solid: false },
+    { type: "coastLilyPad", x: 5, y: 6, solid: false },
+    { type: "coastLilyPad", x: 10, y: 3, solid: false },
+    { type: "coastFoam", x: 6, y: 4, solid: false },
+    { type: "coastFoam", x: 9, y: 5, solid: false },
+    { type: "coastCoral", x: 3, y: 6, solid: false },
+    { type: "coastCoral", x: 12, y: 3, solid: false },
+  ],
+};
