@@ -19,35 +19,27 @@ const SCREEN_ROWS = 10;
 const WORLD_COLS = 16;
 const WORLD_ROWS = 16;
 
-function inRange(value, min, max) {
-  return value >= min && value <= max;
-}
-
+function inRange(value, min, max) { return value >= min && value <= max; }
 function inWillowbrook(tx, ty) {
-  return tx >= WILLOWBROOK_SHOWCASE.x
-    && ty >= WILLOWBROOK_SHOWCASE.y
+  return tx >= WILLOWBROOK_SHOWCASE.x && ty >= WILLOWBROOK_SHOWCASE.y
     && tx < WILLOWBROOK_SHOWCASE.x + WILLOWBROOK_SHOWCASE.width
     && ty < WILLOWBROOK_SHOWCASE.y + WILLOWBROOK_SHOWCASE.height;
 }
 
 function willowbrookTerrain(tx, ty) {
   if (!inWillowbrook(tx, ty)) return null;
-
   if ((tx === 31 || tx === 32) && inRange(ty, 10, 29)) return "village";
   if ((ty === 19 || ty === 20) && inRange(tx, 16, 47)) return "village";
-
   if (ty === 18 && inRange(tx, 18, 30)) {
     if (tx === 27 || tx === 28) return TERRAIN.STAIRS;
     if (tx === 29 || tx === 30) return TERRAIN.RAMP;
     if (inRange(tx, 20, 26)) return TERRAIN.LEDGE_DOWN;
     return "mountain";
   }
-
   if (WILLOWBROOK_PITS.has(`${tx},${ty}`)) return TERRAIN.PIT;
   if (ty === 17 && inRange(tx, 19, 30)) return "stone";
   if (ty === 21 && inRange(tx, 19, 29)) return "grassAlt";
   if ((tx === 26 || tx === 27) && inRange(ty, 22, 25)) return "stone";
-
   return null;
 }
 
@@ -115,9 +107,11 @@ function authoredPerimeterTerrain(tx, ty) {
   const roomY = Math.floor(ty / SCREEN_ROWS);
   if (roomX < 0 || roomY < 0 || roomX >= WORLD_COLS || roomY >= WORLD_ROWS) return null;
 
-  // Explicit room files keep their hand-authored wall art. This system replaces
-  // only the old generated fallback borders that used one repeated wall tile.
-  if (editableRoomAt("overworld", roomX, roomY)) return null;
+  // Rooms with an explicit wall grid keep their hand-authored border. Asset-only
+  // room files still receive the biome perimeter profile instead of falling back
+  // to the old repeated forestWall/mountain row.
+  const explicitRoom = editableRoomAt("overworld", roomX, roomY);
+  if (explicitRoom?.walls?.length) return null;
 
   const lx = tx % SCREEN_COLS;
   const ly = ty % SCREEN_ROWS;
@@ -137,9 +131,7 @@ function authoredPerimeterTerrain(tx, ty) {
 
 export function showcaseTerrainAt(mapId, tx, ty) {
   if (mapId !== "overworld") return null;
-  return willowbrookTerrain(tx, ty)
-    || oldgrowthTerrain(tx, ty)
-    || authoredPerimeterTerrain(tx, ty);
+  return willowbrookTerrain(tx, ty) || oldgrowthTerrain(tx, ty) || authoredPerimeterTerrain(tx, ty);
 }
 
 export function isShowcasePit(mapId, tx, ty) {
