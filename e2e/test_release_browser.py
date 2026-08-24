@@ -54,16 +54,27 @@ class ReleaseBrowserE2E(unittest.TestCase):
 
     def tearDown(self):
         failures = self.driver.execute_script("return window.__e2eFailures || [];") or []
-        severe_logs = [
-            entry["message"] for entry in self.driver.get_log("browser")
-            if entry.get("level") == "SEVERE"
-            and "favicon" not in entry.get("message", "").lower()
-        ]
+        severe_logs = []
+        for entry in self.driver.get_log("browser"):
+            if entry.get("level") != "SEVERE":
+                continue
+            message = entry.get("message", "")
+            lowered = message.lower()
+            if "favicon" in lowered:
+                continue
+            # Session bootstrap intentionally receives 401 for anonymous guests.
+            if "/api/auth/" in message and "401 (UNAUTHORIZED)" in message:
+                continue
+            severe_logs.append(message)
         self.assertEqual(failures, [], f"Browser runtime failures: {failures}")
         self.assertEqual(severe_logs, [], f"Browser console errors: {severe_logs}")
 
     def wait_for_text(self, text):
         self.wait.until(EC.presence_of_element_located((By.XPATH, f"//*[contains(normalize-space(), {json.dumps(text)})]")))
+
+    def file_one_text(self):
+        file_one = self.wait.until(EC.presence_of_element_located((By.XPATH, "//button[.//*[contains(text(),'FILE 1')]]")))
+        return file_one.text
 
     def api(self, method, path, body=None):
         script = """
@@ -109,10 +120,11 @@ class ReleaseBrowserE2E(unittest.TestCase):
         self.wait_for_text("Select a File")
         self.wait_for_text("Guest files are saved on this device")
         self.wait_for_text("BEARER OF THE BLADE")
-        self.wait_for_text("◆ 17")
+        self.assertIn("17", self.file_one_text())
 
         self.driver.refresh()
         self.wait_for_text("BEARER OF THE BLADE")
+        self.assertIn("17", self.file_one_text())
         file_one = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[.//*[contains(text(),'FILE 1')]]")))
         file_one.click()
         self.wait_for_text("Continue the Quest")
@@ -154,7 +166,8 @@ class ReleaseBrowserE2E(unittest.TestCase):
 
         self.driver.refresh()
         self.wait_for_text("GROVE SIGIL CLAIMED")
-        self.wait_for_text("◆ 42")
+        self.assertIn("42", self.file_one_text())
+        self.assertIn("Keys 1", self.file_one_text())
 
         self.driver.get(f"{BASE_URL}/")
         self.wait_for_text("Your progress saves to your account")
