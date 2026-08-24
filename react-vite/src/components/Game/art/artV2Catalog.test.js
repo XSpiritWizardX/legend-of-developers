@@ -45,12 +45,20 @@ describe("v2 game art overrides", () => {
     expect(catalogArtV2("props", "desertRock").source).toContain("desert-rock.svg");
   });
 
-  test("early combat silhouettes are all on the v2 enemy family", () => {
-    expect(catalogArtV2("enemies", "forestByteBeetle").source).toContain("forest-byte-beetle.svg");
-    expect(catalogArtV2("enemies", "caveEchoBat").source).toContain("cave-echo-bat.svg");
-    expect(catalogArtV2("enemies", "waterCurrentBlob").source).toContain("water-current-blob.svg");
-    expect(catalogArtV2("enemies", "dungeonFirewallDrone").source).toContain("dungeon-firewall-drone.svg");
-    expect(catalogArtV2("enemies", "desertSandSkitter").source).toContain("desert-sand-skitter.svg");
+  test("early combat silhouettes are animated on the v2 enemy family", () => {
+    const expected = {
+      forestByteBeetle: "forest-byte-beetle.svg",
+      caveEchoBat: "cave-echo-bat.svg",
+      waterCurrentBlob: "water-current-blob.svg",
+      dungeonFirewallDrone: "dungeon-firewall-drone.svg",
+      desertSandSkitter: "desert-sand-skitter.svg",
+    };
+    Object.entries(expected).forEach(([id, firstFrame]) => {
+      const entry = catalogArtV2("enemies", id);
+      expect(entry.frames).toHaveLength(2);
+      expect(entry.frames[0]).toContain(firstFrame);
+      expect(entry.frameDuration).toBeGreaterThan(0);
+    });
   });
 
   test("common dungeon interactables use the v2 prop family", () => {
