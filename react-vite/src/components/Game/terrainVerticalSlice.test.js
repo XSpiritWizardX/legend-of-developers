@@ -1,4 +1,4 @@
-import { showcaseTerrainAt } from "./showcaseTerrain";
+import { jest } from "@jest/globals";
 import {
   ELEVATION_TRANSITION,
   TERRAIN,
@@ -12,6 +12,12 @@ import {
   facingWorldObject,
   pushDestination,
 } from "./worldObjects";
+
+jest.unstable_mockModule("./rooms/roomRegistry", () => ({
+  editableRoomAt: () => undefined,
+}));
+
+const { showcaseTerrainAt } = await import("./showcaseTerrain");
 
 const TILE = 64;
 const playerAt = (tx, ty, dir = "down") => ({
