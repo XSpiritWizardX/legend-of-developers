@@ -1,4 +1,9 @@
-import { authoredRegionsForMap, authoredRoomsForMap, logicalRoomAtTile } from "./worldLayout";
+import {
+  authoredConnectionsForRoom,
+  authoredRegionsForMap,
+  authoredRoomsForMap,
+  logicalRoomAtTile,
+} from "./worldLayout";
 
 describe("logical world layout", () => {
   test("models Willowbrook as a larger 32x20 authored settlement", () => {
@@ -24,5 +29,25 @@ describe("logical world layout", () => {
     const regions = authoredRegionsForMap("overworld");
     expect(regions.some((region) => region.id === "greenwood-vale")).toBe(true);
     expect(regions.some((region) => region.id === "silverwater-reach")).toBe(true);
+  });
+
+  test("Rootbound chambers expose authored edge connections instead of relying on screen reciprocity", () => {
+    const naveConnections = authoredConnectionsForRoom("d01", "d01-grand-nave");
+    expect(naveConnections).toEqual(expect.arrayContaining([
+      expect.objectContaining({ edge: "west", to: "d01-west-gallery" }),
+      expect.objectContaining({ edge: "south", to: "d01-lower-crypt" }),
+      expect.objectContaining({ edge: "south", to: "d01-root-sanctum" }),
+    ]));
+    expect(authoredConnectionsForRoom("d01", "missing-room")).toEqual([]);
+  });
+
+  test("Rootbound mixes authored room dimensions inside one dungeon coordinate space", () => {
+    const rooms = authoredRoomsForMap("d01");
+    const dimensions = rooms.map((room) => `${room.bounds.width}x${room.bounds.height}`);
+    expect(new Set(dimensions).size).toBeGreaterThan(1);
+    expect(logicalRoomAtTile("d01", 8, 5).id).toBe("d01-west-gallery");
+    expect(logicalRoomAtTile("d01", 30, 5).id).toBe("d01-grand-nave");
+    expect(logicalRoomAtTile("d01", 10, 20).id).toBe("d01-lower-crypt");
+    expect(logicalRoomAtTile("d01", 36, 20).id).toBe("d01-root-sanctum");
   });
 });
