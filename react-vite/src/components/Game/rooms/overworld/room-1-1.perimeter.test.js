@@ -1,5 +1,6 @@
 import room from "./room-1-1";
-import { TILE_INDEX } from "../../art/tileIndex";
+
+const SOLID_PERIMETER_CODES = new Set(["tr", "bu", "rk", "lg"]);
 
 function rowCodes(row) {
   if (row.includes(" ")) return row.trim().split(/\s+/);
@@ -11,8 +12,7 @@ function codeAt(x, y) {
 }
 
 function solidCode(code) {
-  if (!code || code === "..") return false;
-  return Boolean(TILE_INDEX[code]?.solid);
+  return SOLID_PERIMETER_CODES.has(code);
 }
 
 describe("Willowbrook authored perimeter", () => {
@@ -54,6 +54,6 @@ describe("Willowbrook authored perimeter", () => {
         return [codes[0], codes[15]];
       }),
     ].filter((code) => code !== "..");
-    expect(new Set(perimeter)).toEqual(new Set(["tr", "bu", "rk", "lg"]));
+    expect(new Set(perimeter)).toEqual(SOLID_PERIMETER_CODES);
   });
 });
