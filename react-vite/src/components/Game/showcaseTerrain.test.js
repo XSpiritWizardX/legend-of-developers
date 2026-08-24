@@ -1,5 +1,15 @@
+import { jest } from "@jest/globals";
 import { TERRAIN } from "./terrainInteractions";
-import { showcaseTerrainAt, WILLOWBROOK_SHOWCASE } from "./showcaseTerrain";
+
+jest.unstable_mockModule("./rooms/roomRegistry", () => ({
+  editableRoomAt: (mapId, roomX, roomY) => (
+    mapId === "overworld" && roomX === 1 && roomY === 1
+      ? { walls: ["authored"] }
+      : undefined
+  ),
+}));
+
+const { showcaseTerrainAt, WILLOWBROOK_SHOWCASE } = await import("./showcaseTerrain");
 
 const SOLID_PERIMETER_TILES = new Set([
   "forestWall", "forest", "mountain", "water", "wall", "crackedWall", "house",
@@ -59,8 +69,6 @@ describe("visible traversal showcase", () => {
   });
 
   test("authored room files retain their own custom perimeter art", () => {
-    // Willowbrook room 1,1 has an explicit room file and should not be replaced
-    // by the generated perimeter profile at its outer north-west corner.
     expect(showcaseTerrainAt("overworld", 16, 10)).toBeNull();
   });
 
