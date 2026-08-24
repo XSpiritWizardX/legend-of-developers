@@ -117,8 +117,8 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] Dungeon enemy silhouette pass
 - [x] Miniboss silhouette pass
 - [x] Boss silhouette pass
-- [ ] Enemy animation / hit-state pass
-- [ ] Boss animation / hit-state / phase presentation pass
+- [ ] Enemy animation / hit-state pass (additional biome animation frames authored; catalog wiring still pending)
+- [ ] Boss hit-state / phase presentation pass (Cache Colossus + Root Warden live idle-energy animation integrated)
 
 ## 10. Items, combat art, and VFX
 - [ ] Equipment icon consistency audit
@@ -136,7 +136,7 @@ This file is the production definition of done for the game's visual pass. Work 
 - [x] HUD frame / heart / magic-meter consistency pass
 - [x] Inventory item-slot presentation pass
 - [x] Shared dialogue / menu / map panel frame polish
-- [ ] Map marker polish
+- [x] Map marker polish
 - [ ] Boss UI
 - [ ] Title/menu art
 - [ ] Game-over / victory presentation
