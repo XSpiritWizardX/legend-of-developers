@@ -13,10 +13,10 @@ describe("visible traversal showcase", () => {
     expect(showcaseTerrainAt("overworld", 46, 20)).toBe("village");
   });
 
-  test("starting terrace has one-way drops and a reversible stair route", () => {
+  test("starting terrace has one-way drops plus reversible stair and ramp routes", () => {
     expect(showcaseTerrainAt("overworld", 22, 18)).toBe(TERRAIN.LEDGE_DOWN);
     expect(showcaseTerrainAt("overworld", 27, 18)).toBe(TERRAIN.STAIRS);
-    expect(showcaseTerrainAt("overworld", 29, 18)).toBe("mountain");
+    expect(showcaseTerrainAt("overworld", 29, 18)).toBe(TERRAIN.RAMP);
   });
 
   test("pit garden is close to the starting area but leaves a safe reward path", () => {

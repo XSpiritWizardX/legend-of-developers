@@ -15,8 +15,20 @@ export const TRAVERSAL_STATE = Object.freeze({
   WALK: "walk",
   HOP: "hop",
   FALL: "fall",
+  LAND: "land",
   RECOVER: "recover",
   SWIM: "swim",
+  LIFT: "lift",
+  CARRY: "carry",
+  THROW: "throw",
+  PUSH: "push",
+  PULL: "pull",
+});
+
+export const ELEVATION_TRANSITION = Object.freeze({
+  LEVEL: "level",
+  ASCEND: "ascend",
+  DESCEND: "descend",
 });
 
 const DIRECTION_VECTOR = Object.freeze({
@@ -57,6 +69,26 @@ export function isSwimmable(tile, hasFlippers) {
   return tile === TERRAIN.DEEP_WATER && Boolean(hasFlippers);
 }
 
+export function isElevationTransition(tile) {
+  return tile === TERRAIN.STAIRS || tile === TERRAIN.RAMP;
+}
+
+export function elevationTransitionFor({ tile, direction }) {
+  if (!isElevationTransition(tile)) return ELEVATION_TRANSITION.LEVEL;
+  if (direction === "up") return ELEVATION_TRANSITION.ASCEND;
+  if (direction === "down") return ELEVATION_TRANSITION.DESCEND;
+  return ELEVATION_TRANSITION.LEVEL;
+}
+
+export function elevationAllowsMovement({ fromElevation = 0, toElevation = 0, tile, direction }) {
+  const delta = toElevation - fromElevation;
+  if (delta === 0) return true;
+  if (!isElevationTransition(tile)) return false;
+  const transition = elevationTransitionFor({ tile, direction });
+  if (delta > 0) return transition === ELEVATION_TRANSITION.ASCEND;
+  return transition === ELEVATION_TRANSITION.DESCEND;
+}
+
 export function terrainTraversalFor({ tile, direction, hasFlippers = false }) {
   if (isDirectionalLedge(tile)) {
     return canHopLedge(tile, direction)
@@ -72,6 +104,26 @@ export function terrainTraversalFor({ tile, direction, hasFlippers = false }) {
       : { state: TRAVERSAL_STATE.WALK, blocksMovement: true };
   }
   return { state: TRAVERSAL_STATE.WALK, blocksMovement: false };
+}
+
+export function traversalVisualState({
+  traversal = null,
+  swimming = false,
+  carrying = false,
+  throwing = false,
+  pushing = false,
+  pulling = false,
+  moving = false,
+} = {}) {
+  if (traversal?.state === TRAVERSAL_STATE.FALL) return TRAVERSAL_STATE.FALL;
+  if (traversal?.state === TRAVERSAL_STATE.HOP) return TRAVERSAL_STATE.HOP;
+  if (traversal?.state === TRAVERSAL_STATE.RECOVER) return TRAVERSAL_STATE.LAND;
+  if (throwing) return TRAVERSAL_STATE.THROW;
+  if (pushing) return TRAVERSAL_STATE.PUSH;
+  if (pulling) return TRAVERSAL_STATE.PULL;
+  if (carrying) return TRAVERSAL_STATE.CARRY;
+  if (swimming) return TRAVERSAL_STATE.SWIM;
+  return moving ? TRAVERSAL_STATE.WALK : TRAVERSAL_STATE.WALK;
 }
 
 export function ledgeLandingPoint({
