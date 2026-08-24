@@ -110,13 +110,15 @@ This file is the production definition of done for the game's visual pass. Work 
 - [ ] Player animation visual consistency audit
 - [ ] NPC visual consistency audit
 - [ ] Merchant and quest-character pass
-- [ ] Forest enemy pass
-- [ ] Cave enemy pass
-- [ ] Desert enemy pass
-- [ ] Water enemy pass
-- [ ] Dungeon enemy pass
-- [ ] Miniboss pass
-- [ ] Boss silhouette / animation / hit-state pass
+- [x] Forest enemy silhouette pass
+- [x] Cave enemy silhouette pass
+- [x] Desert enemy silhouette pass
+- [x] Water enemy silhouette pass
+- [x] Dungeon enemy silhouette pass
+- [x] Miniboss silhouette pass
+- [x] Boss silhouette pass
+- [ ] Enemy animation / hit-state pass
+- [ ] Boss animation / hit-state / phase presentation pass
 
 ## 10. Items, combat art, and VFX
 - [ ] Equipment icon consistency audit
