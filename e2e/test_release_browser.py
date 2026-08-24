@@ -72,9 +72,12 @@ class ReleaseBrowserE2E(unittest.TestCase):
     def wait_for_text(self, text):
         self.wait.until(EC.presence_of_element_located((By.XPATH, f"//*[contains(normalize-space(), {json.dumps(text)})]")))
 
+    def file_one(self, clickable=False):
+        condition = EC.element_to_be_clickable if clickable else EC.presence_of_element_located
+        return self.wait.until(condition((By.CSS_SELECTOR, ".save-files .save-file")))
+
     def file_one_text(self):
-        file_one = self.wait.until(EC.presence_of_element_located((By.XPATH, "//button[.//*[contains(text(),'FILE 1')]]")))
-        return file_one.text
+        return self.file_one().text
 
     def api(self, method, path, body=None):
         script = """
@@ -125,8 +128,7 @@ class ReleaseBrowserE2E(unittest.TestCase):
         self.driver.refresh()
         self.wait_for_text("BEARER OF THE BLADE")
         self.assertIn("17", self.file_one_text())
-        file_one = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[.//*[contains(text(),'FILE 1')]]")))
-        file_one.click()
+        self.file_one(clickable=True).click()
         self.wait_for_text("Continue the Quest")
         self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[aria-label*='Legend of Developer']")))
 
