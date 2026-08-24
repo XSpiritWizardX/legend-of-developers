@@ -122,8 +122,10 @@ export function createGame(canvas, { initialSave, onSave }) {
 
   const saved = initialSave || {};
   const compatibleLayout = saved.version === 3;
+  const requestedMapId = compatibleLayout ? saved.mapId : null;
+  const safeMapId = requestedMapId && MAPS[requestedMapId] ? requestedMapId : "overworld";
   const state = {
-    mapId: compatibleLayout ? (saved.mapId || "overworld") : "overworld",
+    mapId: safeMapId,
     openedChests: saved.openedChests || {},
     killed: saved.killed || {},
     flags: saved.flags || {},
@@ -607,7 +609,9 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
 
   function reward(type) {
-    playGameSfx(GAME_SFX.PICKUP);
+    playGameSfx(type === "heart"
+      ? GAME_SFX.HEART
+      : (type === "key" ? GAME_SFX.KEY : GAME_SFX.PICKUP));
     if (type === "htmlSword") {
       player.inventory.htmlSword = true;
       player.equipmentLevels.sword = Math.max(player.equipmentLevels.sword, 2);
@@ -766,7 +770,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         result.event === "gate" ? 205 : 145,
       );
       screenShake = Math.max(screenShake, result.event === "gate" ? 11 : 5);
-      playGameSfx(result.event === "secret" ? GAME_SFX.CHEST : GAME_SFX.ROOM);
+      playGameSfx(result.event === "secret" ? GAME_SFX.SECRET : GAME_SFX.SWITCH);
       save();
     }
     return true;
@@ -790,7 +794,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         result.event === "gate" ? 190 : 135,
       );
       screenShake = Math.max(screenShake, result.event === "gate" ? 10 : 5);
-      playGameSfx(result.event === "secret" ? GAME_SFX.CHEST : GAME_SFX.ROOM);
+      playGameSfx(result.event === "secret" ? GAME_SFX.SECRET : GAME_SFX.SWITCH);
       save();
     }
     return true;
@@ -972,6 +976,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     const cost = MAGIC_COSTS[item] || 0;
     if (player.magic < cost) {
       announce("NOT ENOUGH MAGIC · WAIT FOR IT TO REFILL");
+      playGameSfx(GAME_SFX.ERROR);
       return false;
     }
     player.magic -= cost;
@@ -1028,6 +1033,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function activateHookshot() {
     if (!player.inventory.hookshot) return announce("YOU HAVE NOT FOUND THE HOOKSHOT");
+    playGameSfx(GAME_SFX.GRAPPLE);
     const dir = directionVector();
     const startX = player.x;
     const startY = player.y;
@@ -1046,6 +1052,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   function activateRod(kind) {
     const key = kind === "fire" ? "fireRod" : "iceRod";
     if (!player.inventory[key]) return announce(`YOU HAVE NOT FOUND THE ${kind.toUpperCase()} ROD`);
+    playGameSfx(kind === "fire" ? GAME_SFX.FIRE : GAME_SFX.ICE);
     enemiesByMap[state.mapId].forEach((enemy) => {
       if (Math.hypot(enemy.x - player.x, enemy.y - player.y) < 170) {
         if (kind === "fire") damageEnemy(enemy, 2);
@@ -1164,6 +1171,7 @@ export function createGame(canvas, { initialSave, onSave }) {
   }
   function dash() {
     if (player.dashCooldown > 0) return;
+    playGameSfx(GAME_SFX.DASH);
     const dir = directionVector();
     const startX = player.x;
     const startY = player.y;
@@ -1224,6 +1232,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       isPermanentEnemy(enemy.type) ? 190 : 125,
     );
     if (enemy.hp <= 0) {
+      playGameSfx(boss ? GAME_SFX.BOSS_DEFEAT : GAME_SFX.ENEMY_DEFEAT);
       spawnParticles(enemy.x, enemy.y, boss ? "#b96f5d" : "#d9fff8", boss ? 36 : 18, 230);
       screenShake = Math.max(screenShake, boss ? 18 : 7);
       if (boss) state.killed[enemy.id] = true;
@@ -1270,7 +1279,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         player.invincible = player.inventory.devJacket ? 1.65 : 1.1;
         screenShake = Math.max(screenShake, 8);
         spawnParticles(player.x, player.y, "#b96f5d", 12, 145);
-        playGameSfx(GAME_SFX.HIT);
+        playGameSfx(GAME_SFX.PLAYER_HURT);
         if (player.hp <= 0) {
           player.hp = player.maxHp;
           changeMap("overworld", MAPS.overworld.spawn);
@@ -1368,6 +1377,7 @@ export function createGame(canvas, { initialSave, onSave }) {
       bomb.timer -= dt;
       if (bomb.timer <= 0 && !bomb.exploded) {
         bomb.exploded = true;
+        playGameSfx(GAME_SFX.BOMB);
         enemiesByMap[state.mapId].forEach((enemy) => {
           if (Math.hypot(bomb.x - enemy.x, bomb.y - enemy.y) < 100) damageEnemy(enemy, 3);
         });
@@ -1383,6 +1393,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           if (foundSecret) {
             state.flags[`secret_${state.mapId}`] = true;
             announce("HIDDEN PASSAGE OPENED");
+            playGameSfx(GAME_SFX.SECRET);
             save();
           }
         }
@@ -1524,12 +1535,13 @@ export function createGame(canvas, { initialSave, onSave }) {
       player.keys -= 1;
       state.flags[doorFlag] = true;
       announce("SMALL KEY USED");
+      playGameSfx(GAME_SFX.DOOR);
       save();
     }
     if (state.mapId !== "overworld" && tileAt(state.mapId, tx, ty, state.flags) === "switch" && !state.flags[`switch_${state.mapId}`]) {
       state.flags[`switch_${state.mapId}`] = true;
       announce("MAGIC BARRIER DISABLED");
-      playGameSfx(GAME_SFX.ROOM);
+      playGameSfx(GAME_SFX.SWITCH);
       save();
     }
 
@@ -1572,7 +1584,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           announce("CACHE COLOSSUS · HEARTROOT PHASE AWAKENED", 4.5);
           screenShake = Math.max(screenShake, 15);
           spawnParticles(enemy.x, enemy.y, "#d4b76b", 34, 220);
-          playGameSfx(GAME_SFX.HIT);
+          playGameSfx(GAME_SFX.BOSS_PHASE);
         }
       }
       const knockbackSpeed = Math.hypot(enemy.knockbackX || 0, enemy.knockbackY || 0);
@@ -1613,7 +1625,7 @@ export function createGame(canvas, { initialSave, onSave }) {
           boss: enemy, player, phase: bossPhase,
         }));
         enemy.attackCooldown = rootboundBossAttackCooldown(bossPhase);
-        playGameSfx(GAME_SFX.ROOM);
+        playGameSfx(GAME_SFX.MAGIC);
       }
       const boss = isPermanentEnemy(enemy.type);
       if (distance < (boss ? 43 : 29) && player.invincible <= 0) {
@@ -1628,6 +1640,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         hitStop = Math.max(hitStop, 0.04);
         screenShake = boss ? 14 : 8;
         spawnParticles(player.x, player.y, "#ff6f7d", boss ? 18 : 10, 170);
+        playGameSfx(GAME_SFX.PLAYER_HURT);
         if (player.hp <= 0) {
           player.hp = player.maxHp;
           changeMap("overworld", MAPS.overworld.spawn);
@@ -2868,6 +2881,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     const [item, price] = offer;
     if (player.coins < price) {
       announce("NOT ENOUGH GOLD");
+      playGameSfx(GAME_SFX.ERROR);
       return;
     }
     player.coins -= price;
@@ -3117,6 +3131,7 @@ export function createGame(canvas, { initialSave, onSave }) {
     if (key === "h" && !keys.h && !event.repeat) {
       player.swordCharging = true;
       player.swordCharge = 0;
+      playGameSfx(GAME_SFX.CHARGE);
     }
     if (!keys[key]) pressed[key] = true;
     keys[key] = true;

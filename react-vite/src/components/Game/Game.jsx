@@ -3,10 +3,154 @@ import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { csrfFetch } from "../../redux/csrf";
 import { createGame } from "./engine";
+import { GAME_SFX, playGameSfx, setGameSfxVolume } from "./gameAudio";
+import { setGameMusicVolume } from "./gameMusic";
 import "./Game.css";
 
 const SLOTS = [1, 2, 3];
-const localKey = (slot) => `legend-of-devs-save-${slot}`;
+const legacyLocalKey = (slot) => `legend-of-devs-save-${slot}`;
+const localIdentity = (user) => (user?.id ? `user-${user.id}` : "guest");
+const localKey = (slot, user) => `legend-of-devs-save-${localIdentity(user)}-${slot}`;
+const localUpdatedKey = (slot, user) => `${localKey(slot, user)}-updated`;
+const AUDIO_PREFERENCES_KEY = "legend-of-devs-audio";
+const DEFAULT_AUDIO_PREFERENCES = Object.freeze({ music: 68, sfx: 88 });
+
+function clampPercent(value, fallback) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.max(0, Math.min(100, numeric)) : fallback;
+}
+
+function readAudioPreferences() {
+  if (typeof localStorage === "undefined") return { ...DEFAULT_AUDIO_PREFERENCES };
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUDIO_PREFERENCES_KEY));
+    return {
+      music: clampPercent(saved?.music, DEFAULT_AUDIO_PREFERENCES.music),
+      sfx: clampPercent(saved?.sfx, DEFAULT_AUDIO_PREFERENCES.sfx),
+    };
+  } catch {
+    return { ...DEFAULT_AUDIO_PREFERENCES };
+  }
+}
+
+export function normalizeCompletedSave(data) {
+  if (!data?.flags?.backendApi || data.flags.questComplete) return data;
+  return {
+    ...data,
+    flags: { ...data.flags, questComplete: true },
+    player: { ...data.player, hasEmber: true },
+  };
+}
+
+function saveProgressScore(data) {
+  if (!data) return -1;
+  const flags = data.flags || {};
+  const inventory = data.player?.inventory || {};
+  let score = 0;
+  if (flags.questComplete) score += 1_000_000;
+  if (flags.backendApi) score += 300_000;
+  if (flags.reactApp) score += 200_000;
+  if (flags.firstWebpage) score += 100_000;
+  if (inventory.htmlSword) score += 50_000;
+  score += Object.keys(data.openedChests || {}).length * 120;
+  score += Object.keys(data.discovered || {}).length * 10;
+  score += Object.values(inventory).filter((value) => value === true).length * 50;
+  score += Math.max(0, Number(data.player?.maxHp) || 0) * 5;
+  score += Math.min(9999, Math.max(0, Number(data.player?.coins) || 0));
+  return score;
+}
+
+function readLocalUpdatedAt(slot, user) {
+  if (typeof localStorage === "undefined") return 0;
+  const timestamp = Number(localStorage.getItem(localUpdatedKey(slot, user)));
+  return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : 0;
+}
+
+function readLocal(slot, user) {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const scoped = localStorage.getItem(localKey(slot, user));
+    if (scoped) return normalizeCompletedSave(JSON.parse(scoped));
+
+    // Preserve pre-release guest saves without ever importing an unscoped
+    // browser save into a signed-in player's private fallback namespace.
+    if (!user) {
+      const legacy = localStorage.getItem(legacyLocalKey(slot));
+      if (legacy) {
+        const migrated = normalizeCompletedSave(JSON.parse(legacy));
+        writeLocal(slot, migrated, user);
+        return migrated;
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function writeLocal(slot, data, user, updatedAt = Date.now()) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(localKey(slot, user), JSON.stringify(data));
+  localStorage.setItem(localUpdatedKey(slot, user), String(updatedAt));
+}
+
+function removeLocal(slot, user) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(localKey(slot, user));
+  localStorage.removeItem(localUpdatedKey(slot, user));
+  if (!user) localStorage.removeItem(legacyLocalKey(slot));
+}
+
+function preferredSave(localRecord, cloudSave) {
+  const localData = normalizeCompletedSave(localRecord?.data);
+  const cloudData = normalizeCompletedSave(cloudSave?.data);
+  if (!cloudData) return { data: localData, source: localData ? "local" : "none" };
+  if (!localData) return { data: cloudData, source: "cloud" };
+
+  const cloudUpdatedAt = Date.parse(cloudSave.updated_at || "") || 0;
+  if (localRecord.updatedAt > 0 && cloudUpdatedAt > 0 && localRecord.updatedAt !== cloudUpdatedAt) {
+    return localRecord.updatedAt > cloudUpdatedAt
+      ? { data: localData, source: "local" }
+      : { data: cloudData, source: "cloud" };
+  }
+
+  // Older local backups did not record timestamps. In that case prefer the
+  // copy with demonstrably greater durable progression and let cloud win ties.
+  return saveProgressScore(localData) > saveProgressScore(cloudData)
+    ? { data: localData, source: "local" }
+    : { data: cloudData, source: "cloud" };
+}
+
+function AudioControls({ preferences, onChange }) {
+  return (
+    <div className="audio-controls" aria-label="Audio settings">
+      <label>
+        <span>Music {preferences.music}%</span>
+        <input
+          aria-label="Music volume"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value={preferences.music}
+          onChange={(event) => onChange("music", event.target.value)}
+        />
+      </label>
+      <label>
+        <span>SFX {preferences.sfx}%</span>
+        <input
+          aria-label="Sound effects volume"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value={preferences.sfx}
+          onChange={(event) => onChange("sfx", event.target.value)}
+        />
+      </label>
+    </div>
+  );
+}
 
 function TouchButton({ input, label, className = "", disabled, onPress, onRelease }) {
   function press(event) {
@@ -51,17 +195,15 @@ function MobileControls({ disabled, onPress, onRelease }) {
       <div className="touch-actions">
         <TouchButton {...buttonProps} input="p" label="Pause" className="touch-menu" />
         <TouchButton {...buttonProps} input="l" label="Talk" className="touch-talk" />
+        <TouchButton {...buttonProps} input="shift" label="Dash" className="touch-dash" />
         <TouchButton {...buttonProps} input="h" label="Sword" className="touch-sword" />
         <TouchButton {...buttonProps} input="j" label="A" className="touch-a" />
+        <TouchButton {...buttonProps} input="q" label="Prev tab" className="touch-tab-prev" />
+        <TouchButton {...buttonProps} input="e" label="Next tab" className="touch-tab-next" />
         <TouchButton {...buttonProps} input="k" label="B" className="touch-b" />
       </div>
     </div>
   );
-}
-
-function readLocal(slot) {
-  try { return JSON.parse(localStorage.getItem(localKey(slot))); }
-  catch { return null; }
 }
 
 export default function Game() {
@@ -80,24 +222,65 @@ export default function Game() {
   const [mode, setMode] = useState("select");
   const [copySource, setCopySource] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
+  const [audioPreferences, setAudioPreferences] = useState(readAudioPreferences);
+  const [completionCelebration, setCompletionCelebration] = useState(false);
+
+  useEffect(() => {
+    setGameMusicVolume(audioPreferences.music / 100);
+    setGameSfxVolume(audioPreferences.sfx / 100);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(AUDIO_PREFERENCES_KEY, JSON.stringify(audioPreferences));
+    }
+  }, [audioPreferences]);
 
   useEffect(() => {
     let active = true;
     async function loadFiles() {
       setLoading(true);
-      let loaded = Object.fromEntries(SLOTS.map((slot) => [slot, readLocal(slot)]));
+      const localRecords = Object.fromEntries(SLOTS.map((slot) => [slot, {
+        data: readLocal(slot, user),
+        updatedAt: readLocalUpdatedAt(slot, user),
+      }]));
+      let loaded = Object.fromEntries(SLOTS.map((slot) => [slot, localRecords[slot].data]));
+      let status = user ? "" : "Guest saves ready";
       if (user) {
         try {
           const response = await csrfFetch("/api/game/saves");
           const payload = await response.json();
+          const cloudBySlot = Object.fromEntries(payload.saves.map((save) => [save.slot, save]));
+          const recoveries = [];
           loaded = { 1: null, 2: null, 3: null };
-          payload.saves.forEach((save) => { loaded[save.slot] = save.data; });
+
+          SLOTS.forEach((slot) => {
+            const cloudSave = cloudBySlot[slot];
+            const preferred = preferredSave(localRecords[slot], cloudSave);
+            loaded[slot] = preferred.data;
+            if (!preferred.data) return;
+
+            if (preferred.source === "cloud") {
+              writeLocal(slot, preferred.data, user, Date.parse(cloudSave.updated_at || "") || Date.now());
+            } else {
+              recoveries.push({ slot, data: preferred.data });
+            }
+          });
+
+          for (const recovery of recoveries) {
+            await csrfFetch(`/api/game/saves/${recovery.slot}`, {
+              method: "PUT",
+              body: JSON.stringify({ data: recovery.data }),
+            });
+            writeLocal(recovery.slot, recovery.data, user);
+          }
+          status = recoveries.length
+            ? `Recovered ${recoveries.length} local ${recoveries.length === 1 ? "backup" : "backups"} to cloud`
+            : "Cloud saves synchronized";
         } catch {
-          // Local copies remain available if the API is temporarily offline.
+          status = "Cloud unavailable · private local backups ready";
         }
       }
       if (active) {
         setFiles(loaded);
+        setSaveStatus(status);
         setLoading(false);
       }
     }
@@ -134,25 +317,34 @@ export default function Game() {
     let playtestTimer;
     const { slot, data } = activeFile;
     gameRef.current = createGame(canvasRef.current, {
-      initialSave: data,
+      initialSave: normalizeCompletedSave(data),
       onSave(saveData) {
-        localStorage.setItem(localKey(slot), JSON.stringify(saveData));
-        setFiles((current) => ({ ...current, [slot]: saveData }));
+        const completedNow = Boolean(saveData?.flags?.backendApi && !saveData?.flags?.questComplete);
+        const normalized = normalizeCompletedSave(saveData);
+        writeLocal(slot, normalized, user);
+        setFiles((current) => ({ ...current, [slot]: normalized }));
+        if (completedNow) {
+          setCompletionCelebration(true);
+          playGameSfx(GAME_SFX.BOSS_DEFEAT);
+        }
         clearTimeout(saveTimer.current);
         if (!user) {
-          setSaveStatus("Saved locally");
+          setSaveStatus(completedNow ? "Realm restored · saved locally" : "Saved locally");
           return;
         }
         setSaveStatus("Saving…");
         saveTimer.current = setTimeout(async () => {
           try {
-            await csrfFetch(`/api/game/saves/${slot}`, {
+            const response = await csrfFetch(`/api/game/saves/${slot}`, {
               method: "PUT",
-              body: JSON.stringify({ data: saveData }),
+              body: JSON.stringify({ data: normalized }),
             });
-            setSaveStatus("Cloud save complete");
+            const payload = await response.json();
+            writeLocal(slot, normalizeCompletedSave(payload.save?.data || normalized), user,
+              Date.parse(payload.save?.updated_at || "") || Date.now());
+            setSaveStatus(completedNow ? "Realm restored · cloud save complete" : "Cloud save complete");
           } catch {
-            setSaveStatus("Saved locally");
+            setSaveStatus("Saved privately on this device · cloud unavailable");
           }
         }, 350);
       },
@@ -179,25 +371,55 @@ export default function Game() {
     };
   }, [activeFile, user, debugRequested, playtestRequested, location.search]);
 
+  function updateAudioPreference(channel, value) {
+    const fallback = DEFAULT_AUDIO_PREFERENCES[channel];
+    const nextValue = clampPercent(value, fallback);
+    setAudioPreferences((current) => ({ ...current, [channel]: nextValue }));
+  }
+
   async function persistFile(slot, data) {
-    localStorage.setItem(localKey(slot), JSON.stringify(data));
+    const normalized = normalizeCompletedSave(data);
+    writeLocal(slot, normalized, user);
+    setFiles((current) => ({ ...current, [slot]: normalized }));
     if (user) {
-      await csrfFetch(`/api/game/saves/${slot}`, {
-        method: "PUT",
-        body: JSON.stringify({ data }),
-      });
+      setSaveStatus("Syncing copied save…");
+      try {
+        const response = await csrfFetch(`/api/game/saves/${slot}`, {
+          method: "PUT",
+          body: JSON.stringify({ data: normalized }),
+        });
+        const payload = await response.json();
+        writeLocal(slot, normalizeCompletedSave(payload.save?.data || normalized), user,
+          Date.parse(payload.save?.updated_at || "") || Date.now());
+        setSaveStatus("Cloud copy complete");
+      } catch {
+        setSaveStatus("Copied privately on this device · cloud unavailable");
+      }
+    } else {
+      setSaveStatus("Copied locally");
     }
-    setFiles((current) => ({ ...current, [slot]: data }));
+    playGameSfx(GAME_SFX.SAVE);
   }
 
   async function deleteFile(slot) {
-    localStorage.removeItem(localKey(slot));
-    if (user) await csrfFetch(`/api/game/saves/${slot}`, { method: "DELETE" });
+    removeLocal(slot, user);
     setFiles((current) => ({ ...current, [slot]: null }));
+    if (user) {
+      try {
+        await csrfFetch(`/api/game/saves/${slot}`, { method: "DELETE" });
+        setSaveStatus("Cloud save deleted");
+      } catch {
+        setSaveStatus("Removed from this device · cloud delete unavailable");
+      }
+    } else {
+      setSaveStatus("Local save deleted");
+    }
+    playGameSfx(GAME_SFX.UI_CANCEL);
   }
 
   function chooseFile(slot) {
     const data = files[slot];
+    playGameSfx(GAME_SFX.UI_CONFIRM);
     if (mode === "delete") {
       if (data && window.confirm(`Delete File ${slot}? This cannot be undone.`)) {
         deleteFile(slot);
@@ -216,26 +438,37 @@ export default function Game() {
       setMode("select");
       return;
     }
+    setCompletionCelebration(false);
     setActiveFile({ slot, data });
     setStarted(false);
     setSaveStatus(user ? "Cloud save ready" : "Local save ready");
   }
 
   function begin() {
+    playGameSfx(GAME_SFX.UI_CONFIRM);
     gameRef.current?.start();
     setStarted(true);
   }
 
   function returnToFiles() {
+    playGameSfx(GAME_SFX.UI_CANCEL);
+    setCompletionCelebration(false);
     setActiveFile(null);
     setStarted(false);
     setMode("select");
   }
 
   function enterDebugLab() {
+    playGameSfx(GAME_SFX.UI_CONFIRM);
     gameRef.current?.start();
     gameRef.current?.enterDebugLab();
     setStarted(true);
+  }
+
+  function setFileMode(nextMode) {
+    playGameSfx(nextMode === "select" ? GAME_SFX.UI_CANCEL : GAME_SFX.UI_MOVE);
+    setMode(nextMode);
+    setCopySource(null);
   }
 
   function pressGameKey(key) {
@@ -255,7 +488,7 @@ export default function Game() {
           <p className="file-instruction">
             {mode === "copy" && (copySource ? `Choose a destination for File ${copySource}` : "Choose a file to copy")}
             {mode === "delete" && "Choose a file to delete"}
-            {mode === "select" && (user ? "Your adventure is saved to your account" : "Guest files are saved on this device")}
+            {mode === "select" && (user ? "Your adventure uses cloud saves with a private local backup" : "Guest files are saved on this device")}
           </p>
           <div className="save-files">
             {SLOTS.map((slot) => {
@@ -298,23 +531,29 @@ export default function Game() {
             })}
           </div>
           <div className="file-tools">
-            <button onClick={() => { setMode(mode === "copy" ? "select" : "copy"); setCopySource(null); }}>Copy File</button>
-            <button onClick={() => { setMode(mode === "delete" ? "select" : "delete"); setCopySource(null); }}>Delete File</button>
-            {mode !== "select" && <button onClick={() => { setMode("select"); setCopySource(null); }}>Cancel</button>}
+            <button onClick={() => setFileMode(mode === "copy" ? "select" : "copy")}>Copy File</button>
+            <button onClick={() => setFileMode(mode === "delete" ? "select" : "delete")}>Delete File</button>
+            {mode !== "select" && <button onClick={() => setFileMode("select")}>Cancel</button>}
           </div>
+          <AudioControls preferences={audioPreferences} onChange={updateAudioPreference} />
+          {saveStatus && <p className="save-status-copy">{saveStatus}</p>}
           {!user && <p className="signin-hint">Log in or sign up to access these files from another device.</p>}
         </div>
       </main>
     );
   }
 
+  const currentSave = files[activeFile.slot] || normalizeCompletedSave(activeFile.data);
+  const restored = Boolean(currentSave?.flags?.questComplete);
+
   return (
     <main className="game-page">
       <header className="game-header">
-        <div><small>FILE {activeFile.slot} · RESTORE THE THREE SIGILS</small><h1>The Legend of Developer: The Blight of AI</h1></div>
+        <div><small>FILE {activeFile.slot} · {restored ? "EVERDAWN RESTORED" : "RESTORE THE THREE SIGILS"}</small><h1>The Legend of Developer: The Blight of AI</h1></div>
         <div className="game-header-actions">
           <div className="controls"><span>WASD Move</span><span>Shift Dash</span><span>H Tap / Hold Blade</span><span>J Item A</span><span>K Item B</span><span>L Enter / Talk</span><span>P Map & Gear</span><span>Q/E Change Tab</span></div>
-          <button onClick={enterDebugLab}>Training Hall</button>
+          <AudioControls preferences={audioPreferences} onChange={updateAudioPreference} />
+          {(debugRequested || playtestRequested) && <button onClick={enterDebugLab}>Training Hall</button>}
           <button onClick={returnToFiles}>Save Files</button>
         </div>
       </header>
@@ -322,15 +561,29 @@ export default function Game() {
         <canvas ref={canvasRef} width="1024" height="708" aria-label="The Legend of Developer: The Blight of AI game" />
         {!started && (
           <div className="game-overlay">
-            <p>CHAPTER I · THE SLEEPING GROVE</p>
-            <h2>{activeFile.data ? "Continue the Quest" : "The HTML Sword"}</h2>
-            <span>Dark roots have sealed the roads beyond Willowbrook.<br />Upgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil.</span>
+            <p>{restored ? "EPILOGUE · EVERDAWN RESTORED" : "CHAPTER I · THE SLEEPING GROVE"}</p>
+            <h2>{restored ? "Continue Exploring" : (activeFile.data ? "Continue the Quest" : "The HTML Sword")}</h2>
+            <span>
+              {restored
+                ? "The three sigils shine again. Revisit Everdawn, uncover secrets, and finish anything you left behind."
+                : "Dark roots have sealed the roads beyond Willowbrook. Upgrade the Regular Blade, awaken the forest temple, and recover the Grove Sigil."}
+            </span>
+            {!activeFile.data && !restored && <small>Move with WASD or the arrow keys · H attacks · L interacts · P opens your map and gear.</small>}
             <button onClick={begin}>{activeFile.data ? "CONTINUE" : "BEGIN ADVENTURE"}</button>
+          </div>
+        )}
+        {started && completionCelebration && (
+          <div className="game-overlay game-completion-overlay" role="dialog" aria-live="polite" aria-label="Everdawn restored">
+            <p>THE THREE SIGILS ARE RESTORED</p>
+            <h2>Everdawn Lives</h2>
+            <span>The Blight has broken. Your completed adventure is saved, and the full realm remains open for exploration.</span>
+            <small>Rootbound Temple · Emberstone Ruins · Crystalwater Vault</small>
+            <button onClick={() => setCompletionCelebration(false)}>CONTINUE EXPLORING</button>
           </div>
         )}
       </section>
       <MobileControls
-        disabled={!started}
+        disabled={!started || completionCelebration}
         onPress={pressGameKey}
         onRelease={releaseGameKey}
       />
