@@ -107,9 +107,6 @@ function authoredPerimeterTerrain(tx, ty) {
   const roomY = Math.floor(ty / SCREEN_ROWS);
   if (roomX < 0 || roomY < 0 || roomX >= WORLD_COLS || roomY >= WORLD_ROWS) return null;
 
-  // Rooms with an explicit wall grid keep their hand-authored border. Asset-only
-  // room files still receive the biome perimeter profile instead of falling back
-  // to the old repeated forestWall/mountain row.
   const explicitRoom = editableRoomAt("overworld", roomX, roomY);
   if (explicitRoom?.walls?.length) return null;
 
@@ -125,7 +122,7 @@ function authoredPerimeterTerrain(tx, ty) {
   const biome = biomeFor(roomX, roomY);
   const profile = PERIMETER_PROFILES[biome] || PERIMETER_PROFILES.grass;
   const sideOffset = ly === 0 ? 0 : lx === SCREEN_COLS - 1 ? 2 : ly === SCREEN_ROWS - 1 ? 4 : 1;
-  const index = Math.abs((roomX * 11) + (roomY * 17) + (lx * 3) + (ly * 5) + sideOffset) % profile.length;
+  const index = Math.abs((roomX * 11) + (roomY * 17) + (lx * 5) + (ly * 7) + sideOffset) % profile.length;
   return profile[index];
 }
 
