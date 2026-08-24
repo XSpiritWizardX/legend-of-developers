@@ -121,12 +121,19 @@ describe("logical room runtime adapter", () => {
     expect(legacyCameraTarget(player, mapPixels, VIEWPORT)).toEqual({ x: 3072, y: 640 });
   });
 
-  test("authored dungeon partitions can be staged without losing room metadata", () => {
-    const runtime = runtimeAt("d01", 8, 5);
+  test("Rootbound mixed-size chambers run as logical rooms without legacy screen transitions", () => {
+    const west = runtimeAt("d01", 8, 5);
+    const naveLeft = runtimeAt("d01", 20, 5, west.targetCamera);
+    const naveRight = runtimeAt("d01", 40, 5, naveLeft.targetCamera);
+    const sanctum = runtimeAt("d01", 36, 20, naveRight.targetCamera);
 
-    expect(runtime.room.id).toBe("d01-west-gallery");
-    expect(runtime.title).toBe("Rootbound West Gallery");
-    expect(runtime.usesLegacyTransitions).toBe(true);
+    expect(west.room.id).toBe("d01-west-gallery");
+    expect(west.usesLegacyTransitions).toBe(false);
+    expect(naveLeft.room.id).toBe("d01-grand-nave");
+    expect(naveRight.room.id).toBe("d01-grand-nave");
+    expect(naveLeft.targetCamera.x).not.toBe(naveRight.targetCamera.x);
+    expect(sanctum.room.id).toBe("d01-root-sanctum");
+    expect(sanctum.usesLegacyTransitions).toBe(false);
   });
 
   test("unmigrated maps keep the legacy transition contract", () => {
