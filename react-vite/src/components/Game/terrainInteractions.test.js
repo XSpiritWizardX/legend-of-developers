@@ -1,12 +1,16 @@
 import {
+  ELEVATION_TRANSITION,
   TERRAIN,
   TRAVERSAL_STATE,
   canHopLedge,
+  elevationAllowsMovement,
+  elevationTransitionFor,
   interactionProbe,
   ledgeLandingPoint,
   recoveryPoint,
   rememberSafeGround,
   terrainTraversalFor,
+  traversalVisualState,
 } from "./terrainInteractions";
 
 describe("terrain traversal rules", () => {
@@ -60,6 +64,31 @@ describe("terrain traversal rules", () => {
     });
   });
 
+  test("stairs and ramps explicitly authorize elevation changes", () => {
+    expect(elevationTransitionFor({ tile: TERRAIN.STAIRS, direction: "up" }))
+      .toBe(ELEVATION_TRANSITION.ASCEND);
+    expect(elevationTransitionFor({ tile: TERRAIN.RAMP, direction: "down" }))
+      .toBe(ELEVATION_TRANSITION.DESCEND);
+    expect(elevationAllowsMovement({
+      fromElevation: 0,
+      toElevation: 1,
+      tile: TERRAIN.STAIRS,
+      direction: "up",
+    })).toBe(true);
+    expect(elevationAllowsMovement({
+      fromElevation: 0,
+      toElevation: 1,
+      tile: "grass",
+      direction: "up",
+    })).toBe(false);
+    expect(elevationAllowsMovement({
+      fromElevation: 1,
+      toElevation: 0,
+      tile: TERRAIN.RAMP,
+      direction: "down",
+    })).toBe(true);
+  });
+
   test("contextual interaction probes in front of the player instead of using radial proximity", () => {
     expect(interactionProbe({ x: 100, y: 200, direction: "up", distance: 32 })).toEqual({
       x: 100,
@@ -77,5 +106,20 @@ describe("terrain traversal rules", () => {
     history = rememberSafeGround(history, { x: 96, y: 64 });
     expect(recoveryPoint(history, { x: 32, y: 32 })).toEqual({ x: 96, y: 64 });
     expect(recoveryPoint([], { x: 32, y: 32 })).toEqual({ x: 32, y: 32 });
+  });
+
+  test("player presentation resolves deterministic traversal/action states", () => {
+    expect(traversalVisualState({ traversal: { state: TRAVERSAL_STATE.HOP } }))
+      .toBe(TRAVERSAL_STATE.HOP);
+    expect(traversalVisualState({ traversal: { state: TRAVERSAL_STATE.FALL }, carrying: true }))
+      .toBe(TRAVERSAL_STATE.FALL);
+    expect(traversalVisualState({ swimming: true, moving: true }))
+      .toBe(TRAVERSAL_STATE.SWIM);
+    expect(traversalVisualState({ carrying: true }))
+      .toBe(TRAVERSAL_STATE.CARRY);
+    expect(traversalVisualState({ throwing: true, carrying: true }))
+      .toBe(TRAVERSAL_STATE.THROW);
+    expect(traversalVisualState({ pushing: true }))
+      .toBe(TRAVERSAL_STATE.PUSH);
   });
 });
