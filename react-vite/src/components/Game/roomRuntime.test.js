@@ -55,15 +55,16 @@ describe("logical room runtime adapter", () => {
     expect(runtime.targetCamera).toEqual({ x: -128, y: -64 });
   });
 
-  test("broad outdoor regions can remain on legacy transitions while tiles are re-authored", () => {
+  test("broad outdoor regions now use continuous clamped-follow camera movement", () => {
     const runtime = runtimeAt("overworld", 4, 4);
 
     expect(runtime.room.id).toBe("greenwood-vale");
     expect(runtime.room.legacy).not.toBe(true);
-    expect(runtime.usesLegacyTransitions).toBe(true);
+    expect(runtime.usesLegacyTransitions).toBe(false);
+    expect(runtime.legacyHandoff).toBe(false);
   });
 
-  test("entering a legacy screen from an authored room uses a smooth handoff instead of bouncing back", () => {
+  test("moving from an authored room into the surrounding region no longer triggers a legacy handoff", () => {
     const player = { x: 15 * TILE + 62, y: 15 * TILE + 32 };
     const runtime = resolveRoomRuntime({
       mapId: "overworld",
@@ -74,26 +75,13 @@ describe("logical room runtime adapter", () => {
     });
 
     expect(runtime.room.id).toBe("greenwood-vale");
-    expect(runtime.legacyHandoff).toBe(true);
-    expect(runtime.usesLegacyTransitions).toBe(false);
-    expect(runtime.targetCamera).toEqual({ x: 0, y: 640 });
-  });
-
-  test("legacy transitions reactivate after the camera is aligned in the destination screen", () => {
-    const player = { x: 15 * TILE + 32, y: 15 * TILE + 32 };
-    const runtime = resolveRoomRuntime({
-      mapId: "overworld",
-      player,
-      viewport: VIEWPORT,
-      tileSize: TILE,
-      previousCamera: { x: 0, y: 640 },
-    });
-
     expect(runtime.legacyHandoff).toBe(false);
-    expect(runtime.usesLegacyTransitions).toBe(true);
+    expect(runtime.usesLegacyTransitions).toBe(false);
+    expect(runtime.targetCamera.x).toBeGreaterThanOrEqual(0);
+    expect(runtime.targetCamera.y).toBeGreaterThanOrEqual(0);
   });
 
-  test("legacy region identity includes the actual screen so adjacent screens are distinct", () => {
+  test("continuous outdoor region identity remains stable across former fixed screens", () => {
     const firstPlayer = { x: 8 * TILE, y: 5 * TILE };
     const secondPlayer = { x: 40 * TILE, y: 35 * TILE };
     const firstRuntime = resolveRoomRuntime({
@@ -107,10 +95,8 @@ describe("logical room runtime adapter", () => {
 
     expect(firstRuntime.room.id).toBe("greenwood-vale");
     expect(secondRuntime.room.id).toBe("greenwood-vale");
-    expect(roomRuntimeIdentity("overworld", firstPlayer, firstRuntime, VIEWPORT))
-      .toBe("overworld:greenwood-vale:screen:0,0");
-    expect(roomRuntimeIdentity("overworld", secondPlayer, secondRuntime, VIEWPORT))
-      .toBe("overworld:greenwood-vale:screen:2,3");
+    expect(roomRuntimeIdentity("overworld", firstPlayer, firstRuntime, VIEWPORT)).toBe("greenwood-vale");
+    expect(roomRuntimeIdentity("overworld", secondPlayer, secondRuntime, VIEWPORT)).toBe("greenwood-vale");
   });
 
   test("legacy camera target follows the destination screen without overshooting map bounds", () => {
