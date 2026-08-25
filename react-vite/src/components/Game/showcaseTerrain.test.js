@@ -9,11 +9,7 @@ jest.unstable_mockModule("./rooms/roomRegistry", () => ({
   ),
 }));
 
-const { showcaseTerrainAt, WILLOWBROOK_SHOWCASE } = await import("./showcaseTerrain");
-
-const SOLID_PERIMETER_TILES = new Set([
-  "forestWall", "forest", "mountain", "water", "wall", "crackedWall", "house",
-]);
+const { showcaseArtAt, showcaseTerrainAt, WILLOWBROOK_SHOWCASE } = await import("./showcaseTerrain");
 
 describe("visible traversal showcase", () => {
   test("Willowbrook is a 32x20 authored showcase room", () => {
@@ -39,40 +35,17 @@ describe("visible traversal showcase", () => {
     expect(showcaseTerrainAt("overworld", 26, 23)).toBe("stone");
   });
 
-  test("generated forest perimeter mixes solid environmental materials", () => {
-    const topEdge = Array.from({ length: 16 }, (_, x) => showcaseTerrainAt("overworld", x, 0));
-    const materials = new Set(topEdge.filter(Boolean));
-    expect(materials.size).toBeGreaterThan(1);
-    expect([...materials].every((tile) => SOLID_PERIMETER_TILES.has(tile))).toBe(true);
+  test("generated perimeter art now resolves connected corner and wall-run assets", () => {
+    expect(showcaseArtAt("overworld", 0, 0)).toBe("autotile:forestCliff:6");
+    expect(showcaseArtAt("overworld", 5, 0)).toBe("autotile:forestCliff:10");
   });
 
-  test("generated desert perimeter uses ruin and cliff materials instead of tree rows", () => {
-    const roomX = 10;
-    const roomY = 10;
-    const y = roomY * 10;
-    const edge = Array.from({ length: 16 }, (_, localX) => (
-      showcaseTerrainAt("overworld", roomX * 16 + localX, y)
-    )).filter(Boolean);
-    expect(edge.some((tile) => tile === "wall" || tile === "crackedWall")).toBe(true);
-    expect(edge.includes("forestWall")).toBe(false);
+  test("authored room files keep their own custom perimeter art", () => {
+    expect(showcaseArtAt("overworld", 16, 10)).toBeNull();
   });
 
-  test("generated coast/lake perimeter can blend rock, vegetation and water while staying solid", () => {
-    const roomX = 12;
-    const roomY = 2;
-    const y = roomY * 10;
-    const edge = Array.from({ length: 16 }, (_, localX) => (
-      showcaseTerrainAt("overworld", roomX * 16 + localX, y)
-    )).filter(Boolean);
-    expect(new Set(edge).size).toBeGreaterThan(1);
-    expect(edge.every((tile) => SOLID_PERIMETER_TILES.has(tile))).toBe(true);
-  });
-
-  test("authored room files retain their own custom perimeter art", () => {
-    expect(showcaseTerrainAt("overworld", 16, 10)).toBeNull();
-  });
-
-  test("showcase terrain never leaks into dungeons", () => {
+  test("showcase terrain and perimeter art never leak into dungeons", () => {
     expect(showcaseTerrainAt("d01", 22, 18)).toBeNull();
+    expect(showcaseArtAt("d01", 0, 0)).toBeNull();
   });
 });
