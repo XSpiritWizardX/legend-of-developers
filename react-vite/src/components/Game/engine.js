@@ -34,7 +34,7 @@ import {
 import {
   boundaryProbe, firstSafeTransitionLanding, transitionDirection,
 } from "./roomTransitionSafety";
-import { showcaseTerrainAt } from "./showcaseTerrain";
+import { showcaseArtAt, showcaseTerrainAt } from "./showcaseTerrain";
 import {
   canDashWhileSwimming, isSwimming, swimMovementScale, swimVisual,
 } from "./swimmingFeel";
@@ -1765,6 +1765,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         if (tile === "lockedDoor" && tx % 16 === 8) continue;
         const indexedTile = indexedRoomTileAt(state.mapId, tx, ty);
         const showcaseTile = showcaseTerrainAt(state.mapId, tx, ty);
+        const showcaseArt = showcaseArtAt(state.mapId, tx, ty);
         const themedDungeonTiles = {
           forest: { dungeonFloor: "mf", dungeonFloorAlt: "mf", wall: "mw" },
           fire: { dungeonFloor: "rf", dungeonFloorAlt: "rf", wall: "rw" },
@@ -1773,7 +1774,7 @@ export function createGame(canvas, { initialSave, onSave }) {
         const themedTile = themedDungeonTiles[map().theme]?.[tile];
         const tileArtId = tile === "lockedDoor"
           ? tile
-          : (showcaseTile || indexedTile?.code || themedTile || tile);
+          : (showcaseArt || showcaseTile || indexedTile?.code || themedTile || tile);
         if (drawCatalogArt(ctx, "tiles", tileArtId, x, y, TILE, TILE)) continue;
         // Tile decorations are authored on a 48-unit detail grid and scaled
         // into the new 64×64 art format, leaving more pixels for shading.
