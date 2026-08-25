@@ -9,9 +9,6 @@ const WORLD_LAYOUTS = {
         bounds: { x: 0, y: 0, width: 64, height: 40 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "outdoorRegion",
-        // Region-scale scrolling remains staged until the generated wilderness
-        // walls are re-authored into a continuous zone.
-        useLegacyTransitions: true,
       },
       {
         id: "silverwater-reach",
@@ -19,7 +16,6 @@ const WORLD_LAYOUTS = {
         bounds: { x: 64, y: 20, width: 64, height: 60 },
         camera: CAMERA_MODE.CLAMPED_FOLLOW,
         kind: "outdoorRegion",
-        useLegacyTransitions: true,
       },
     ],
     rooms: [
