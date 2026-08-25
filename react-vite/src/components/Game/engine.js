@@ -31,6 +31,9 @@ import {
 import {
   resolveRoomRuntime, roomChanged, settleCamera, smoothCamera,
 } from "./roomRuntime";
+import {
+  boundaryProbe, firstSafeTransitionLanding, transitionDirection,
+} from "./roomTransitionSafety";
 import { showcaseTerrainAt } from "./showcaseTerrain";
 import {
   canDashWhileSwimming, isSwimming, swimMovementScale, swimVisual,
@@ -1673,21 +1676,50 @@ export function createGame(canvas, { initialSave, onSave }) {
     }
 
     if (toX !== camera.x || toY !== camera.y) {
-      if (toX - camera.x >= VIEW_W - 1) player.x = toX + 32;
-      if (camera.x - toX >= VIEW_W - 1) player.x = toX + VIEW_W - 32;
-      if (toY - camera.y >= VIEW_H - 1) player.y = toY + 32;
-      if (camera.y - toY >= VIEW_H - 1) player.y = toY + VIEW_H - 32;
-      screenTransition = {
-        fromX: camera.x,
-        fromY: camera.y,
-        toX,
-        toY,
-        elapsed: 0,
-        duration: 0.42,
-      };
-      playGameSfx(GAME_SFX.ROOM);
-      save();
-    }
+  const direction = transitionDirection(camera.x, camera.y, toX, toY, VIEW_W, VIEW_H);
+  const probe = boundaryProbe({
+    direction,
+    cameraX: camera.x,
+    cameraY: camera.y,
+    viewWidth: VIEW_W,
+    viewHeight: VIEW_H,
+    playerX: player.x,
+    playerY: player.y,
+  });
+  // Direction metadata says a neighboring room exists, but the player's
+  // exact crossing point must also be a real opening in the authored perimeter.
+  if (solidAt(probe.x, probe.y)) return;
+
+  const landing = firstSafeTransitionLanding({
+    direction,
+    toX,
+    toY,
+    playerX: player.x,
+    playerY: player.y,
+    tileSize: TILE,
+    viewWidth: VIEW_W,
+    viewHeight: VIEW_H,
+  }, (x, y) => canMove(x, y));
+  // Never begin a camera handoff unless the destination has a collision-safe
+  // landing. This prevents a save or transition from embedding the player.
+  if (!landing) return;
+
+  player.x = landing.x;
+  player.y = landing.y;
+  traversal = null;
+  safeGroundHistory = [{ x: player.x, y: player.y }];
+  lastSafeTile = { x: player.x, y: player.y };
+  screenTransition = {
+    fromX: camera.x,
+    fromY: camera.y,
+    toX,
+    toY,
+    elapsed: 0,
+    duration: 0.42,
+  };
+  playGameSfx(GAME_SFX.ROOM);
+  save();
+}
   }
 
   const tileColors = {
