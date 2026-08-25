@@ -2,14 +2,14 @@ name: Patch world perimeter renderer
 
 on:
   push:
-    branches: [art/world-scale-perimeter-autotiles]
+    branches:
+      - art/world-scale-perimeter-autotiles
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: ${{ !contains(github.event.head_commit.message, '[perimeter-renderer-patched]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,45 +19,30 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           path = Path('react-vite/src/components/Game/engine.js')
           source = path.read_text()
-
-          old_import = 'import { showcaseTerrainAt } from "./showcaseTerrain";'
-          new_import = 'import { showcaseArtAt, showcaseTerrainAt } from "./showcaseTerrain";'
-          if new_import not in source:
-              if old_import not in source:
-                  raise SystemExit('showcase import anchor not found')
-              source = source.replace(old_import, new_import, 1)
-
-          old_block = '''        const indexedTile = indexedRoomTileAt(state.mapId, tx, ty);
-        const showcaseTile = showcaseTerrainAt(state.mapId, tx, ty);
-        const themedDungeonTiles = {'''
-          new_block = '''        const indexedTile = indexedRoomTileAt(state.mapId, tx, ty);
-        const showcaseTile = showcaseTerrainAt(state.mapId, tx, ty);
-        const showcaseArt = showcaseArtAt(state.mapId, tx, ty);
-        const themedDungeonTiles = {'''
-          if 'const showcaseArt = showcaseArtAt' not in source:
-              if old_block not in source:
-                  raise SystemExit('showcase tile block anchor not found')
-              source = source.replace(old_block, new_block, 1)
-
-          old_art = '''        const tileArtId = tile === "lockedDoor"
-          ? tile
-          : (showcaseTile || indexedTile?.code || themedTile || tile);'''
-          new_art = '''        const tileArtId = tile === "lockedDoor"
-          ? tile
-          : (showcaseArt || showcaseTile || indexedTile?.code || themedTile || tile);'''
-          if new_art not in source:
-              if old_art not in source:
-                  raise SystemExit('tileArtId anchor not found')
-              source = source.replace(old_art, new_art, 1)
-
+          source = source.replace(
+              'import { showcaseTerrainAt } from "./showcaseTerrain";',
+              'import { showcaseArtAt, showcaseTerrainAt } from "./showcaseTerrain";',
+              1,
+          )
+          source = source.replace(
+              '        const showcaseTile = showcaseTerrainAt(state.mapId, tx, ty);\n        const themedDungeonTiles = {',
+              '        const showcaseTile = showcaseTerrainAt(state.mapId, tx, ty);\n        const showcaseArt = showcaseArtAt(state.mapId, tx, ty);\n        const themedDungeonTiles = {',
+              1,
+          )
+          source = source.replace(
+              ': (showcaseTile || indexedTile?.code || themedTile || tile);',
+              ': (showcaseArt || showcaseTile || indexedTile?.code || themedTile || tile);',
+              1,
+          )
+          if 'showcaseArtAt(state.mapId, tx, ty)' not in source:
+              raise SystemExit('renderer patch did not apply')
           path.write_text(source)
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add react-vite/src/components/Game/engine.js
-          git diff --cached --quiet && exit 0
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "feat: render structural overworld perimeter art [perimeter-renderer-patched]"
           git push origin HEAD:art/world-scale-perimeter-autotiles
