@@ -7,6 +7,7 @@ import {
 } from "./fastTravel";
 import { MAPS, TILE, isSolid, tileAt } from "./world";
 import { roomAssetSolidAt } from "./roomAssets";
+import { installSpinningSawSpawns } from "./spinningSaw";
 
 const PLAY_SURFACE = "play";
 const PAUSE_SURFACE = "pause";
@@ -41,6 +42,7 @@ function overworldFastTravelTileOpen(tx, ty, flags = {}) {
 }
 
 export function createGame(canvas, { initialSave, onSave } = {}) {
+  installSpinningSawSpawns(MAPS);
   let latestSave = withFastTravelMirror(initialSave);
   let coreGame = null;
   let running = false;
