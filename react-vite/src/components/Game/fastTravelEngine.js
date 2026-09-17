@@ -5,6 +5,8 @@ import {
   isOverworldFastTravelActivation,
   withFastTravelMirror,
 } from "./fastTravel";
+import { MAPS, TILE, isSolid, tileAt } from "./world";
+import { roomAssetSolidAt } from "./roomAssets";
 
 const PLAY_SURFACE = "play";
 const PAUSE_SURFACE = "pause";
@@ -15,6 +17,27 @@ const TRAVEL_SURFACE = "travel";
 function applyStyles(element, styles) {
   Object.assign(element.style, styles);
   return element;
+}
+
+function overworldFastTravelTileOpen(tx, ty, flags = {}) {
+  const overworld = MAPS.overworld;
+  if (tx < 1 || ty < 1 || tx >= overworld.width - 1 || ty >= overworld.height - 1) return false;
+
+  const centerX = tx * TILE + TILE / 2;
+  const centerY = ty * TILE + TILE / 2;
+  const radius = 18;
+  return [
+    [centerX - radius, centerY - radius],
+    [centerX + radius, centerY - radius],
+    [centerX - radius, centerY + radius],
+    [centerX + radius, centerY + radius],
+    [centerX, centerY],
+  ].every(([x, y]) => {
+    const tileX = Math.floor(x / TILE);
+    const tileY = Math.floor(y / TILE);
+    return !isSolid(tileAt("overworld", tileX, tileY, flags))
+      && !roomAssetSolidAt("overworld", x, y);
+  });
 }
 
 export function createGame(canvas, { initialSave, onSave } = {}) {
@@ -60,7 +83,11 @@ export function createGame(canvas, { initialSave, onSave } = {}) {
   }
 
   function travelTo(destinationId) {
-    const nextSave = buildFastTravelSave(latestSave, destinationId);
+    const flags = latestSave.flags || {};
+    const nextSave = buildFastTravelSave(latestSave, destinationId, {
+      tileSize: TILE,
+      isOpen: (tx, ty) => overworldFastTravelTileOpen(tx, ty, flags),
+    });
     latestSave = nextSave;
     onSave?.(nextSave);
     closeFastTravelMenu();
