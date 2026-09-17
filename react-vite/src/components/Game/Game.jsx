@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { csrfFetch } from "../../redux/csrf";
-import { createGame } from "./engine";
+import { createGame } from "./fastTravelEngine";
 import "./Game.css";
 
 const SLOTS = [1, 2, 3];
