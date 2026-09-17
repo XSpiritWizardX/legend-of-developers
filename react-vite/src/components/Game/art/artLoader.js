@@ -8,6 +8,7 @@ import { catalogNpcArtV2 } from "./npcV2Catalog";
 import { catalogPlayerCombatArtV2 } from "./playerCombatV2Catalog";
 import { catalogSceneryArtV2 } from "./sceneryV2Catalog";
 import { catalogUiArtV2 } from "./uiV2Catalog";
+import { catalogSpinningSawArt } from "../spinningSaw";
 
 const imageCache = new Map();
 
@@ -105,7 +106,8 @@ function cachedImage(source) {
 }
 
 export function drawCatalogArt(ctx, category, id, x, y, width, height, options = {}) {
-  const entry = catalogArtV2(category, id)
+  const entry = catalogSpinningSawArt(category, id)
+    || catalogArtV2(category, id)
     || catalogAutotileArt(category, id)
     || catalogBossArtV2(category, id)
     || catalogEffectsArtV2(category, id)
@@ -215,7 +217,16 @@ export function drawCatalogArt(ctx, category, id, x, y, width, height, options =
     return true;
   }
 
-  if (flipX) {
+  const rotationSpeed = options.rotationSpeed ?? entry.rotationSpeed ?? 0;
+  const rotation = options.rotation ?? (rotationSpeed
+    ? (performance.now() / 1000) * rotationSpeed
+    : 0);
+  if (rotation) {
+    ctx.translate(drawX + drawWidth / 2, drawY + drawHeight / 2);
+    ctx.rotate(rotation);
+    if (flipX) ctx.scale(-1, 1);
+    ctx.drawImage(record.image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+  } else if (flipX) {
     ctx.translate(drawX + drawWidth, drawY);
     ctx.scale(-1, 1);
     ctx.drawImage(record.image, 0, 0, drawWidth, drawHeight);
