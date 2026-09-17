@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { thunkLogin } from "../../redux/session";
 import { useDispatch, useSelector } from "react-redux";
-import { Navigate, useNavigate } from "react-router-dom";
-import "./LoginForm.css";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import "../AuthForm.css";
 
 function LoginFormPage() {
   const navigate = useNavigate();
@@ -31,50 +31,51 @@ function LoginFormPage() {
     }
   };
 
-  const handleDemo = async (e) => {
-    e.preventDefault();
-    const serverResponse = await dispatch(
-      thunkLogin({ email: "demo@aa.io", password: "password" })
-    );
-    if (serverResponse) {
-      setErrors(serverResponse);
-    } else {
-      navigate("/game");
-    }
-  };
-
   return (
-    <>
-      <h1>Log In</h1>
-      {errors.length > 0 &&
-        errors.map((message) => <p key={message}>{message}</p>)}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        {errors.email && <p>{errors.email}</p>}
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        {errors.password && <p>{errors.password}</p>}
-        <button type="submit">Log In</button>
-        <button type="button" onClick={handleDemo}>
-          Demo Login
-        </button>
-      </form>
-    </>
+    <main className="auth-screen">
+      <section className="auth-panel" aria-labelledby="login-title">
+        <p className="auth-kicker">RETURN TO EVERDAWN</p>
+        <h1 id="login-title">Log In</h1>
+        <p className="auth-copy">
+          Continue a cloud-synced adventure on this device. Guest play remains
+          available without an account.
+        </p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          {Array.isArray(errors) && errors.map((message) => (
+            <p className="auth-error" key={message}>{message}</p>
+          ))}
+          <label className="auth-field">
+            Email
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          {errors.email && <p className="auth-error">{errors.email}</p>}
+          <label className="auth-field">
+            Password
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+          {errors.password && <p className="auth-error">{errors.password}</p>}
+          {errors.server && <p className="auth-error">{errors.server}</p>}
+          <button className="auth-submit" type="submit">Continue Adventure</button>
+        </form>
+        <div className="auth-links">
+          <Link to="/game">Play as Guest</Link>
+          <Link to="/signup">Create Account</Link>
+          <Link to="/">Back to Title</Link>
+        </div>
+      </section>
+    </main>
   );
 }
 
