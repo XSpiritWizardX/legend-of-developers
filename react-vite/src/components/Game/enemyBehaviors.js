@@ -52,6 +52,10 @@ export function enemyMotion({ enemy, player, distance, baseSpeed }) {
   const phase = ((enemy.phase || 0) % TAU + TAU) % TAU;
   const direct = toward(enemy, player);
 
+  if (enemy.type === "spinningSaw") {
+    return { vector: direct, speed: baseSpeed * 1.65, state: "chase" };
+  }
+
   if (behavior === ENEMY_BEHAVIOR.CHARGER) {
     // A readable wind-up followed by a short, dangerous straight-line burst.
     const cycle = (enemy.phase || 0) % 3.1;

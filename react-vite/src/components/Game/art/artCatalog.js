@@ -630,6 +630,11 @@ export const ART_CATALOG = {
     },
   },
   enemies: {
+    spinningSaw: {
+      source: "/art/enemies/spinning-saw.png.png",
+      width: 48,
+      height: 48,
+    },
     forestByteBeetle: {
       source: "/art/enemies/forest-byte-beetle.png",
       width: 72,

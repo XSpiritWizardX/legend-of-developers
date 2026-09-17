@@ -2201,6 +2201,19 @@ export function createGame(canvas, { initialSave, onSave }) {
       ctx.fill();
       ctx.globalAlpha = 1;
     }
+    if (enemy.type === "spinningSaw") {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(enemy.phase * 12);
+      const drawn = drawCatalogArt(ctx, "enemies", enemy.type, -24, -24, 48, 48);
+      if (!drawn) {
+        ctx.strokeStyle = "#b8c8cf";
+        ctx.lineWidth = 5;
+        ctx.strokeRect(-13, -13, 26, 26);
+      }
+      ctx.restore();
+      return;
+    }
     if (drawCatalogArt(ctx, "enemies", enemy.type, x - 32, y - 44, 64, 64)) {
       if (boss) {
         const maxHp = enemy.maxHp || (24 + (map().number || 0) * 4);

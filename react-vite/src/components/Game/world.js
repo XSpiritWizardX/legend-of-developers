@@ -145,7 +145,7 @@ function buildOverworldEnemies() {
       ]);
       if ((rx + ry) % 3 === 0) {
         enemies.push([
-          `ow-${rx}-${ry}-b`, types[(rx + ry + 1) % types.length],
+          `ow-${rx}-${ry}-b`, "spinningSaw",
           rx * SCREEN_COLS + 11,
           ry * SCREEN_ROWS + 6,
         ]);
@@ -171,6 +171,9 @@ function dungeonEnemies(id) {
     [`${id}-west-guard`, commonTypes[1], 8, 15], [`${id}-east-guard`, commonTypes[1], 40, 15],
     [`${id}-hall-bat-a`, commonTypes[1], 21, 15], [`${id}-hall-bat-b`, commonTypes[1], 27, 15],
     [`${id}-north-bat`, commonTypes[1], 8, 5], [`${id}-east-slime`, commonTypes[0], 40, 5],
+    [`${id}-entry-saw`, "spinningSaw", 24, 25],
+    [`${id}-west-saw`, "spinningSaw", 6, 14],
+    [`${id}-east-saw`, "spinningSaw", 38, 4],
     [`${id}-boss`, bossTypes[id], 24, 4],
   ];
 }
