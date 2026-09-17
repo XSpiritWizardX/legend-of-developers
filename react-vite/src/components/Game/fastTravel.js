@@ -1,7 +1,5 @@
-import { TILE, isSolid, tileAt } from "./world";
-import { roomAssetSolidAt } from "./roomAssets";
-
 export const FAST_TRAVEL_ITEM = "mirror";
+export const FAST_TRAVEL_TILE_SIZE = 64;
 
 export const FAST_TRAVEL_DESTINATIONS = Object.freeze([
   Object.freeze({ id: "willowbrook", name: "Willowbrook Village", tx: 24, ty: 15 }),
@@ -33,48 +31,31 @@ export function fastTravelDestination(destinationId) {
   return FAST_TRAVEL_DESTINATIONS.find((destination) => destination.id === destinationId) || null;
 }
 
-function fastTravelTileOpen(tx, ty, flags = {}) {
-  const centerX = tx * TILE + TILE / 2;
-  const centerY = ty * TILE + TILE / 2;
-  const radius = 18;
-  const probes = [
-    [centerX - radius, centerY - radius],
-    [centerX + radius, centerY - radius],
-    [centerX - radius, centerY + radius],
-    [centerX + radius, centerY + radius],
-    [centerX, centerY],
-  ];
-
-  return probes.every(([x, y]) => {
-    const tileX = Math.floor(x / TILE);
-    const tileY = Math.floor(y / TILE);
-    return !isSolid(tileAt("overworld", tileX, tileY, flags))
-      && !roomAssetSolidAt("overworld", x, y);
-  });
-}
-
-export function resolveFastTravelPoint(destination, flags = {}) {
+export function resolveFastTravelPoint(destination, {
+  isOpen = () => true,
+  tileSize = FAST_TRAVEL_TILE_SIZE,
+  maxSearchRadius = 8,
+} = {}) {
   if (!destination) return null;
 
-  for (let searchRadius = 0; searchRadius <= 8; searchRadius += 1) {
+  for (let searchRadius = 0; searchRadius <= maxSearchRadius; searchRadius += 1) {
     for (let oy = -searchRadius; oy <= searchRadius; oy += 1) {
       for (let ox = -searchRadius; ox <= searchRadius; ox += 1) {
         if (searchRadius && Math.abs(ox) !== searchRadius && Math.abs(oy) !== searchRadius) continue;
         const tx = destination.tx + ox;
         const ty = destination.ty + oy;
-        if (tx < 1 || ty < 1) continue;
-        if (!fastTravelTileOpen(tx, ty, flags)) continue;
+        if (tx < 1 || ty < 1 || !isOpen(tx, ty)) continue;
         return {
-          x: tx * TILE + TILE / 2,
-          y: ty * TILE + TILE / 2,
+          x: tx * tileSize + tileSize / 2,
+          y: ty * tileSize + tileSize / 2,
         };
       }
     }
   }
 
   return {
-    x: destination.tx * TILE + TILE / 2,
-    y: destination.ty * TILE + TILE / 2,
+    x: destination.tx * tileSize + tileSize / 2,
+    y: destination.ty * tileSize + tileSize / 2,
   };
 }
 
@@ -86,12 +67,12 @@ export function isOverworldFastTravelActivation(save, key) {
   return save?.player?.equippedSlots?.[slotIndex] === FAST_TRAVEL_ITEM;
 }
 
-export function buildFastTravelSave(save, destinationId) {
+export function buildFastTravelSave(save, destinationId, travelOptions = {}) {
   const destination = fastTravelDestination(destinationId);
   if (!destination) throw new Error(`Unknown fast travel destination: ${destinationId}`);
 
   const nextSave = withFastTravelMirror(save);
-  const point = resolveFastTravelPoint(destination, nextSave.flags || {});
+  const point = resolveFastTravelPoint(destination, travelOptions);
   return {
     ...nextSave,
     mapId: "overworld",
