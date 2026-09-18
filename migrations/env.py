@@ -4,7 +4,7 @@ import logging
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 
 from alembic import context
 
@@ -84,20 +84,23 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
+        # Bootstrap the configured PostgreSQL schema before Alembic creates
+        # its version table. Do not depend on FLASK_ENV for this: Render may
+        # supply SCHEMA without FLASK_ENV being exactly "production".
+        if SCHEMA:
+            if not SCHEMA.replace("_", "").isalnum():
+                raise ValueError("SCHEMA may contain only letters, numbers, and underscores")
+            connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{SCHEMA}"'))
+            connection.execute(text(f'SET search_path TO "{SCHEMA}", public'))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
             process_revision_directives=process_revision_directives,
             **current_app.extensions['migrate'].configure_args
         )
-        # Create a schema (only in production)
-        if environment == "production":
-            connection.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
-
-        # Set search path to your schema (only in production)
         with context.begin_transaction():
-            if environment == "production":
-                context.execute(f"SET search_path TO {SCHEMA}")
             context.run_migrations()
 
 if context.is_offline_mode():
