@@ -84,6 +84,16 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
+        # Bootstrap the configured PostgreSQL schema before Alembic creates
+        # its version table. Do not depend on FLASK_ENV for this: Render may
+        # supply SCHEMA without FLASK_ENV being exactly "production".
+        if SCHEMA:
+            if not SCHEMA.replace("_", "").isalnum():
+                raise ValueError("SCHEMA may contain only letters, numbers, and underscores")
+            connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{SCHEMA}"'))
+            connection.execute(text(f'SET search_path TO "{SCHEMA}", public'))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
